@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/lab-management-template-/static/css/main.e9ecb527.css",
+    "main.js": "/lab-management-template-/static/js/main.df831cc1.js",
+    "index.html": "/lab-management-template-/index.html",
+    "main.e9ecb527.css.map": "/lab-management-template-/static/css/main.e9ecb527.css.map",
+    "main.df831cc1.js.map": "/lab-management-template-/static/js/main.df831cc1.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e9ecb527.css",
+    "static/js/main.df831cc1.js"
+  ]
+}
