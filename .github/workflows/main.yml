@@ -1,0 +1,36 @@
+name: Deploy to GitHub Pages
+
+# 触发条件，推送到 main 分支时自动触发部署
+on:
+  push:
+    branches:
+      - main  # 你可以改成自己主分支的名称，通常是 main 或 master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # 使用最新版本的 Ubuntu 作为构建环境
+
+    steps:
+      # 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # 设置 Node.js 环境
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'  # 设置 Node.js 的版本
+
+      # 安装依赖
+      - name: Install dependencies
+        run: npm install
+
+      # 构建生产版本
+      - name: Build the app
+        run: npm run build
+
+      # 部署到 GitHub Pages
+      - name: Deploy to GitHub Pages
+        run: npm run deploy
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # 使用 GitHub Token 进行身份验证
