@@ -1,0 +1,41 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master  # 触发条件：推送到 master 分支
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # 设置 Node.js 环境
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      # 安装依赖
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm install
+
+      # 构建应用
+      - name: Build the app
+        run: |
+          cd frontend
+          npm run build
+
+      # 部署到 GitHub Pages
+      - name: Deploy to GitHub Pages
+        run: |
+          cd frontend
+          npm run deploy
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
