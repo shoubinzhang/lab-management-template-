@@ -1,0 +1,2 @@
+source: src  # 指定你的源目录为 src 或者其他正确的目录
+destination: _site  # Jekyll 默认生成站点的目标目录
