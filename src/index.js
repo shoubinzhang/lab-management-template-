@@ -1,12 +1,12 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { HashRouter } from 'react-router-dom'; // 改为 HashRouter
-import App from './App';
+import ReactDOM from 'react-dom';
+import { BrowserRouter } from 'react-router-dom';
 import './index.css';
+import App from './App';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <HashRouter> {/* ✅ 这里使用 HashRouter */}
+ReactDOM.render(
+  <BrowserRouter>
     <App />
-  </HashRouter>
+  </BrowserRouter>,
+  document.getElementById('root')
 );
