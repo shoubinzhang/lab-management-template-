@@ -3,27 +3,30 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main  # 或者你部署的分支
-
+      - main  # 触发部署的分支
+  
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'  # 使用 Node.js 版本 16
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.7
-
-      - name: Install dependencies
-        run: |
-          gem install bundler
-          bundle install
-
-      - name: Build and deploy to GitHub Pages
-        run: |
-          bundle exec jekyll build --source src --destination build  # 这里指明了正确的源和目标目录
-          bundle exec jekyll deploy
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Build the project
+      run: npm run build
+      
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@4.1.3
+      with:
+        branch: gh-pages  # GitHub Pages 会使用 gh-pages 分支
+        folder: build  # 构建文件的目录
+        token: ${{ secrets.GITHUB_TOKEN }}  # 自动使用 GitHub Token 进行身份验证
