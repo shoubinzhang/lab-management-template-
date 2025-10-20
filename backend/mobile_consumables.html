@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>耗材管理 - 移动端</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="static/mobile_nav_styles.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 70px;
+        }
+        
+        .mobile-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0 0 20px 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .consumable-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .consumable-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stock-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .stock-normal {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .stock-low {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .stock-empty {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .category-badge {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        
+        .search-bar {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 25px;
+            padding: 10px 20px;
+            border: none;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #4CAF50;
+            background: transparent;
+            color: #4CAF50;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-action {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 60px;
+        }
+        
+        .btn-receive {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+        }
+        
+        .btn-request {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+        }
+        
+        .btn-edit {
+            background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+            color: white;
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+        
+        .btn-primary-mobile {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 24px;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-mobile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px 20px 0 0;
+            padding: 10px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-around;
+            z-index: 1000;
+        }
+        
+        .nav-item {
+            text-align: center;
+            padding: 8px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+        
+        .nav-item i {
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+        
+        .nav-item span {
+            font-size: 0.8rem;
+            display: block;
+        }
+        
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .alert-mobile {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 2000;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+        
+        .consumable-detail {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 8px;
+        }
+        
+        .expiry-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 2px;
+        }
+        
+        .receive-modal {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+        
+        .receive-form {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+        
+        /* 申请模态框特定样式 */
+        .request-modal .modal-header {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+        }
+        
+        .request-modal .btn-primary-mobile {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        }
+        
+        .request-modal .btn-primary-mobile:hover {
+            background: linear-gradient(135deg, #F57C00 0%, #EF6C00 100%);
+        }
+    </style>
+</head>
+<body>
+    <!-- 耗材管理页面 -->
+    <div id="consumable-page" class="container-fluid">
+        <!-- 头部 -->
+        <div class="mobile-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0 text-success">耗材管理</h4>
+                    <small class="text-muted">移动端</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary-mobile btn-sm" onclick="showAddConsumableModal()">
+                        <i class="bi bi-plus"></i> 添加
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="goBack()">
+                        <i class="bi bi-arrow-left"></i> 返回
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">总耗材</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="lowStockCount">0</div>
+                <div class="stat-label">低库存</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="expiredCount">0</div>
+                <div class="stat-label">已过期</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="receivedCount">0</div>
+                <div class="stat-label">已领用</div>
+            </div>
+        </div>
+
+        <!-- 搜索栏 -->
+        <div class="px-3">
+            <input type="text" class="form-control search-bar" placeholder="搜索耗材名称、货号或供应商..." 
+                   id="searchInput" onkeyup="searchConsumables()">
+        </div>
+
+        <!-- 分类筛选 -->
+        <div class="px-3">
+            <div class="filter-section" id="categoryFilter">
+                <button class="filter-btn active" data-category="" onclick="filterByCategory('')">全部</button>
+                <button class="filter-btn" data-category="实验室耗材" onclick="filterByCategory('实验室耗材')">实验室耗材</button>
+                <button class="filter-btn" data-category="办公用品" onclick="filterByCategory('办公用品')">办公用品</button>
+                <button class="filter-btn" data-category="防护用品" onclick="filterByCategory('防护用品')">防护用品</button>
+            </div>
+        </div>
+
+        <!-- 耗材列表 -->
+        <div class="px-3" id="consumableList">
+            <!-- 静态模拟数据，确保页面至少显示一些内容 -->
+            <div class="consumable-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="mb-1">一次性移液器吸头</h6>
+                    <div class="text-end">
+                        <span class="category-badge">实验耗材</span>
+                        <div class="mt-1">
+                            <span class="stock-status stock-normal">
+                                2500 个
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="consumable-detail">
+                    <div><i class="bi bi-hash"></i> 货号: TIP-1000</div>
+                    <div><i class="bi bi-building"></i> 供应商: Corning</div>
+                    <div><i class="bi bi-geo-alt"></i> 位置: 耗材柜A-01</div>
+                    <div><i class="bi bi-thermometer"></i> 存储: 室温</div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-action btn-receive">
+                        <i class="bi bi-box-arrow-out"></i> 领用
+                    </button>
+                    <button class="btn-action btn-request">
+                        <i class="bi bi-cart-plus"></i> 申请
+                    </button>
+                    <button class="btn-action btn-edit">
+                        <i class="bi bi-pencil"></i> 编辑
+                    </button>
+                </div>
+            </div>
+            
+            <div class="consumable-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="mb-1">PCR管</h6>
+                    <div class="text-end">
+                        <span class="category-badge">实验耗材</span>
+                        <div class="mt-1">
+                            <span class="stock-status stock-low">
+                                120 个
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="consumable-detail">
+                    <div><i class="bi bi-hash"></i> 货号: PCR-0200</div>
+                    <div><i class="bi bi-building"></i> 供应商: Axygen</div>
+                    <div><i class="bi bi-geo-alt"></i> 位置: 耗材柜A-02</div>
+                    <div><i class="bi bi-thermometer"></i> 存储: 室温</div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-action btn-receive">
+                        <i class="bi bi-box-arrow-out"></i> 领用
+                    </button>
+                    <button class="btn-action btn-request">
+                        <i class="bi bi-cart-plus"></i> 申请
+                    </button>
+                    <button class="btn-action btn-edit">
+                        <i class="bi bi-pencil"></i> 编辑
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 空状态 -->
+        <div id="emptyState" class="empty-state hidden">
+            <i class="bi bi-box-seam"></i>
+            <h5>暂无耗材数据</h5>
+            <p>点击上方"添加"按钮创建第一个耗材</p>
+        </div>
+    </div>
+
+    <!-- 添加/编辑耗材模态框 -->
+    <div class="modal fade" id="consumableModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="consumableModalTitle">添加耗材</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="consumableForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">耗材名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="consumableName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">分类 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="consumableCategory" required>
+                                    <option value="">请选择分类</option>
+                                    <option value="实验室耗材">实验室耗材</option>
+                                    <option value="办公用品">办公用品</option>
+                                    <option value="防护用品">防护用品</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">货号</label>
+                                <input type="text" class="form-control" id="consumableCatalog" placeholder="供应商货号">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">供应商</label>
+                                <input type="text" class="form-control" id="consumableSupplier" placeholder="供应商名称">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">库存数量 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="consumableQuantity" min="0" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">单位</label>
+                                <select class="form-select" id="consumableUnit">
+                                    <option value="个">个</option>
+                                    <option value="包">包</option>
+                                    <option value="盒">盒</option>
+                                    <option value="支">支</option>
+                                    <option value="瓶">瓶</option>
+                                    <option value="卷">卷</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">低库存预警值</label>
+                                <input type="number" class="form-control" id="consumableThreshold" min="0" placeholder="低于此值时预警">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">有效期</label>
+                                <input type="date" class="form-control" id="consumableExpiry">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">存储条件</label>
+                                <select class="form-select" id="consumableStorage">
+                                    <option value="室温">室温</option>
+                                    <option value="2-8°C">2-8°C</option>
+                                    <option value="干燥">干燥</option>
+                                    <option value="避光">避光</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">位置</label>
+                                <input type="text" class="form-control" id="consumableLocation" placeholder="如：耗材柜A-01">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">备注</label>
+                            <textarea class="form-control" id="consumableNotes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary-mobile" onclick="saveConsumable()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 领用耗材模态框 -->
+    <div class="modal fade" id="receiveModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content receive-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title">领用耗材</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="receiveForm">
+                        <div class="mb-3">
+                            <label class="form-label">耗材名称</label>
+                            <input type="text" class="form-control" id="receiveConsumableName" readonly>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">领用数量 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="receiveQuantity" min="1" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">可用库存</label>
+                                <input type="text" class="form-control" id="availableStock" readonly>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">领用人 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="receiverName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">领用部门</label>
+                            <select class="form-select" id="receiveDepartment">
+                                <option value="">请选择部门</option>
+                                <option value="研发部">研发部</option>
+                                <option value="质检部">质检部</option>
+                                <option value="生产部">生产部</option>
+                                <option value="行政部">行政部</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">领用用途</label>
+                            <textarea class="form-control" id="receivePurpose" rows="2" placeholder="请说明领用用途"></textarea>
+                        </div>
+                        <div class="receive-form">
+                            <h6 class="text-primary"><i class="bi bi-info-circle"></i> 领用说明</h6>
+                            <small class="text-muted">
+                                • 请根据实际需要领用，避免浪费<br>
+                                • 领用后请及时登记使用情况<br>
+                                • 如有剩余，请妥善保存或归还
+                            </small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary-mobile" onclick="receiveConsumable()">确认领用</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 申请耗材模态框 -->
+    <div class="modal fade" id="requestModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content request-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title">申请耗材</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="requestForm">
+                        <div class="mb-3">
+                            <label class="form-label">耗材名称</label>
+                            <input type="text" class="form-control rounded-10" id="requestConsumableName" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">可用库存</label>
+                            <input type="text" class="form-control rounded-10" id="requestConsumableStock" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">申请数量 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control rounded-10" id="requestQuantity" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">申请用途 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-10" id="requestPurpose" placeholder="请输入申请用途" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">备注</label>
+                            <textarea class="form-control rounded-10" id="requestNotes" rows="2" placeholder="选填"></textarea>
+                        </div>
+                        <div class="receive-form">
+                            <h6 class="text-warning"><i class="bi bi-info-circle"></i> 申请说明</h6>
+                            <small class="text-muted">
+                                • 申请提交后，需等待管理员审批<br>
+                                • 审批通过后，可前往系统领用<br>
+                                • 请确保填写真实的申请用途
+                            </small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary-mobile" onclick="submitConsumableRequest()">提交申请</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toast通知系统 - 保持与其他页面一致性，参数顺序为(message, type)
+        function showToast(message, type = 'info', duration = 3000) {
+            // 兼容性处理：如果调用方式是旧的(type, message)，则交换参数
+            if (typeof message === 'string' && ['success', 'error', 'warning', 'info', 'danger'].includes(message)) {
+                const temp = message;
+                message = type;
+                type = temp;
+            }
+            
+            // 检查是否已存在toast容器，不存在则创建
+            let toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toastContainer';
+                toastContainer.style.position = 'fixed';
+                toastContainer.style.top = '20px';
+                toastContainer.style.right = '20px';
+                toastContainer.style.zIndex = '9999';
+                toastContainer.style.display = 'flex';
+                toastContainer.style.flexDirection = 'column';
+                toastContainer.style.gap = '10px';
+                document.body.appendChild(toastContainer);
+            }
+            
+            // 创建toast元素
+            const toast = document.createElement('div');
+            
+            // 根据类型设置背景色
+            const bgColors = {
+                success: 'rgba(40, 167, 69, 0.95)',
+                error: 'rgba(220, 53, 69, 0.95)',
+                warning: 'rgba(255, 193, 7, 0.95)',
+                info: 'rgba(23, 162, 184, 0.95)',
+                danger: 'rgba(220, 53, 69, 0.95)'
+            };
+            
+            // 根据类型设置图标
+            const icons = {
+                success: 'bi-check-circle',
+                error: 'bi-exclamation-circle',
+                warning: 'bi-exclamation-triangle',
+                info: 'bi-info-circle',
+                danger: 'bi-exclamation-circle'
+            };
+            
+            toast.style.backgroundColor = bgColors[type] || bgColors.info;
+            toast.style.color = 'white';
+            toast.style.padding = '12px 20px';
+            toast.style.borderRadius = '8px';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '10px';
+            toast.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            toast.style.maxWidth = '350px';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            toast.style.cursor = 'pointer';
+            
+            toast.innerHTML = `
+                <i class="bi ${icons[type] || icons.info}" style="font-size: 1.2rem;"></i>
+                <span>${message}</span>
+            `;
+            
+            // 添加到容器
+            toastContainer.appendChild(toast);
+            
+            // 触发动画
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // 点击关闭
+            toast.addEventListener('click', () => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            });
+            
+            // 自动关闭
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, duration);
+        }
+        
+        // 为了兼容性保留showAlert函数，但内部调用showToast
+        function showAlert(type, message) {
+            // 将bootstrap的alert类型映射到toast类型
+            const typeMap = {
+                success: 'success',
+                danger: 'error',
+                warning: 'warning',
+                info: 'info'
+            };
+            showToast(message, typeMap[type] || 'info');
+        }
+        
+        // 全局变量
+        let apiBaseUrl = window.location.origin;
+        // 统一从localStorage获取认证信息
+        let authToken = localStorage.getItem('authToken') || '';
+        let currentUser = null;
+        let consumables = [];
+        let editingConsumable = null;
+        let receivingConsumable = null;
+        let requestingConsumable = null;
+        let currentCategory = '';
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查登录状态
+            if (!authToken) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            initializeConsumablePage();
+        });
+
+        // 初始化耗材页面
+        async function initializeConsumablePage() {
+            try {
+                console.log('页面初始化完成');
+                
+                // 优先加载真实数据
+                await loadConsumables();
+                
+            } catch (error) {
+                console.error('初始化失败:', error);
+                // 显示错误提示
+                showToast('warning', '无法连接到服务器，使用模拟数据');
+                // 确保始终有数据显示
+                loadMockConsumables();
+            }
+        }
+        
+        // 加载模拟耗材数据
+        function loadMockConsumables() {
+            console.log('开始加载模拟耗材数据');
+            
+            // 确保consumables数组是全局可访问的
+            window.consumables = consumables = [
+                {
+                    id: 1,
+                    name: '一次性移液器吸头',
+                    category: '实验耗材',
+                    catalog_number: 'TIP-1000',
+                    supplier: 'Corning',
+                    quantity: 2500,
+                    unit: '个',
+                    threshold: 1000,
+                    expiry_date: '2026-12-31',
+                    storage_condition: '室温',
+                    location: '耗材柜A-01',
+                    notes: '1000μl吸头，已灭菌',
+                    is_received: false
+                },
+                {
+                    id: 2,
+                    name: 'PCR管',
+                    category: '实验耗材',
+                    catalog_number: 'PCR-0200',
+                    supplier: 'Axygen',
+                    quantity: 120,
+                    unit: '个',
+                    threshold: 200,
+                    expiry_date: '2025-09-30',
+                    storage_condition: '室温',
+                    location: '耗材柜A-02',
+                    notes: '0.2ml PCR管，带盖',
+                    is_received: false
+                },
+                {
+                    id: 3,
+                    name: '一次性手套',
+                    category: '防护用品',
+                    catalog_number: 'GLOVE-L',
+                    supplier: 'Kimberly-Clark',
+                    quantity: 50,
+                    unit: '副',
+                    threshold: 100,
+                    expiry_date: '2024-12-31',
+                    storage_condition: '干燥',
+                    location: '防护柜B-01',
+                    notes: '乳胶手套，大号',
+                    is_received: false
+                },
+                {
+                    id: 4,
+                    name: '离心管',
+                    category: '实验耗材',
+                    catalog_number: 'CT-15',
+                    supplier: 'Falcon',
+                    quantity: 0,
+                    unit: '个',
+                    threshold: 50,
+                    expiry_date: '2025-06-30',
+                    storage_condition: '室温',
+                    location: '耗材柜A-03',
+                    notes: '15ml离心管，带刻度',
+                    is_received: false
+                },
+                {
+                    id: 5,
+                    name: '培养皿',
+                    category: '细胞培养',
+                    catalog_number: 'DISH-100',
+                    supplier: 'Corning',
+                    quantity: 35,
+                    unit: '个',
+                    threshold: 50,
+                    expiry_date: '2024-08-31',
+                    storage_condition: '4°C',
+                    location: '冰箱C-01',
+                    notes: '100mm细胞培养皿，已灭菌',
+                    is_received: true
+                }
+            ];
+            
+            console.log('模拟数据加载完成，共', consumables.length, '条数据');
+            
+            // 强制渲染，确保DOM元素存在
+            setTimeout(() => {
+                if (document.getElementById('consumableList') && document.getElementById('emptyState')) {
+                    console.log('DOM元素存在，开始渲染耗材列表');
+                    renderConsumables();
+                    updateStats();
+                } else {
+                    console.error('无法找到必要的DOM元素:', {
+                        consumableList: document.getElementById('consumableList'),
+                        emptyState: document.getElementById('emptyState')
+                    });
+                    // 直接设置统计数据，提供基本的用户反馈
+                    if (document.getElementById('totalCount')) document.getElementById('totalCount').textContent = consumables.length;
+                }
+            }, 100);
+        }
+
+        // 加载耗材数据
+        async function loadConsumables() {
+            try {
+                // 检查认证状态
+                if (!authToken) {
+                    throw new Error('用户未登录');
+                }
+                
+                // 添加超时控制，防止请求长时间阻塞
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${apiBaseUrl}/api/consumables`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showToast('error', '认证失败，请重新登录');
+                        localStorage.removeItem('authToken');
+                        window.location.href = '/login.html';
+                        throw new Error('认证失败');
+                    }
+                    throw new Error('获取耗材数据失败');
+                }
+                
+                const data = await response.json();
+                // 只有在获取到有效数据时才更新耗材列表，否则保留模拟数据
+                const fetchedConsumables = data.items || data || [];
+                if (fetchedConsumables.length > 0) {
+                    consumables = fetchedConsumables;
+                    renderConsumables();
+                    updateStats();
+                } else {
+                    showToast('info', '当前没有耗材数据');
+                    // 加载模拟数据以提供更好的用户体验
+                    if (consumables.length === 0) {
+                        loadMockConsumables();
+                    }
+                }
+                
+            } catch (error) {
+                console.error('加载耗材失败:', error);
+                // 显示错误提示
+                if (error.name !== 'AbortError' && error.message !== '认证失败') {
+                    showToast('error', error.message || '加载耗材失败');
+                }
+                // 确保模拟数据已经被渲染
+                if (consumables.length === 0) {
+                    loadMockConsumables();
+                }
+                throw error;
+            }
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const total = consumables.length;
+            const lowStock = consumables.filter(c => {
+                const threshold = c.threshold || 10;
+                return c.quantity <= threshold && c.quantity > 0;
+            }).length;
+            const expired = consumables.filter(c => {
+                if (!c.expiry_date) return false;
+                const today = new Date();
+                const expiry = new Date(c.expiry_date);
+                return expiry < today;
+            }).length;
+            const received = consumables.filter(c => c.is_received).length;
+            
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('lowStockCount').textContent = lowStock;
+            document.getElementById('expiredCount').textContent = expired;
+            document.getElementById('receivedCount').textContent = received;
+        }
+
+        // 渲染耗材列表
+        function renderConsumables(searchTerm = '', category = '') {
+            const consumableList = document.getElementById('consumableList');
+            const emptyState = document.getElementById('emptyState');
+            
+            let filteredConsumables = consumables;
+            
+            // 搜索过滤
+            if (searchTerm) {
+                filteredConsumables = filteredConsumables.filter(consumable => 
+                    consumable.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (consumable.catalog_number && consumable.catalog_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (consumable.supplier && consumable.supplier.toLowerCase().includes(searchTerm.toLowerCase()))
+                );
+            }
+            
+            // 分类过滤
+            if (category) {
+                filteredConsumables = filteredConsumables.filter(consumable => 
+                    consumable.category === category
+                );
+            }
+            
+            if (filteredConsumables.length === 0) {
+                consumableList.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            consumableList.innerHTML = filteredConsumables.map(consumable => {
+                const stockClass = getStockStatusClass(consumable);
+                const expiryWarning = getExpiryWarning(consumable);
+                
+                return `
+                    <div class="consumable-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-1">${consumable.name}</h6>
+                            <div class="text-end">
+                                <span class="category-badge">${consumable.category}</span>
+                                <div class="mt-1">
+                                    <span class="stock-status ${stockClass}">
+                                        ${consumable.quantity} ${consumable.unit}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="consumable-detail">
+                            <div><i class="bi bi-hash"></i> 货号: ${consumable.catalog_number || '无'}</div>
+                            <div><i class="bi bi-building"></i> 供应商: ${consumable.supplier || '未指定'}</div>
+                            <div><i class="bi bi-geo-alt"></i> 位置: ${consumable.location || '未指定'}</div>
+                            <div><i class="bi bi-thermometer"></i> 存储: ${consumable.storage_condition || '室温'}</div>
+                        </div>
+                        ${expiryWarning}
+                        <div class="action-buttons">
+                            ${consumable.quantity > 0 ? `
+                                <button class="btn-action btn-receive" onclick="showReceiveModal(${consumable.id})">
+                                    <i class="bi bi-box-arrow-out"></i> 领用
+                                </button>
+                            ` : ''}
+                            ${consumable.is_received ? `
+                                <button class="btn-action btn-request" onclick="returnConsumable(${consumable.id})">
+                                    <i class="bi bi-box-arrow-in"></i> 归还
+                                </button>
+                            ` : ''}
+                            <button class="btn-action btn-request" onclick="requestConsumable(${consumable.id})">
+                                <i class="bi bi-cart-plus"></i> 申请
+                            </button>
+                            <button class="btn-action btn-edit" onclick="editConsumable(${consumable.id})">
+                                <i class="bi bi-pencil"></i> 编辑
+                            </button>
+                            <button class="btn-action btn-delete" onclick="deleteConsumable(${consumable.id})">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 获取库存状态样式类
+        function getStockStatusClass(consumable) {
+            const threshold = consumable.threshold || 10;
+            if (consumable.quantity === 0) return 'stock-empty';
+            if (consumable.quantity <= threshold) return 'stock-low';
+            return 'stock-normal';
+        }
+
+        // 获取过期警告
+        function getExpiryWarning(consumable) {
+            if (!consumable.expiry_date) return '';
+            
+            const today = new Date();
+            const expiry = new Date(consumable.expiry_date);
+            const daysDiff = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff <= 30 && daysDiff > 0) {
+                return `<div class="expiry-warning">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    还有 ${daysDiff} 天过期
+                </div>`;
+            } else if (daysDiff <= 0) {
+                return `<div class="expiry-warning" style="background: #f8d7da; color: #721c24; border-color: #f5c6cb;">
+                    <i class="bi bi-x-circle"></i> 
+                    已过期 ${Math.abs(daysDiff)} 天
+                </div>`;
+            }
+            
+            return '';
+        }
+
+        // 搜索耗材
+        function searchConsumables() {
+            const searchTerm = document.getElementById('searchInput').value;
+            renderConsumables(searchTerm, currentCategory);
+        }
+
+        // 按分类筛选
+        function filterByCategory(category) {
+            currentCategory = category;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderConsumables('', category);
+        }
+
+        // 显示添加耗材模态框
+        function showAddConsumableModal() {
+            editingConsumable = null;
+            document.getElementById('consumableModalTitle').textContent = '添加耗材';
+            document.getElementById('consumableForm').reset();
+            new bootstrap.Modal(document.getElementById('consumableModal')).show();
+        }
+
+        // 编辑耗材
+        function editConsumable(consumableId) {
+            const consumable = consumables.find(c => c.id === consumableId);
+            if (!consumable) return;
+            
+            editingConsumable = consumable;
+            document.getElementById('consumableModalTitle').textContent = '编辑耗材';
+            
+            // 填充表单数据
+            document.getElementById('consumableName').value = consumable.name || '';
+            document.getElementById('consumableCategory').value = consumable.category || '';
+            document.getElementById('consumableCatalog').value = consumable.catalog_number || '';
+            document.getElementById('consumableSupplier').value = consumable.supplier || '';
+            document.getElementById('consumableQuantity').value = consumable.quantity || 0;
+            document.getElementById('consumableUnit').value = consumable.unit || '个';
+            document.getElementById('consumableThreshold').value = consumable.threshold || 10;
+            document.getElementById('consumableExpiry').value = consumable.expiry_date || '';
+            document.getElementById('consumableStorage').value = consumable.storage_condition || '室温';
+            document.getElementById('consumableLocation').value = consumable.location || '';
+            document.getElementById('consumableNotes').value = consumable.notes || '';
+            
+            new bootstrap.Modal(document.getElementById('consumableModal')).show();
+        }
+
+        // 保存耗材
+        async function saveConsumable() {
+            try {
+                const formData = {
+                    name: document.getElementById('consumableName').value,
+                    category: document.getElementById('consumableCategory').value,
+                    catalog_number: document.getElementById('consumableCatalog').value,
+                    supplier: document.getElementById('consumableSupplier').value,
+                    quantity: parseInt(document.getElementById('consumableQuantity').value),
+                    unit: document.getElementById('consumableUnit').value,
+                    threshold: parseInt(document.getElementById('consumableThreshold').value) || 10,
+                    expiry_date: document.getElementById('consumableExpiry').value || null,
+                    storage_condition: document.getElementById('consumableStorage').value,
+                    location: document.getElementById('consumableLocation').value,
+                    notes: document.getElementById('consumableNotes').value
+                };
+                
+                // 检查认证状态
+                if (!authToken) {
+                    showToast('error', '用户未登录');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                const url = editingConsumable ? 
+                    `${apiBaseUrl}/api/consumables/${editingConsumable.id}` : 
+                    `${apiBaseUrl}/api/consumables`;
+                
+                const method = editingConsumable ? 'PUT' : 'POST';
+                
+                // 添加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(formData),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showToast('error', '认证失败，请重新登录');
+                        localStorage.removeItem('authToken');
+                        window.location.href = '/login.html';
+                        throw new Error('认证失败');
+                    }
+                    throw new Error('保存耗材失败');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('consumableModal')).hide();
+                    showToast('success', editingConsumable ? '耗材更新成功' : '耗材添加成功');
+                    await loadConsumables();
+                
+            } catch (error) {
+                console.error('保存耗材失败:', error);
+                // 显示真实错误信息
+                if (error.name !== 'AbortError' && error.message !== '认证失败') {
+                    showToast('error', error.message || '保存耗材失败');
+                }
+            }
+        }
+
+        // 显示领用模态框
+        function showReceiveModal(consumableId) {
+            const consumable = consumables.find(c => c.id === consumableId);
+            if (!consumable) return;
+            
+            if (consumable.quantity <= 0) {
+                showToast('warning', '该耗材库存不足');
+                return;
+            }
+            
+            receivingConsumable = consumable;
+            document.getElementById('receiveConsumableName').value = consumable.name;
+            document.getElementById('availableStock').value = `${consumable.quantity} ${consumable.unit}`;
+            document.getElementById('receiveQuantity').max = consumable.quantity;
+            document.getElementById('receiveQuantity').value = 1;
+            
+            new bootstrap.Modal(document.getElementById('receiveModal')).show();
+        }
+
+        // 领用耗材
+        async function receiveConsumable() {
+            try {
+                const quantity = parseInt(document.getElementById('receiveQuantity').value);
+                const receiver = document.getElementById('receiverName').value;
+                const department = document.getElementById('receiveDepartment').value;
+                const purpose = document.getElementById('receivePurpose').value;
+                
+                if (!quantity || quantity <= 0) {
+                    showToast('warning', '请输入有效的领用数量');
+                    return;
+                }
+                
+                if (!receiver) {
+                    showToast('warning', '请输入领用人姓名');
+                    return;
+                }
+                
+                if (quantity > receivingConsumable.quantity) {
+                    showToast('warning', '领用数量超过可用库存');
+                    return;
+                }
+                
+                // 检查认证状态
+                if (!authToken) {
+                    showToast('error', '用户未登录');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                const receiveData = {
+                    consumable_id: receivingConsumable.id,
+                    quantity: quantity,
+                    receiver: receiver,
+                    department: department,
+                    purpose: purpose
+                };
+                
+                // 添加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${apiBaseUrl}/api/consumables/receive`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(receiveData),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showToast('error', '认证失败，请重新登录');
+                        localStorage.removeItem('authToken');
+                        window.location.href = '/login.html';
+                        throw new Error('认证失败');
+                    }
+                    throw new Error('领用耗材失败');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('receiveModal')).hide();
+                    showToast('success', '耗材领用成功');
+                    await loadConsumables();
+                
+            } catch (error) {
+                console.error('领用耗材失败:', error);
+                // 显示真实错误信息
+                if (error.name !== 'AbortError' && error.message !== '认证失败') {
+                    showToast('error', error.message || '领用耗材失败');
+                }
+            }
+        }
+
+        // 归还耗材
+        async function returnConsumable(consumableId) {
+            try {
+                // 检查认证状态
+                if (!authToken) {
+                    showToast('error', '用户未登录');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // 添加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${apiBaseUrl}/api/consumables/return/${consumableId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showToast('error', '认证失败，请重新登录');
+                        localStorage.removeItem('authToken');
+                        window.location.href = '/login.html';
+                        throw new Error('认证失败');
+                    }
+                    throw new Error('归还耗材失败');
+                }
+                
+                showToast('success', '耗材归还成功');
+                    await loadConsumables();
+                
+            } catch (error) {
+                console.error('归还耗材失败:', error);
+                // 显示真实错误信息
+                if (error.name !== 'AbortError' && error.message !== '认证失败') {
+                    showToast('error', error.message || '归还耗材失败');
+                }
+            }
+        }
+
+        // 申请耗材模态框相关变量
+        // requestingConsumable已在全局变量中声明
+
+        // 显示申请模态框
+        function showRequestModal(consumableId) {
+            const consumable = consumables.find(c => c.id === consumableId);
+            if (!consumable) return;
+            
+            requestingConsumable = consumable;
+            document.getElementById('requestConsumableName').value = consumable.name;
+            document.getElementById('requestConsumableStock').value = `${consumable.quantity || 0} ${consumable.unit}`;
+            document.getElementById('requestQuantity').value = 1;
+            document.getElementById('requestQuantity').max = consumable.quantity || 0;
+            document.getElementById('requestPurpose').value = '';
+            document.getElementById('requestNotes').value = '';
+            
+            new bootstrap.Modal(document.getElementById('requestModal')).show();
+        }
+
+        // 申请耗材
+        function requestConsumable(consumableId) {
+            const consumable = consumables.find(c => c.id === consumableId);
+            if (!consumable) return;
+            
+            // 检查库存
+            if ((consumable.quantity || 0) <= 0) {
+                showToast('warning', '该耗材库存不足，无法申请');
+                return;
+            }
+            
+            showRequestModal(consumableId);
+        }
+
+        // 提交耗材申请
+        async function submitConsumableRequest() {
+            try {
+                const quantity = parseInt(document.getElementById('requestQuantity').value);
+                const purpose = document.getElementById('requestPurpose').value;
+                const notes = document.getElementById('requestNotes').value;
+                
+                if (!quantity || quantity <= 0) {
+                    showToast('warning', '请输入有效的申请数量');
+                    return;
+                }
+                
+                if (!purpose.trim()) {
+                    showToast('warning', '请输入申请用途');
+                    return;
+                }
+                
+                if (quantity > requestingConsumable.quantity) {
+                    showToast('warning', '申请数量超过可用库存');
+                    return;
+                }
+                
+                // 检查认证状态
+                if (!authToken) {
+                    showToast('error', '用户未登录');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                const requestData = {
+                    consumable_id: requestingConsumable.id,
+                    quantity: quantity,
+                    unit: requestingConsumable.unit,
+                    purpose: purpose,
+                    notes: notes
+                };
+                
+                // 添加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${apiBaseUrl}/api/consumables/request`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(requestData),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showToast('error', '认证失败，请重新登录');
+                        localStorage.removeItem('authToken');
+                        window.location.href = '/login.html';
+                        throw new Error('认证失败');
+                    }
+                    throw new Error('申请耗材失败');
+                }
+                
+                const result = await response.json();
+                bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
+                    showToast('success', `耗材申请已提交，等待审批\n申请ID: ${result.request_id}`);
+                
+            } catch (error) {
+                console.error('申请耗材失败:', error);
+                // 显示真实错误信息
+                if (error.name !== 'AbortError' && error.message !== '认证失败') {
+                    showToast('error', error.message || '申请耗材失败');
+                }
+            }
+        }
+
+        // 删除耗材
+        async function deleteConsumable(consumableId) {
+            if (!confirm('确定要删除这个耗材吗？此操作不可恢复。')) {
+                return;
+            }
+            
+            try {
+                // 检查认证状态
+                if (!authToken) {
+                    showToast('error', '用户未登录');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // 添加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${apiBaseUrl}/api/consumables/${consumableId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showToast('error', '认证失败，请重新登录');
+                        localStorage.removeItem('authToken');
+                        window.location.href = '/login.html';
+                        throw new Error('认证失败');
+                    }
+                    throw new Error('删除耗材失败');
+                }
+                
+                showToast('success', '耗材删除成功');
+                    await loadConsumables();
+                
+            } catch (error) {
+                console.error('删除耗材失败:', error);
+                // 显示真实错误信息
+                if (error.name !== 'AbortError' && error.message !== '认证失败') {
+                    showToast('error', error.message || '删除耗材失败');
+                }
+            }
+        }
+
+        // 页面导航
+        function navigateTo(page) {
+            const pages = {
+                'dashboard': '/static/mobile_dashboard.html',
+                'devices': '/static/mobile_devices.html',
+                'reagents': '/static/mobile_reagents.html',
+                'consumables': '/static/mobile_consumables.html',
+                'scan': '/static/mobile_scan.html'
+            };
+            
+            if (pages[page]) {
+                window.location.href = pages[page];
+            }
+        }
+
+        // 返回主页
+        function goBack() {
+            window.location.href = "/static/mobile_dashboard.html";
+        }
+
+
+    </script>
+    
+</body>
+</html>

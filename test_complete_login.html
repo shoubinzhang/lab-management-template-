@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>完整登录流程测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 完整登录流程测试</h1>
+        <p>此页面将测试完整的登录流程，包括前端API调用、后端验证、CORS配置等。</p>
+        
+        <div class="form-group">
+            <label for="apiUrl">API基础URL:</label>
+            <input type="text" id="apiUrl" value="http://172.30.81.103:8000">
+        </div>
+        
+        <div class="form-group">
+            <label for="username">用户名:</label>
+            <input type="text" id="username" value="admin">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">密码:</label>
+            <input type="password" id="password" value="admin123">
+        </div>
+        
+        <button onclick="testCompleteLogin()">🚀 测试完整登录流程</button>
+        <button onclick="testCORS()">🌐 测试CORS配置</button>
+        <button onclick="testNetworkConnectivity()">📡 测试网络连接</button>
+        <button onclick="clearResults()">🧹 清除结果</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        function step(message) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = 'step';
+            div.innerHTML = `<strong>步骤:</strong> ${message}`;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testNetworkConnectivity() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            
+            step('测试网络连接性');
+            
+            try {
+                log('🔍 测试健康检查端点...', 'info');
+                const healthResponse = await fetch(`${apiUrl}/health`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (healthResponse.ok) {
+                    const healthData = await healthResponse.text();
+                    log(`✅ 健康检查成功: ${healthData}`, 'success');
+                } else {
+                    log(`❌ 健康检查失败: ${healthResponse.status} ${healthResponse.statusText}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ 网络连接失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCORS() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            
+            step('测试CORS配置');
+            
+            try {
+                log('🔍 发送OPTIONS预检请求...', 'info');
+                const optionsResponse = await fetch(`${apiUrl}/api/auth/login`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                log(`OPTIONS响应状态: ${optionsResponse.status}`, 'info');
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': optionsResponse.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': optionsResponse.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': optionsResponse.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Allow-Credentials': optionsResponse.headers.get('Access-Control-Allow-Credentials')
+                };
+                
+                log(`CORS头信息: ${JSON.stringify(corsHeaders, null, 2)}`, 'info');
+                
+                if (corsHeaders['Access-Control-Allow-Origin']) {
+                    log('✅ CORS配置正常', 'success');
+                } else {
+                    log('❌ CORS配置可能有问题', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ CORS测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCompleteLogin() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            clearResults();
+            step('开始完整登录流程测试');
+            
+            // 步骤1: 测试网络连接
+            await testNetworkConnectivity();
+            
+            // 步骤2: 测试CORS
+            await testCORS();
+            
+            // 步骤3: 测试登录API
+            step('测试登录API调用');
+            
+            try {
+                log('🔐 发送登录请求...', 'info');
+                log(`请求URL: ${apiUrl}/api/auth/login`, 'info');
+                log(`请求数据: {"username": "${username}", "password": "***"}`, 'info');
+                
+                const loginResponse = await fetch(`${apiUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    },
+                    mode: 'cors',
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                log(`登录响应状态: ${loginResponse.status} ${loginResponse.statusText}`, 'info');
+                log(`响应头: ${JSON.stringify(Object.fromEntries(loginResponse.headers.entries()), null, 2)}`, 'info');
+                
+                if (loginResponse.ok) {
+                    const loginData = await loginResponse.json();
+                    log('✅ 登录成功!', 'success');
+                    log(`Token: ${loginData.access_token ? loginData.access_token.substring(0, 50) + '...' : '无'}`, 'success');
+                    log(`用户信息: ${JSON.stringify(loginData.user, null, 2)}`, 'success');
+                    
+                    // 步骤4: 测试Token验证
+                    step('测试Token验证');
+                    await testTokenValidation(apiUrl, loginData.access_token);
+                    
+                } else {
+                    const errorText = await loginResponse.text();
+                    log(`❌ 登录失败: ${loginResponse.status} ${loginResponse.statusText}`, 'error');
+                    log(`错误详情: ${errorText}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ 登录请求异常: ${error.message}`, 'error');
+                log(`错误堆栈: ${error.stack}`, 'error');
+            }
+            
+            step('测试完成');
+        }
+
+        async function testTokenValidation(apiUrl, token) {
+            if (!token) {
+                log('❌ 没有Token，跳过验证测试', 'error');
+                return;
+            }
+            
+            try {
+                log('🔍 测试Token验证...', 'info');
+                
+                const profileResponse = await fetch(`${apiUrl}/api/users/profile`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+                
+                if (profileResponse.ok) {
+                    const profileData = await profileResponse.json();
+                    log('✅ Token验证成功!', 'success');
+                    log(`用户资料: ${JSON.stringify(profileData, null, 2)}`, 'success');
+                } else {
+                    log(`❌ Token验证失败: ${profileResponse.status} ${profileResponse.statusText}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Token验证异常: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时自动运行测试
+        window.addEventListener('load', function() {
+            log('🚀 页面加载完成，准备进行登录流程测试', 'info');
+            log(`当前页面URL: ${window.location.href}`, 'info');
+            log(`用户代理: ${navigator.userAgent}`, 'info');
+        });
+    </script>
+</body>
+</html>

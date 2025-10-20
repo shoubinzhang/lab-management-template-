@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户权限检查</title>
+    <script src="config.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #2196f3;
+        }
+        .admin {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+        }
+        .user {
+            border-left-color: #ff9800;
+            background: #fff3e0;
+        }
+        .error {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+        .code {
+            background: #e8e8e8;
+            padding: 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .button-test {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+        .test-button {
+            margin: 5px;
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background: white;
+            cursor: pointer;
+        }
+        .admin-button {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+        
+        /* AppConfig 相关样式 */
+        #config-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        .config-loading {
+            color: #ff9800;
+        }
+        
+        .config-loaded {
+            color: #4caf50;
+        }
+        
+        .config-error {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <h1>用户权限检查</h1>
+    
+    <div id="config-status" class="config-loading">AppConfig 加载中...</div>
+    <div id="results">
+        <p>正在检查用户权限...</p>
+    </div>
+    
+    <div class="button-test">
+        <h3>按钮显示测试：</h3>
+        <button class="test-button">申请按钮（所有用户）</button>
+        <button class="test-button admin-button" id="edit-btn" style="display: none;">编辑按钮（管理员）</button>
+        <button class="test-button admin-button" id="delete-btn" style="display: none;">删除按钮（管理员）</button>
+    </div>
+    
+    <script>
+        function checkUserPermissions() {
+            const resultsDiv = document.getElementById('results');
+            const editBtn = document.getElementById('edit-btn');
+            const deleteBtn = document.getElementById('delete-btn');
+            let html = '';
+            
+            try {
+                // 1. 检查localStorage中的用户信息
+                const userStr = localStorage.getItem('user');
+                const tokenStr = localStorage.getItem('token');
+                
+                html += '<div class="result">';
+                html += '<h3>1. 存储检查</h3>';
+                html += '<p><strong>用户数据:</strong> ' + (userStr ? '存在' : '不存在') + '</p>';
+                html += '<p><strong>Token:</strong> ' + (tokenStr ? '存在' : '不存在') + '</p>';
+                
+                if (userStr) {
+                    html += '<p><strong>原始用户数据:</strong> <span class="code">' + userStr + '</span></p>';
+                }
+                html += '</div>';
+                
+                // 2. 解析用户信息
+                if (userStr) {
+                    try {
+                        const user = JSON.parse(userStr);
+                        const isAdmin = user?.role === 'admin';
+                        
+                        html += '<div class="result ' + (isAdmin ? 'admin' : 'user') + '">';
+                        html += '<h3>2. 用户权限分析</h3>';
+                        html += '<p><strong>用户名:</strong> ' + (user.username || '未知') + '</p>';
+                        html += '<p><strong>用户角色:</strong> ' + (user.role || '未设置') + '</p>';
+                        html += '<p><strong>是否为管理员:</strong> ' + (isAdmin ? '是' : '否') + '</p>';
+                        html += '<p><strong>计算公式:</strong> <span class="code">user?.role === "admin" = ' + isAdmin + '</span></p>';
+                        html += '</div>';
+                        
+                        // 显示/隐藏管理员按钮
+                        if (isAdmin) {
+                            editBtn.style.display = 'inline-block';
+                            deleteBtn.style.display = 'inline-block';
+                        } else {
+                            editBtn.style.display = 'none';
+                            deleteBtn.style.display = 'none';
+                        }
+                        
+                        // 3. 检查屏幕尺寸
+                        const isMobile = window.innerWidth < 960; // Material-UI md断点
+                        html += '<div class="result">';
+                        html += '<h3>3. 响应式布局检查</h3>';
+                        html += '<p><strong>窗口宽度:</strong> ' + window.innerWidth + 'px</p>';
+                        html += '<p><strong>窗口高度:</strong> ' + window.innerHeight + 'px</p>';
+                        html += '<p><strong>是否为移动端:</strong> ' + (isMobile ? '是' : '否') + ' (宽度 < 960px)</p>';
+                        html += '<p><strong>当前布局:</strong> ' + (isMobile ? '移动端布局' : '桌面端布局') + '</p>';
+                        html += '</div>';
+                        
+                        // 4. 按钮显示预期
+                        html += '<div class="result">';
+                        html += '<h3>4. 按钮显示预期</h3>';
+                        if (isAdmin) {
+                            html += '<p>✅ <strong>申请按钮:</strong> 应该显示（所有用户可见）</p>';
+                            html += '<p>✅ <strong>编辑按钮:</strong> 应该显示（管理员权限）</p>';
+                            html += '<p>✅ <strong>删除按钮:</strong> 应该显示（管理员权限）</p>';
+                        } else {
+                            html += '<p>✅ <strong>申请按钮:</strong> 应该显示（所有用户可见）</p>';
+                            html += '<p>❌ <strong>编辑按钮:</strong> 不应该显示（需要管理员权限）</p>';
+                            html += '<p>❌ <strong>删除按钮:</strong> 不应该显示（需要管理员权限）</p>';
+                        }
+                        html += '</div>';
+                        
+                        // 5. 调试建议
+                        html += '<div class="result">';
+                        html += '<h3>5. 调试建议</h3>';
+                        if (!isAdmin) {
+                            html += '<p><strong>问题:</strong> 当前用户不是管理员，所以编辑和删除按钮不会显示。</p>';
+                            html += '<p><strong>解决方案:</strong></p>';
+                            html += '<ul>';
+                            html += '<li>使用管理员账户登录</li>';
+                            html += '<li>或者在用户管理页面将当前用户角色改为"admin"</li>';
+                            html += '</ul>';
+                        } else {
+                            html += '<p><strong>用户权限正常:</strong> 管理员用户应该能看到所有按钮。</p>';
+                            html += '<p><strong>如果按钮仍然不显示，请检查:</strong></p>';
+                            html += '<ul>';
+                            html += '<li>浏览器控制台是否有JavaScript错误</li>';
+                            html += '<li>CSS样式是否隐藏了按钮</li>';
+                            html += '<li>组件props传递是否正确</li>';
+                            html += '</ul>';
+                        }
+                        html += '</div>';
+                        
+                        // 6. 快速修复建议
+                        html += '<div class="result">';
+                        html += '<h3>6. 快速修复</h3>';
+                        html += '<p><strong>如果你是管理员但看不到按钮，可以尝试:</strong></p>';
+                        html += '<ul>';
+                        html += '<li><button onclick="fixUserRole()">点击这里将当前用户设为管理员</button></li>';
+                        html += '<li><button onclick="clearAndReload()">清除缓存并重新加载</button></li>';
+                        html += '<li><button onclick="openReagentsPage()">在新窗口打开试剂页面</button></li>';
+                        html += '</ul>';
+                        html += '</div>';
+                        
+                    } catch (parseError) {
+                        html += '<div class="result error">';
+                        html += '<h3>解析错误</h3>';
+                        html += '<p>无法解析用户数据: ' + parseError.message + '</p>';
+                        html += '</div>';
+                    }
+                } else {
+                    html += '<div class="result error">';
+                    html += '<h3>未登录</h3>';
+                    html += '<p>没有找到用户数据，请先登录。</p>';
+                    html += '<p><button onclick="openLoginPage()">点击这里登录</button></p>';
+                    html += '</div>';
+                }
+                
+            } catch (error) {
+                html += '<div class="result error">';
+                html += '<h3>检查失败</h3>';
+                html += '<p>权限检查过程中发生错误: ' + error.message + '</p>';
+                html += '</div>';
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // 修复用户角色
+        function fixUserRole() {
+            try {
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    user.role = 'admin';
+                    localStorage.setItem('user', JSON.stringify(user));
+                    alert('用户角色已设置为管理员，页面将刷新');
+                    window.location.reload();
+                } else {
+                    alert('未找到用户数据');
+                }
+            } catch (error) {
+                alert('修复失败: ' + error.message);
+            }
+        }
+        
+        // 获取前端URL
+        function getFrontendUrl(path = '') {
+            try {
+                if (!window.AppConfig) {
+                    // 设置默认配置，以防config.js加载失败
+                    window.AppConfig = {
+                        frontendUrl: `${window.location.protocol}//${window.location.hostname}:3000`,
+                        frontendPort: '3000'
+                    };
+                }
+                
+                // 优先使用AppConfig中的完整URL
+                if (window.AppConfig.frontendUrl) {
+                    return window.AppConfig.frontendUrl + (path.startsWith('/') ? path : '/' + path);
+                }
+                
+                // 动态构建前端URL
+                const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+                const host = window.location.hostname;
+                const port = window.AppConfig.frontendPort || '3000';
+                const baseUrl = `${protocol}//${host}:${port}`;
+                
+                return baseUrl + (path.startsWith('/') ? path : '/' + path);
+            } catch (error) {
+                console.error('获取前端URL失败:', error);
+                // 回退方案
+                const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+                return `${protocol}//${window.location.hostname}:3000` + (path.startsWith('/') ? path : '/' + path);
+            }
+        }
+        
+        // 在新窗口打开试剂页面
+        function openReagentsPage() {
+            try {
+                window.open(getFrontendUrl('reagents'), '_blank');
+            } catch (error) {
+                console.error('打开试剂页面失败:', error);
+                alert('打开页面失败，请稍后再试');
+            }
+        }
+        
+        // 在新窗口打开登录页面
+        function openLoginPage() {
+            try {
+                window.open(getFrontendUrl('login'), '_blank');
+            } catch (error) {
+                console.error('打开登录页面失败:', error);
+                alert('打开页面失败，请稍后再试');
+            }
+        }
+        
+        // 清除缓存并重新加载
+        function clearAndReload() {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert('缓存已清除，请重新登录');
+            window.location.href = getFrontendUrl('login');
+        }
+        
+        // 等待AppConfig加载完成
+        function waitForAppConfig(callback, timeout = 5000) {
+            const startTime = Date.now();
+            
+            function checkConfig() {
+                // 检查AppConfig是否存在，不强制要求loaded标志
+                if (window.AppConfig) {
+                    document.getElementById('config-status').className = 'config-loaded';
+                    document.getElementById('config-status').textContent = 'AppConfig 已加载';
+                    callback();
+                } else if (Date.now() - startTime > timeout) {
+                    document.getElementById('config-status').className = 'config-error';
+                    document.getElementById('config-status').textContent = 'AppConfig 加载超时';
+                    console.warn('AppConfig加载超时，使用默认值继续');
+                    // 创建默认配置
+                    window.AppConfig = {
+                        frontendUrl: `${window.location.protocol}//${window.location.hostname}:3000`,
+                        frontendPort: '3000'
+                    };
+                    callback();
+                } else {
+                    setTimeout(checkConfig, 100);
+                }
+            }
+            
+            checkConfig();
+        }
+        
+        // 页面加载完成后执行检查
+        window.addEventListener('load', function() {
+            // 确保config.js正确加载
+            if (!window.AppConfig) {
+                const configScript = document.createElement('script');
+                configScript.src = 'config.js';
+                configScript.onload = function() {
+                    console.log('config.js 加载完成');
+                    waitForAppConfig(function() {
+                        checkUserPermissions();
+                        // 也可以手动刷新检查
+                        setInterval(checkUserPermissions, 5000); // 每5秒刷新一次
+                    });
+                };
+                configScript.onerror = function() {
+                    console.warn('config.js 加载失败，使用默认配置');
+                    // 创建默认配置
+                    window.AppConfig = {
+                        frontendUrl: `${window.location.protocol}//${window.location.hostname}:3000`,
+                        frontendPort: '3000'
+                    };
+                    waitForAppConfig(function() {
+                        checkUserPermissions();
+                        // 也可以手动刷新检查
+                        setInterval(checkUserPermissions, 5000); // 每5秒刷新一次
+                    });
+                };
+                document.head.appendChild(configScript);
+            } else {
+                waitForAppConfig(function() {
+                    checkUserPermissions();
+                    // 也可以手动刷新检查
+                    setInterval(checkUserPermissions, 5000); // 每5秒刷新一次
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扫码功能 - 移动端</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="mobile_nav_styles.css?v=2" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 70px;
+            min-height: 100vh;
+        }
+        
+        .mobile-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0 0 20px 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .scan-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 3px solid #667eea;
+        }
+        
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .scan-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+        }
+        
+        .scan-frame {
+            width: 200px;
+            height: 200px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            position: relative;
+            animation: scanPulse 2s infinite;
+        }
+        
+        @keyframes scanPulse {
+            0%, 100% { border-color: #667eea; box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+            50% { border-color: #fff; box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+        }
+        
+        .scan-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            animation: scanMove 2s linear infinite;
+        }
+        
+        @keyframes scanMove {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        
+        .corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #667eea;
+        }
+        
+        .corner.top-left { top: -3px; left: -3px; border-right: none; border-bottom: none; }
+        .corner.top-right { top: -3px; right: -3px; border-left: none; border-bottom: none; }
+        .corner.bottom-left { bottom: -3px; left: -3px; border-right: none; border-top: none; }
+        .corner.bottom-right { bottom: -3px; right: -3px; border-left: none; border-top: none; }
+        
+        .scan-status {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 15px;
+        }
+        
+        .scan-result {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+        }
+        
+        .result-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .result-item.device {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        
+        .result-item.reagent {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        }
+        
+        .result-item.consumable {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        }
+        
+        .result-item.unknown {
+            background: linear-gradient(135deg, #9E9E9E 0%, #757575 100%);
+        }
+        
+        .btn-scan {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 24px;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn-scan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-scan.active {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+        
+        .btn-return {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 24px;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn-return:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 摄像头权限错误提示样式 */
+        .camera-permission-error {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+        }
+        
+        .camera-permission-error .text-center {
+            max-width: 90%;
+            padding: 20px;
+        }
+        
+        .camera-permission-error h4 {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .camera-permission-error p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .camera-permission-error .d-grid {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .manual-input {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .input-group {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .form-control {
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 15px;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-outline-secondary {
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px 20px 0 0;
+            padding: 10px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-around;
+            z-index: 1000;
+        }
+        
+        .nav-item {
+            text-align: center;
+            padding: 8px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .nav-item i {
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+        
+        .nav-item span {
+            font-size: 0.8rem;
+            display: block;
+        }
+        
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .alert-mobile {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 2000;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .scan-history {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .history-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .scan-stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 扫码功能页面 -->
+    <div id="scan-page" class="container-fluid">
+        <!-- 头部 -->
+        <div class="mobile-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0 text-primary">扫码功能</h4>
+                    <small class="text-muted">移动端</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="goBack()">
+                        <i class="bi bi-arrow-left"></i> 返回主页
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 扫码统计 -->
+        <div class="scan-stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalScans">0</div>
+                <div class="stat-label">总扫码</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="deviceScans">0</div>
+                <div class="stat-label">设备</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="reagentScans">0</div>
+                <div class="stat-label">试剂</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="consumableScans">0</div>
+                <div class="stat-label">耗材</div>
+            </div>
+        </div>
+
+        <!-- 扫码容器 -->
+        <div class="scan-container">
+            <div class="text-center mb-3">
+                <h5 class="text-primary">二维码扫描</h5>
+                <p class="text-muted small">将二维码对准扫描框</p>
+            </div>
+            
+            <div class="video-container">
+                <video id="video" autoplay muted playsinline></video>
+                <div class="scan-overlay">
+                    <div class="scan-frame">
+                        <div class="corner top-left"></div>
+                        <div class="corner top-right"></div>
+                        <div class="corner bottom-left"></div>
+                        <div class="corner bottom-right"></div>
+                        <div class="scan-line"></div>
+                    </div>
+                    <div class="scan-status">
+                        <i class="bi bi-qr-code-scan"></i> 正在扫描...
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button class="btn-scan" id="startScanBtn" onclick="startScan()">
+                    <i class="bi bi-play"></i> 开始扫描
+                </button>
+                <button class="btn-scan hidden" id="stopScanBtn" onclick="stopScan()">
+                    <i class="bi bi-stop"></i> 停止扫描
+                </button>
+                <button class="btn-scan" onclick="switchCamera()">
+                    <i class="bi bi-camera"></i> 切换摄像头
+                </button>
+            </div>
+        </div>
+
+        <!-- 手动输入 -->
+        <div class="manual-input">
+            <h6 class="text-primary mb-3">
+                <i class="bi bi-keyboard"></i> 手动输入
+            </h6>
+            <div class="input-group">
+                <input type="text" class="form-control" id="manualCode" placeholder="输入二维码内容">
+                <button class="btn btn-outline-secondary" onclick="processManualCode()">
+                    <i class="bi bi-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 扫描结果 -->
+        <div class="scan-result" id="scanResult">
+            <h6 class="text-primary mb-3">
+                <i class="bi bi-check-circle"></i> 扫描结果
+            </h6>
+            <div id="resultContent"></div>
+        </div>
+
+        <!-- 扫码历史 -->
+        <div class="scan-history">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="text-primary mb-0">
+                    <i class="bi bi-clock-history"></i> 扫码历史
+                </h6>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearHistory()">
+                    <i class="bi bi-trash"></i> 清空
+                </button>
+            </div>
+            <div id="scanHistoryList">
+                <div class="text-center text-muted">
+                    <i class="bi bi-inbox"></i>
+                    <p class="small">暂无扫码记录</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 操作模态框 -->
+    <div class="modal fade" id="actionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="actionModalTitle">设备操作</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="actionModalBody">
+                    <!-- 动态内容 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="actionConfirmBtn">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航栏 -->
+    <nav class="bottom-nav">
+        <a href="/static/mobile_index.html" class="nav-item">
+            <i class="bi bi-house"></i>
+            <span>首页</span>
+        </a>
+        <a href="/static/mobile_devices.html" class="nav-item">
+            <i class="bi bi-laptop"></i>
+            <span>设备</span>
+        </a>
+        <a href="/static/mobile_reagents.html" class="nav-item">
+            <i class="bi bi-flask-conical" style="font-size: 1.4rem;"></i>
+            <span>试剂</span>
+        </a>
+        <a href="/static/mobile_consumables.html" class="nav-item">
+            <i class="bi bi-cart"></i>
+            <span>耗材</span>
+        </a>
+        <a href="/static/mobile_scan.html" class="nav-item active">
+            <i class="bi bi-qr-code-scan"></i>
+            <span>扫码</span>
+        </a>
+    </nav>
+    
+    <!-- 功能扩展区 -->
+    <div class="function-extension">
+        <a href="/static/mobile_reservations.html" class="function-item">
+            <i class="bi bi-calendar-check"></i>
+            <span>预约设备</span>
+        </a>
+        <a href="/static/mobile_maintenance.html" class="function-item">
+            <i class="bi bi-tools"></i>
+            <span>设备维护</span>
+        </a>
+        <a href="/static/mobile_user.html" class="function-item">
+            <i class="bi bi-person"></i>
+            <span>用户管理</span>
+        </a>
+    </div>
+    
+    <style>
+        .function-extension {
+            display: flex;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .function-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 20px;
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .function-item i {
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+        }
+        .function-item:hover {
+            color: #0d6efd;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <!-- 引入配置文件 -->
+    <script src="/static/js/config.js"></script>
+    <script>
+        let authToken = '';
+        let currentUser = null;
+        let videoStream = null;
+        let videoElement = null;
+        let canvasElement = null;
+        let canvasContext = null;
+        let currentCamera = 'environment';
+        let scanning = false;
+        let scanHistory = [];
+        let scanStats = {
+            total: 0,
+            devices: 0,
+            reagents: 0,
+            consumables: 0
+        };
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeScanPage();
+        });
+
+        // 初始化扫码页面
+        function initializeScanPage() {
+            try {
+                // 获取有效的认证令牌
+                authToken = getAuthToken();
+                
+                // 添加模拟历史记录数据
+                addMockHistoryData();
+                
+                // 初始化扫码功能
+                initializeScanner();
+                
+                // 更新统计
+                updateScanStats();
+                
+                // 显示模拟的扫码统计数据
+                scanStats = {
+                    total: 12,
+                    devices: 5,
+                    reagents: 4,
+                    consumables: 3
+                };
+                updateScanStats();
+                
+                showAlert('info', '扫码功能已启动，使用模拟数据展示');
+                
+            } catch (error) {
+                console.error('初始化失败:', error);
+                showAlert('danger', '页面初始化失败: ' + error.message);
+            }
+        }
+        
+        // 获取认证令牌
+        function getAuthToken() {
+            // 首先尝试从localStorage获取令牌
+            const savedToken = localStorage.getItem('authToken');
+            if (savedToken) {
+                return savedToken;
+            }
+            
+            // 尝试从URL参数获取令牌
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            if (token) {
+                // 保存到localStorage以便后续使用
+                localStorage.setItem('authToken', token);
+                return token;
+            }
+            
+            // 生成一个模拟的测试token，包含管理员角色信息
+            const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' + 
+                            'eyJzdWIiOiJhZG1pbiIsIm5hbWUiOiLkuK3lm70iLCJpYXQiOjE2MjAzNDU2MDAsInJvbGUiOiJhZG1pbiJ9.' + 
+                            'test-signature';
+            localStorage.setItem('authToken', mockToken);
+            return mockToken;
+        }
+        
+        // 添加模拟历史记录数据
+        function addMockHistoryData() {
+            // 添加一些模拟的历史记录
+            const mockHistory = [
+                {
+                    code: 'device:PCR-Model-X123',
+                    timestamp: new Date(Date.now() - 30 * 60000).toISOString(), // 30分钟前
+                    type: 'device'
+                },
+                {
+                    code: 'reagent:serum-2023-1122',
+                    timestamp: new Date(Date.now() - 60 * 60000).toISOString(), // 1小时前
+                    type: 'reagent'
+                },
+                {
+                    code: 'consumable:tube-50ml-box123',
+                    timestamp: new Date(Date.now() - 24 * 60 * 60000).toISOString(), // 1天前
+                    type: 'consumable'
+                }
+            ];
+            
+            scanHistory = mockHistory;
+            renderScanHistory();
+        }
+
+        // 初始化扫码器
+        function initializeScanner() {
+            videoElement = document.getElementById('video');
+            canvasElement = document.createElement('canvas');
+            canvasContext = canvasElement.getContext('2d');
+            
+            // 不再自动请求摄像头权限，改为用户点击按钮触发
+            console.log('扫码器已初始化，等待用户交互启动摄像头');
+        }
+
+        // 启动摄像头
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: currentCamera,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        // 添加自动播放策略
+                        autoplay: true,
+                        playsinline: true
+                    }
+                };
+                
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement.srcObject = videoStream;
+                
+                return new Promise((resolve) => {
+                    videoElement.onloadedmetadata = () => {
+                        canvasElement.width = videoElement.videoWidth;
+                        canvasElement.height = videoElement.videoHeight;
+                        
+                        // 不再自动开始扫描，由用户点击按钮触发
+                        resolve();
+                    };
+                });
+                
+            } catch (error) {
+                console.error('启动摄像头失败:', error);
+                
+                // 根据不同错误类型提供更具体的提示
+                let errorMessage = '无法访问摄像头';
+                let errorType = 'warning';
+                
+                if (error.name === 'NotAllowedError') {
+                    // 用户拒绝了权限
+                    errorMessage = '您拒绝了摄像头权限，请在浏览器设置中启用摄像头权限后重试';
+                    
+                    // 显示包含重试按钮的自定义提示
+                    showCameraPermissionError();
+                    return;
+                } else if (error.name === 'NotFoundError') {
+                    // 未找到摄像头设备
+                    errorMessage = '未检测到可用摄像头设备';
+                } else if (error.name === 'NotReadableError') {
+                    // 摄像头被其他应用占用
+                    errorMessage = '摄像头正在被其他应用使用，请关闭其他应用后重试';
+                } else if (error.name === 'SecurityError') {
+                    // 安全错误，可能是HTTP环境下的限制
+                    errorMessage = '请在HTTPS环境下使用摄像头功能';
+                    errorType = 'danger';
+                }
+                
+                showAlert(errorType, errorMessage + '，请检查设置');
+            }
+        }
+        
+        // 触发文件上传
+        function triggerFileUpload() {
+            // 创建隐藏的文件输入元素
+            let fileInput = document.getElementById('qrFileInput');
+            if (!fileInput) {
+                fileInput = document.createElement('input');
+                fileInput.id = 'qrFileInput';
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.style.display = 'none';
+                fileInput.onchange = handleFileUpload;
+                document.body.appendChild(fileInput);
+            }
+            
+            // 触发文件选择对话框
+            fileInput.click();
+        }
+        
+        // 处理文件上传
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 显示加载中状态
+            const scanContainer = document.querySelector('.scan-container');
+            const loadingHtml = `
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="sr-only">处理中...</span>
+                    </div>
+                    <p>正在解析图片中的二维码...</p>
+                </div>
+            `;
+            scanContainer.innerHTML = loadingHtml;
+            
+            try {
+                // 读取图片文件并尝试解析二维码
+                const image = await loadImage(file);
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // 设置canvas大小与图片一致
+                canvas.width = image.width;
+                canvas.height = image.height;
+                ctx.drawImage(image, 0, 0, image.width, image.height);
+                
+                // 获取图像数据
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                // 尝试解析二维码
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'attemptBoth',
+                });
+                
+                if (code) {
+                    // 解析成功，处理结果
+                    await handleScanResult(code.data);
+                    showScanSuccess();
+                } else {
+                    // 未找到二维码
+                    showAlert('warning', '未在图片中识别到二维码，请尝试重新上传');
+                    showCameraPermissionError(); // 显示回权限错误界面
+                }
+            } catch (error) {
+                console.error('图片解析错误:', error);
+                showAlert('danger', '图片处理失败: ' + error.message);
+                showCameraPermissionError();
+            }
+        }
+        
+        // 加载图片文件
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = () => reject(new Error('图片加载失败'));
+                    img.src = event.target.result;
+                };
+                reader.onerror = () => reject(new Error('文件读取失败'));
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // 显示摄像头权限错误和重试按钮
+        function showCameraPermissionError() {
+            // 先移除可能存在的旧提示
+            const oldErrorDiv = document.getElementById('cameraPermissionError');
+            if (oldErrorDiv) {
+                oldErrorDiv.remove();
+            }
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'cameraPermissionError';
+            errorDiv.className = 'camera-permission-error';
+            errorDiv.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="mb-4">
+                        <i class="bi bi-camera-slash" style="font-size: 4rem; color: #ffc107;"></i>
+                    </div>
+                    <h4 class="mb-2">需要摄像头权限</h4>
+                    <p class="text-muted mb-4">
+                        请在浏览器设置中允许此网站访问您的摄像头，以便使用扫码功能。
+                    </p>
+                    
+                    <!-- 浏览器权限设置指南 -->
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <h6 class="text-sm font-medium mb-2">如何在浏览器中开启权限:</h6>
+                        <ul class="text-sm text-left list-unstyled">
+                            <li class="mb-1"><i class="bi bi-chrome mr-1"></i> Chrome: 点击地址栏左侧的锁图标 → 权限 → 摄像头 → 允许</li>
+                            <li class="mb-1"><i class="bi bi-edge mr-1"></i> Edge: 点击地址栏左侧的锁图标 → 管理权限 → 摄像头 → 允许</li>
+                            <li class="mb-1"><i class="bi bi-safari mr-1"></i> Safari: 设置 → 网站设置 → 摄像头 → 选择此网站 → 允许</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" onclick="startCamera()">
+                            <i class="bi bi-arrow-repeat"></i> 重试
+                        </button>
+                        <button class="btn btn-secondary" onclick="toggleHistoryPanel()">
+                            <i class="bi bi-clock-history"></i> 查看历史记录
+                        </button>
+                        <button class="btn btn-info" onclick="triggerFileUpload()">
+                            <i class="bi bi-upload"></i> 上传图片扫码
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 插入到扫描区域
+            const scanContainer = document.querySelector('.scan-container');
+            scanContainer.innerHTML = '';
+            scanContainer.appendChild(errorDiv);
+        }
+
+        // 切换摄像头
+        async function switchCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            
+            currentCamera = currentCamera === 'environment' ? 'user' : 'environment';
+            await startCamera();
+        }
+
+        // 开始扫描
+        async function startScan() {
+            if (scanning) return;
+            
+            // 检查摄像头是否已经启动
+            if (!videoStream || videoStream.active === false) {
+                // 显示加载状态
+                const scanContainer = document.querySelector('.scan-container');
+                const loadingHtml = `
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-3">正在请求摄像头权限...</p>
+                    </div>
+                `;
+                
+                // 保存原始内容以便恢复
+                const originalContent = scanContainer.innerHTML;
+                scanContainer.innerHTML = loadingHtml;
+                
+                try {
+                    // 请求摄像头权限
+                    await startCamera();
+                    // 恢复原始内容
+                    scanContainer.innerHTML = originalContent;
+                } catch (error) {
+                    // 如果摄像头启动失败，恢复原始内容
+                    scanContainer.innerHTML = originalContent;
+                    return;
+                }
+            }
+            
+            scanning = true;
+            document.getElementById('startScanBtn').classList.add('hidden');
+            document.getElementById('stopScanBtn').classList.remove('hidden');
+            
+            scanFrame();
+        }
+
+        // 停止扫描
+        function stopScan() {
+            scanning = false;
+            document.getElementById('startScanBtn').classList.remove('hidden');
+            document.getElementById('stopScanBtn').classList.add('hidden');
+        }
+
+        // 扫描帧
+        function scanFrame() {
+            if (!scanning) return;
+            
+            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+                const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                
+                try {
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: 'dontInvert',
+                    });
+                    
+                    if (code) {
+                        handleScanResult(code.data);
+                        stopScan();
+                        
+                        // 显示扫描成功效果
+                        showScanSuccess();
+                        return;
+                    }
+                } catch (error) {
+                    console.error('二维码解析错误:', error);
+                }
+            }
+            
+            requestAnimationFrame(scanFrame);
+        }
+
+        // 处理扫描结果
+        async function handleScanResult(qrData) {
+            console.log('扫描到二维码:', qrData);
+            
+            // 添加到历史记录
+            addToHistory(qrData);
+            
+            try {
+                // 尝试解析二维码内容
+                const data = JSON.parse(qrData);
+                
+                if (data.type === 'device') {
+                    await handleDeviceScan(data);
+                } else if (data.type === 'reagent') {
+                    await handleReagentScan(data);
+                } else if (data.type === 'consumable') {
+                    await handleConsumableScan(data);
+                } else {
+                    // 未知类型，显示原始数据
+                    showScanResult('unknown', data);
+                }
+                
+            } catch (error) {
+                // 不是JSON格式，尝试作为设备ID查询
+                await handleRawCode(qrData);
+            }
+        }
+
+        // 处理设备扫描
+        async function handleDeviceScan(data) {
+            try {
+                // 添加超时控制，防止请求长时间阻塞
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                // 尝试重试机制，最多重试2次
+                let retryCount = 0;
+                let maxRetries = 2;
+                let response;
+                
+                while (retryCount <= maxRetries) {
+                    try {
+                        response = await fetch(AppConfig.getApiUrl(`devices/${data.id}`), {
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            signal: controller.signal
+                        });
+                        
+                        if (response.ok || retryCount === maxRetries) {
+                            break;
+                        }
+                        
+                        retryCount++;
+                        // 短暂延迟后重试
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    } catch (fetchError) {
+                        // 网络错误时也要重试
+                        if (retryCount === maxRetries || fetchError.name === 'AbortError') {
+                            throw fetchError;
+                        }
+                        retryCount++;
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    }
+                }
+                
+                clearTimeout(timeoutId);
+                
+                if (response && response.ok) {
+                    const device = await response.json();
+                    showScanResult('device', device);
+                    scanStats.devices++;
+                } else {
+                    // 如果响应存在但不是OK状态，显示详细错误信息
+                    if (response) {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('获取设备信息失败，状态码:', response.status, errorData);
+                        showAlert('warning', `获取设备信息失败: ${errorData.detail || '未知错误'}`);
+                    }
+                    showScanResult('device', { ...data, status: 'not_found' });
+                }
+                
+            } catch (error) {
+                // 直接显示错误信息，不使用模拟数据
+                console.error('获取设备信息失败:', error);
+                
+                if (error.name === 'AbortError') {
+                    showAlert('error', '获取设备信息超时，请稍后再试');
+                } else {
+                    showAlert('error', '无法连接到服务器: ' + error.message);
+                }
+                
+                // 不显示任何设备信息，直接返回错误
+                showScanResult('device', { 
+                    id: data.id, 
+                    status: 'error', 
+                    error: error.message 
+                });
+            }
+            
+            scanStats.total++;
+            updateScanStats();
+        }
+
+        // 处理试剂扫描
+        async function handleReagentScan(data) {
+            try {
+                // 添加超时控制，防止请求长时间阻塞
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                // 尝试重试机制，最多重试2次
+                let retryCount = 0;
+                let maxRetries = 2;
+                let response;
+                
+                while (retryCount <= maxRetries) {
+                    try {
+                        response = await fetch(AppConfig.getApiUrl(`reagents/${data.id}`), {
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            signal: controller.signal
+                        });
+                        
+                        if (response.ok || retryCount === maxRetries) {
+                            break;
+                        }
+                        
+                        retryCount++;
+                        // 短暂延迟后重试
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    } catch (fetchError) {
+                        // 网络错误时也要重试
+                        if (retryCount === maxRetries || fetchError.name === 'AbortError') {
+                            throw fetchError;
+                        }
+                        retryCount++;
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    }
+                }
+                
+                clearTimeout(timeoutId);
+                
+                if (response && response.ok) {
+                    const reagent = await response.json();
+                    showScanResult('reagent', reagent);
+                    scanStats.reagents++;
+                } else {
+                    // 如果响应存在但不是OK状态，显示详细错误信息
+                    if (response) {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('获取试剂信息失败，状态码:', response.status, errorData);
+                        showAlert('warning', `获取试剂信息失败: ${errorData.detail || '未知错误'}`);
+                    }
+                    showScanResult('reagent', { ...data, status: 'not_found' });
+                }
+                
+            } catch (error) {
+                // 显示错误信息但仍然使用模拟数据
+                console.error('获取试剂信息失败:', error);
+                
+                if (error.name === 'AbortError') {
+                    showAlert('warning', '获取试剂信息超时，请稍后再试');
+                } else {
+                    showAlert('warning', '无法连接到服务器，使用模拟数据');
+                }
+                
+                // 使用模拟试剂数据进行展示
+                const mockReagent = {
+                    id: data.id || 'mock-reagent-1',
+                    name: '胎牛血清',
+                    cas_number: '模拟CAS号',
+                    catalog_number: 'FBS-2023-1122',
+                    supplier: 'Gibco',
+                    specification: '500ml',
+                    quantity: 12,
+                    unit: '瓶',
+                    threshold: 5,
+                    expiry_date: '2025-12-31',
+                    location: '冰箱B-02',
+                    notes: '模拟试剂数据'
+                };
+                showScanResult('reagent', mockReagent);
+            }
+            
+            scanStats.total++;
+            updateScanStats();
+        }
+
+        // 处理耗材扫描
+        async function handleConsumableScan(data) {
+            try {
+                // 添加超时控制，防止请求长时间阻塞
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                // 尝试重试机制，最多重试2次
+                let retryCount = 0;
+                let maxRetries = 2;
+                let response;
+                
+                while (retryCount <= maxRetries) {
+                    try {
+                        response = await fetch(AppConfig.getApiUrl(`consumables/${data.id}`), {
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            signal: controller.signal
+                        });
+                        
+                        if (response.ok || retryCount === maxRetries) {
+                            break;
+                        }
+                        
+                        retryCount++;
+                        // 短暂延迟后重试
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    } catch (fetchError) {
+                        // 网络错误时也要重试
+                        if (retryCount === maxRetries || fetchError.name === 'AbortError') {
+                            throw fetchError;
+                        }
+                        retryCount++;
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    }
+                }
+                
+                clearTimeout(timeoutId);
+                
+                if (response && response.ok) {
+                    const consumable = await response.json();
+                    showScanResult('consumable', consumable);
+                    scanStats.consumables++;
+                } else {
+                    // 如果响应存在但不是OK状态，显示详细错误信息
+                    if (response) {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('获取耗材信息失败，状态码:', response.status, errorData);
+                        showAlert('warning', `获取耗材信息失败: ${errorData.detail || '未知错误'}`);
+                    }
+                    showScanResult('consumable', { ...data, status: 'not_found' });
+                }
+                
+            } catch (error) {
+                // 直接显示错误信息，不使用模拟数据
+                console.error('获取耗材信息失败:', error);
+                
+                if (error.name === 'AbortError') {
+                    showAlert('error', '获取耗材信息超时，请稍后再试');
+                } else {
+                    showAlert('error', '无法连接到服务器: ' + error.message);
+                }
+                
+                // 不显示任何耗材信息，直接返回错误
+                showScanResult('consumable', { 
+                    id: data.id, 
+                    status: 'error', 
+                    error: error.message 
+                });
+            }
+            
+            scanStats.total++;
+            updateScanStats();
+        }
+
+        // 处理原始代码
+        async function handleRawCode(code) {
+            console.log('处理原始二维码内容:', code);
+            
+            // 尝试作为设备ID查询
+            try {
+                // 添加超时控制，防止请求长时间阻塞
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                // 尝试重试机制，最多重试2次
+                let retryCount = 0;
+                let maxRetries = 2;
+                let response;
+                
+                while (retryCount <= maxRetries) {
+                    try {
+                        response = await fetch(AppConfig.getApiUrl(`devices/${code}`), {
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            signal: controller.signal
+                        });
+                        
+                        if (response.ok || retryCount === maxRetries) {
+                            break;
+                        }
+                        
+                        retryCount++;
+                        // 短暂延迟后重试
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    } catch (fetchError) {
+                        // 网络错误时也要重试
+                        if (retryCount === maxRetries || fetchError.name === 'AbortError') {
+                            throw fetchError;
+                        }
+                        retryCount++;
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    }
+                }
+                
+                clearTimeout(timeoutId);
+                
+                if (response && response.ok) {
+                    const device = await response.json();
+                    showScanResult('device', device);
+                    scanStats.devices++;
+                    scanStats.total++;
+                    updateScanStats();
+                    return;
+                }
+            } catch (error) {
+                console.error('设备查询失败:', error);
+                // 继续尝试其他类型
+            }
+            
+            // 尝试作为试剂ID查询
+            try {
+                // 添加超时控制，防止请求长时间阻塞
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                // 尝试重试机制，最多重试2次
+                let retryCount = 0;
+                let maxRetries = 2;
+                let response;
+                
+                while (retryCount <= maxRetries) {
+                    try {
+                        response = await fetch(AppConfig.getApiUrl(`reagents/${code}`), {
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            signal: controller.signal
+                        });
+                        
+                        if (response.ok || retryCount === maxRetries) {
+                            break;
+                        }
+                        
+                        retryCount++;
+                        // 短暂延迟后重试
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    } catch (fetchError) {
+                        // 网络错误时也要重试
+                        if (retryCount === maxRetries || fetchError.name === 'AbortError') {
+                            throw fetchError;
+                        }
+                        retryCount++;
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    }
+                }
+                
+                clearTimeout(timeoutId);
+                
+                if (response && response.ok) {
+                    const reagent = await response.json();
+                    showScanResult('reagent', reagent);
+                    scanStats.reagents++;
+                    scanStats.total++;
+                    updateScanStats();
+                    return;
+                }
+            } catch (error) {
+                console.error('试剂查询失败:', error);
+                // 继续尝试其他类型
+            }
+            
+            // 尝试作为耗材ID查询
+            try {
+                // 添加超时控制，防止请求长时间阻塞
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                // 尝试重试机制，最多重试2次
+                let retryCount = 0;
+                let maxRetries = 2;
+                let response;
+                
+                while (retryCount <= maxRetries) {
+                    try {
+                        response = await fetch(AppConfig.getApiUrl(`consumables/${code}`), {
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            signal: controller.signal
+                        });
+                        
+                        if (response.ok || retryCount === maxRetries) {
+                            break;
+                        }
+                        
+                        retryCount++;
+                        // 短暂延迟后重试
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    } catch (fetchError) {
+                        // 网络错误时也要重试
+                        if (retryCount === maxRetries || fetchError.name === 'AbortError') {
+                            throw fetchError;
+                        }
+                        retryCount++;
+                        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
+                    }
+                }
+                
+                clearTimeout(timeoutId);
+                
+                if (response && response.ok) {
+                    const consumable = await response.json();
+                    showScanResult('consumable', consumable);
+                    scanStats.consumables++;
+                    scanStats.total++;
+                    updateScanStats();
+                    return;
+                }
+            } catch (error) {
+                console.error('耗材查询失败:', error);
+                // 显示错误信息
+                if (error.name === 'AbortError') {
+                    showAlert('warning', '查询超时，请稍后再试');
+                }
+            }
+            
+            // 显示为未知类型
+            showScanResult('unknown', { code: code, message: '未识别的二维码内容' });
+            scanStats.total++;
+            updateScanStats();
+        }
+
+        // 显示扫描结果
+        function showScanResult(type, data) {
+            const resultDiv = document.getElementById('scanResult');
+            const contentDiv = document.getElementById('resultContent');
+            
+            let html = '';
+            
+            if (type === 'device') {
+                html = `
+                    <div class="result-item device" onclick="showDeviceActions(${JSON.stringify(data).replace(/"/g, '&quot;')})">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${data.name || '未知设备'}</h6>
+                                <small>型号: ${data.model || '未指定'}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="mb-1">${getStatusBadge(data.status)}</div>
+                                <small>${data.location || '未指定位置'}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'reagent') {
+                html = `
+                    <div class="result-item reagent" onclick="showReagentActions(${JSON.stringify(data).replace(/"/g, '&quot;')})">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${data.name || '未知试剂'}</h6>
+                                <small>货号: ${data.catalog_number || '未指定'}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="mb-1">${getStockBadge(data.quantity, data.threshold)}</div>
+                                <small>${data.location || '未指定位置'}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'consumable') {
+                html = `
+                    <div class="result-item consumable" onclick="showConsumableActions(${JSON.stringify(data).replace(/"/g, '&quot;')})">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${data.name || '未知耗材'}</h6>
+                                <small>分类: ${data.category || '未指定'}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="mb-1">${getStockBadge(data.quantity, data.threshold)}</div>
+                                <small>${data.quantity || 0} ${data.unit || '个'}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                html = `
+                    <div class="result-item unknown">
+                        <div class="text-center">
+                            <i class="bi bi-question-circle" style="font-size: 2rem;"></i>
+                            <p class="mb-1">未识别的二维码</p>
+                            <small class="text-muted">${data.code || data.message || '未知内容'}</small>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            contentDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+            
+            // 滚动到结果区域
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // 获取状态徽章
+        function getStatusBadge(status) {
+            const statusMap = {
+                'available': '<span class="badge bg-success">可用</span>',
+                'in_use': '<span class="badge bg-warning">使用中</span>',
+                'maintenance': '<span class="badge bg-info">维护中</span>',
+                'damaged': '<span class="badge bg-danger">损坏</span>',
+                'not_found': '<span class="badge bg-secondary">未找到</span>'
+            };
+            
+            return statusMap[status] || '<span class="badge bg-secondary">未知</span>';
+        }
+
+        // 获取库存徽章
+        function getStockBadge(quantity, threshold) {
+            const thresholdValue = threshold || 10;
+            if (quantity === 0) return '<span class="badge bg-danger">缺货</span>';
+            if (quantity <= thresholdValue) return '<span class="badge bg-warning">低库存</span>';
+            return '<span class="badge bg-success">有库存</span>';
+        }
+
+        // 显示设备操作
+        function showDeviceActions(device) {
+            const modal = new bootstrap.Modal(document.getElementById('actionModal'));
+            const title = document.getElementById('actionModalTitle');
+            const body = document.getElementById('actionModalBody');
+            const confirmBtn = document.getElementById('actionConfirmBtn');
+            
+            title.textContent = `设备操作 - ${device.name}`;
+            
+            body.innerHTML = `
+                <div class="text-center mb-3">
+                    <h5>${device.name}</h5>
+                    <p class="text-muted">型号: ${device.model}</p>
+                    <p>状态: ${getStatusBadge(device.status)}</p>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" onclick="borrowDevice(${device.id})">
+                        <i class="bi bi-box-arrow-out"></i> 借用设备
+                    </button>
+                    <button class="btn btn-primary" onclick="returnDevice(${device.id})">
+                        <i class="bi bi-box-arrow-in"></i> 归还设备
+                    </button>
+                    <button class="btn btn-info" onclick="maintenanceDevice(${device.id})">
+                        <i class="bi bi-tools"></i> 维护设备
+                    </button>
+                    <button class="btn btn-warning" onclick="editDevice(${device.id})">
+                        <i class="bi bi-pencil"></i> 编辑设备
+                    </button>
+                </div>
+            `;
+            
+            confirmBtn.style.display = 'none';
+            modal.show();
+        }
+
+        // 显示试剂操作
+        function showReagentActions(reagent) {
+            const modal = new bootstrap.Modal(document.getElementById('actionModal'));
+            const title = document.getElementById('actionModalTitle');
+            const body = document.getElementById('actionModalBody');
+            const confirmBtn = document.getElementById('actionConfirmBtn');
+            
+            title.textContent = `试剂操作 - ${reagent.name}`;
+            
+            body.innerHTML = `
+                <div class="text-center mb-3">
+                    <h5>${reagent.name}</h5>
+                    <p class="text-muted">货号: ${reagent.catalog_number}</p>
+                    <p>库存: ${getStockBadge(reagent.quantity, reagent.threshold)}</p>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" onclick="borrowReagent(${reagent.id})">
+                        <i class="bi bi-box-arrow-out"></i> 借用试剂
+                    </button>
+                    <button class="btn btn-primary" onclick="returnReagent(${reagent.id})">
+                        <i class="bi bi-box-arrow-in"></i> 归还试剂
+                    </button>
+                    <button class="btn btn-warning" onclick="editReagent(${reagent.id})">
+                        <i class="bi bi-pencil"></i> 编辑试剂
+                    </button>
+                </div>
+            `;
+            
+            confirmBtn.style.display = 'none';
+            modal.show();
+        }
+
+        // 显示耗材操作
+        function showConsumableActions(consumable) {
+            const modal = new bootstrap.Modal(document.getElementById('actionModal'));
+            const title = document.getElementById('actionModalTitle');
+            const body = document.getElementById('actionModalBody');
+            const confirmBtn = document.getElementById('actionConfirmBtn');
+            
+            title.textContent = `耗材操作 - ${consumable.name}`;
+            
+            body.innerHTML = `
+                <div class="text-center mb-3">
+                    <h5>${consumable.name}</h5>
+                    <p class="text-muted">分类: ${consumable.category}</p>
+                    <p>库存: ${consumable.quantity || 0} ${consumable.unit || '个'}</p>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" onclick="receiveConsumable(${consumable.id})">
+                        <i class="bi bi-box-arrow-out"></i> 领用耗材
+                    </button>
+                    <button class="btn btn-primary" onclick="returnConsumable(${consumable.id})">
+                        <i class="bi bi-box-arrow-in"></i> 归还耗材
+                    </button>
+                    <button class="btn btn-warning" onclick="editConsumable(${consumable.id})">
+                        <i class="bi bi-pencil"></i> 编辑耗材
+                    </button>
+                </div>
+            `;
+            
+            confirmBtn.style.display = 'none';
+            modal.show();
+        }
+
+        // 处理手动输入
+        function processManualCode() {
+            const code = document.getElementById('manualCode').value.trim();
+            if (!code) {
+                showAlert('warning', '请输入二维码内容');
+                return;
+            }
+            
+            handleScanResult(code);
+            document.getElementById('manualCode').value = '';
+        }
+
+        // 设备操作函数
+        function borrowDevice(deviceId) {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            
+            // 获取设备信息
+            let device = null;
+            for (let d of devices) {
+                if (d.id === deviceId) {
+                    device = d;
+                    break;
+                }
+            }
+            
+            if (!device) {
+                showAlert('danger', '未找到该设备');
+                return;
+            }
+            
+            if (device.status !== 'available') {
+                showAlert('warning', '该设备当前状态不可借用');
+                return;
+            }
+            
+            // 显示借用备注输入框
+            const notes = prompt('请输入借用备注（可选）：');
+            
+            // 调用API借用设备，使用正确的令牌键名
+            const token = localStorage.getItem('authToken') || localStorage.getItem('token') || authToken;
+            
+            fetch(AppConfig.getApiUrl(`devices/${deviceId}/borrow`), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ notes: notes || null })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.detail || '借用失败');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showAlert('success', `设备借用成功：${device.name}`);
+            })
+            .catch(error => {
+                console.error('借用设备失败:', error);
+                showAlert('danger', `借用失败：${error.message || '未知错误'}`);
+            });
+        }
+
+        function returnDevice(deviceId) {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            
+            // 获取设备信息
+            let device = null;
+            for (let d of devices) {
+                if (d.id === deviceId) {
+                    device = d;
+                    break;
+                }
+            }
+            
+            if (!device) {
+                showAlert('danger', '未找到该设备');
+                return;
+            }
+            
+            // 确认归还
+            if (!confirm(`确定要归还设备：${device.name}吗？`)) {
+                return;
+            }
+            
+            // 调用API归还设备，使用正确的令牌键名
+            const token = localStorage.getItem('authToken') || localStorage.getItem('token') || authToken;
+            
+            fetch(AppConfig.getApiUrl(`devices/${deviceId}/return`), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.detail || '归还失败');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showAlert('success', `设备归还成功：${device.name}`);
+            })
+            .catch(error => {
+                console.error('归还设备失败:', error);
+                showAlert('danger', `归还失败：${error.message || '未知错误'}`);
+            });
+        }
+
+        function maintenanceDevice(deviceId) {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            showAlert('info', '设备维护功能开发中...');
+        }
+
+        function editDevice(deviceId) {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            window.location.href = `/mobile_devices.html?edit=${deviceId}`;
+        }
+
+        // 试剂操作函数
+        function borrowReagent(reagentId) {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            showAlert('info', '试剂借用功能开发中...');
+        }
+
+        function returnReagent(reagentId) {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            showAlert('info', '试剂归还功能开发中...');
+        }
+
+        function editReagent(reagentId) {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            window.location.href = `/mobile_reagents.html?edit=${reagentId}`;
+        }
+
+        // 耗材操作函数
+        function receiveConsumable(consumableId) {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            showAlert('info', '耗材领用功能开发中...');
+        }
+
+        function returnConsumable(consumableId) {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            showAlert('info', '耗材归还功能开发中...');
+        }
+
+        function editConsumable(consumableId) {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            window.location.href = `/mobile_consumables.html?edit=${consumableId}`;
+        }
+
+        // 显示扫描成功效果
+        function showScanSuccess() {
+            const overlay = document.querySelector('.scan-overlay');
+            overlay.style.background = 'rgba(76, 175, 80, 0.8)';
+            overlay.innerHTML = `
+                <div class="text-center">
+                    <i class="bi bi-check-circle" style="font-size: 3rem; color: white;"></i>
+                    <h5 class="text-white mt-2">扫描成功</h5>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                overlay.style.background = 'rgba(0, 0, 0, 0.3)';
+                overlay.innerHTML = `
+                    <div class="scan-frame">
+                        <div class="corner top-left"></div>
+                        <div class="corner top-right"></div>
+                        <div class="corner bottom-left"></div>
+                        <div class="corner bottom-right"></div>
+                        <div class="scan-line"></div>
+                    </div>
+                    <div class="scan-status">
+                        <i class="bi bi-qr-code-scan"></i> 正在扫描...
+                    </div>
+                `;
+            }, 1500);
+        }
+
+        // 添加到历史记录
+        function addToHistory(code) {
+            const history = {
+                code: code,
+                timestamp: new Date().toISOString(),
+                type: 'unknown'
+            };
+            
+            scanHistory.unshift(history);
+            
+            // 限制历史记录数量
+            if (scanHistory.length > 20) {
+                scanHistory = scanHistory.slice(0, 20);
+            }
+            
+            // 保存到本地存储
+            localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
+            
+            renderScanHistory();
+        }
+
+        // 加载扫码历史
+        function loadScanHistory() {
+            const saved = localStorage.getItem('scanHistory');
+            if (saved) {
+                scanHistory = JSON.parse(saved);
+                renderScanHistory();
+            }
+        }
+
+        // 渲染扫码历史
+        function renderScanHistory() {
+            const historyList = document.getElementById('scanHistoryList');
+            
+            if (scanHistory.length === 0) {
+                historyList.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="bi bi-inbox"></i>
+                        <p class="small">暂无扫码记录</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            historyList.innerHTML = scanHistory.map(item => {
+                const time = new Date(item.timestamp).toLocaleString();
+                const shortCode = item.code.length > 30 ? item.code.substring(0, 30) + '...' : item.code;
+                
+                return `
+                    <div class="history-item" onclick="handleScanResult('${item.code.replace(/'/g, "\\'")}')">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted">${time}</small>
+                                <div class="text-truncate" style="max-width: 200px;">
+                                    <small>${shortCode}</small>
+                                </div>
+                            </div>
+                            <i class="bi bi-arrow-right"></i>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 清空历史记录
+        function clearHistory() {
+            if (confirm('确定要清空扫码历史吗？')) {
+                scanHistory = [];
+                localStorage.removeItem('scanHistory');
+                renderScanHistory();
+                showAlert('success', '扫码历史已清空');
+            }
+        }
+
+        // 更新扫码统计
+        function updateScanStats() {
+            document.getElementById('totalScans').textContent = scanStats.total;
+            document.getElementById('deviceScans').textContent = scanStats.devices;
+            document.getElementById('reagentScans').textContent = scanStats.reagents;
+            document.getElementById('consumableScans').textContent = scanStats.consumables;
+        }
+
+        // 页面导航
+        function navigateTo(page) {
+            const pages = {
+                'dashboard': '/static/mobile_dashboard.html',
+                'devices': '/static/mobile_devices.html',
+                'reagents': '/static/mobile_reagents.html',
+                'consumables': '/static/mobile_consumables.html',
+                'scan': '/static/mobile_scan.html'
+            };
+            
+            if (pages[page]) {
+                window.location.href = pages[page];
+            }
+        }
+
+        // 返回主页
+        function goBack() {
+            window.location.href = '/static/mobile_dashboard.html';
+        }
+
+        // Toast通知系统 - 保持与其他页面一致性，参数顺序为(message, type)
+        function showToast(message, type = 'info', duration = 3000) {
+            // 兼容性处理：如果调用方式是旧的(type, message)，则交换参数
+            if (typeof message === 'string' && ['success', 'error', 'warning', 'info', 'danger'].includes(message)) {
+                const temp = message;
+                message = type;
+                type = temp;
+            }
+            
+            // 检查是否已存在toast容器，不存在则创建
+            let toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toastContainer';
+                toastContainer.style.position = 'fixed';
+                toastContainer.style.top = '20px';
+                toastContainer.style.right = '20px';
+                toastContainer.style.zIndex = '9999';
+                toastContainer.style.display = 'flex';
+                toastContainer.style.flexDirection = 'column';
+                toastContainer.style.gap = '10px';
+                document.body.appendChild(toastContainer);
+            }
+            
+            // 创建toast元素
+            const toast = document.createElement('div');
+            
+            // 根据类型设置背景色
+            const bgColors = {
+                success: 'rgba(40, 167, 69, 0.95)',
+                error: 'rgba(220, 53, 69, 0.95)',
+                warning: 'rgba(255, 193, 7, 0.95)',
+                info: 'rgba(23, 162, 184, 0.95)',
+                danger: 'rgba(220, 53, 69, 0.95)'
+            };
+            
+            // 根据类型设置图标
+            const icons = {
+                success: 'bi-check-circle',
+                error: 'bi-exclamation-circle',
+                warning: 'bi-exclamation-triangle',
+                info: 'bi-info-circle',
+                danger: 'bi-exclamation-circle'
+            };
+            
+            toast.style.backgroundColor = bgColors[type] || bgColors.info;
+            toast.style.color = 'white';
+            toast.style.padding = '12px 20px';
+            toast.style.borderRadius = '8px';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '10px';
+            toast.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            toast.style.maxWidth = '350px';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            toast.style.cursor = 'pointer';
+            
+            toast.innerHTML = `
+                <i class="bi ${icons[type] || icons.info}" style="font-size: 1.2rem;"></i>
+                <span>${message}</span>
+            `;
+            
+            // 添加到容器
+            toastContainer.appendChild(toast);
+            
+            // 触发动画
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // 点击关闭
+            toast.addEventListener('click', () => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            });
+            
+            // 自动关闭
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, duration);
+        }
+        
+        // 为了兼容性保留showAlert函数，但内部调用showToast
+        function showAlert(type, message) {
+            // 将bootstrap的alert类型映射到toast类型
+            const typeMap = {
+                success: 'success',
+                danger: 'error',
+                warning: 'warning',
+                info: 'info'
+            };
+            showToast(message, typeMap[type] || 'info');
+        }
+
+        // 页面卸载时清理资源
+        window.addEventListener('beforeunload', () => {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+    
+    <!-- 底部导航栏 - 统一所有按钮在一排 -->
+    <nav class="bottom-nav">
+        <a href="/static/mobile_index.html" class="nav-item">
+            <i class="bi bi-house"></i>
+            <span>首页</span>
+        </a>
+        <a href="/static/mobile_devices.html" class="nav-item">
+            <i class="bi bi-microchip"></i>
+            <span>设备</span>
+        </a>
+        <a href="/static/mobile_reagents.html" class="nav-item">
+            <i class="bi bi-flask"></i>
+            <span>试剂</span>
+        </a>
+        <a href="/static/mobile_consumables.html" class="nav-item">
+            <i class="bi bi-cart"></i>
+            <span>耗材</span>
+        </a>
+        <a href="/static/mobile_scan.html" class="nav-item active">
+            <i class="bi bi-qr-code-scan"></i>
+            <span>扫码</span>
+        </a>
+        <a href="/static/mobile_reservations.html" class="nav-item">
+            <i class="bi bi-calendar-check"></i>
+            <span>预约</span>
+        </a>
+        <a href="/static/mobile_maintenance.html" class="nav-item">
+            <i class="bi bi-tools"></i>
+            <span>维护</span>
+        </a>
+        <a href="/static/mobile_user.html" class="nav-item">
+            <i class="bi bi-person"></i>
+            <span>用户</span>
+        </a>
+    </nav>
+</body>
+</html>

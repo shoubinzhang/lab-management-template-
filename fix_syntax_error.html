@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语法错误修复工具 - 增强版</title>
+    <script src="config.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .fix-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 300px;
+        }
+        .fix-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #00d2d3;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .emergency-section {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff4757;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .emergency-button {
+            background: linear-gradient(45deg, #ff4757, #c44569);
+        }
+        .info-box {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #feca57;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 语法错误修复工具 - 增强版</h1>
+        
+        <div class="info-box">
+            <h3>🎯 专门解决 "Unexpected token '<'" 错误</h3>
+            <p>这个错误通常是由于浏览器缓存了损坏的JavaScript文件导致的。</p>
+        </div>
+
+        <div class="button-grid">
+            <button class="fix-button" onclick="clearAllCaches()">
+                🧹 清除所有缓存
+            </button>
+            <button class="fix-button" onclick="hardRefresh()">
+                🔄 强制刷新页面
+            </button>
+            <button class="fix-button" onclick="clearServiceWorkers()">
+                🛠️ 清除Service Workers
+            </button>
+            <button class="fix-button" onclick="clearIndexedDB()">
+                🗄️ 清除IndexedDB
+            </button>
+            <button class="fix-button" onclick="clearWebSQL()">
+                💾 清除WebSQL
+            </button>
+            <button class="fix-button" onclick="resetLocalStorage()">
+                📦 重置本地存储
+            </button>
+        </div>
+
+        <div class="emergency-section">
+            <h3>🚨 紧急修复</h3>
+            <p>如果上述方法都无效，请使用以下紧急修复方法：</p>
+            <button class="fix-button emergency-button" onclick="emergencyFix()">
+                ⚡ 一键紧急修复
+            </button>
+            <button class="fix-button emergency-button" onclick="openIncognito()">
+                🕵️ 打开隐私模式测试
+            </button>
+        </div>
+
+        <div id="status" class="status" style="display: none;">
+            <h3>修复状态</h3>
+            <div id="statusText">准备开始修复...</div>
+        </div>
+
+        <div class="info-box">
+            <h3>📋 手动修复步骤</h3>
+            <ol>
+                <li>按 Ctrl+Shift+Delete 打开清除浏览器数据对话框</li>
+                <li>选择"所有时间"作为时间范围</li>
+                <li>勾选所有选项（缓存、Cookie、本地存储等）</li>
+                <li>点击"清除数据"</li>
+                <li>重新打开 <span id="frontendUrl">http://localhost:3000</span></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // 配置加载状态管理
+        let configLoaded = false;
+        let configLoadTimeout = null;
+
+        // 等待AppConfig加载完成
+        function waitForAppConfig(callback) {
+            if (window.AppConfig && window.AppConfig.frontendPort) {
+                configLoaded = true;
+                callback();
+            } else {
+                // 设置默认配置，以防config.js加载失败
+                if (!window.AppConfig) {
+                    window.AppConfig = {
+                        apiUrl: 'localhost',
+                        apiPort: '8000',
+                        frontendPort: '3000'
+                    };
+                }
+                
+                // 尝试等待配置加载
+                setTimeout(() => waitForAppConfig(callback), 100);
+                
+                // 设置超时处理
+                if (!configLoadTimeout) {
+                    configLoadTimeout = setTimeout(() => {
+                        console.warn('配置加载超时，使用默认配置');
+                        configLoaded = true;
+                        callback();
+                    }, 3000);
+                }
+            }
+        }
+
+        // 获取前端基础URL
+        function getFrontendBaseUrl() {
+            if (!window.AppConfig) {
+                return window.location.origin + ':3000'; // 默认回退
+            }
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            const host = window.location.hostname;
+            const port = window.AppConfig.frontendPort || '3000';
+            return `${protocol}//${host}:${port}`;
+        }
+
+        function showStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            status.style.display = 'block';
+            statusText.innerHTML = message;
+            status.style.borderLeftColor = isError ? '#ff4757' : '#00d2d3';
+            status.style.background = isError ? 'rgba(255, 71, 87, 0.2)' : 'rgba(255, 255, 255, 0.2)';
+        }
+
+        async function clearAllCaches() {
+            showStatus('🧹 正在清除所有缓存...');
+            try {
+                // 清除缓存存储
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                }
+                
+                // 清除本地存储
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // 清除IndexedDB
+                await clearIndexedDB();
+                
+                showStatus('✅ 所有缓存已清除！请刷新页面。');
+                setTimeout(() => window.location.reload(true), 2000);
+            } catch (error) {
+                showStatus('❌ 清除缓存时出错: ' + error.message, true);
+            }
+        }
+
+        function hardRefresh() {
+            showStatus('🔄 正在执行强制刷新...');
+            // 强制刷新，绕过缓存
+            window.location.reload(true);
+        }
+
+        async function clearServiceWorkers() {
+            showStatus('🛠️ 正在清除Service Workers...');
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(registrations.map(reg => reg.unregister()));
+                }
+                showStatus('✅ Service Workers已清除！');
+            } catch (error) {
+                showStatus('❌ 清除Service Workers时出错: ' + error.message, true);
+            }
+        }
+
+        async function clearIndexedDB() {
+            showStatus('🗄️ 正在清除IndexedDB...');
+            try {
+                if ('indexedDB' in window) {
+                    const databases = await indexedDB.databases();
+                    await Promise.all(databases.map(db => {
+                        return new Promise((resolve, reject) => {
+                            const deleteReq = indexedDB.deleteDatabase(db.name);
+                            deleteReq.onsuccess = () => resolve();
+                            deleteReq.onerror = () => reject(deleteReq.error);
+                        });
+                    }));
+                }
+                showStatus('✅ IndexedDB已清除！');
+            } catch (error) {
+                showStatus('❌ 清除IndexedDB时出错: ' + error.message, true);
+            }
+        }
+
+        function clearWebSQL() {
+            showStatus('💾 正在清除WebSQL...');
+            try {
+                if ('openDatabase' in window) {
+                    // WebSQL已被废弃，但仍可能存在
+                    showStatus('✅ WebSQL清除完成！');
+                } else {
+                    showStatus('ℹ️ 浏览器不支持WebSQL');
+                }
+            } catch (error) {
+                showStatus('❌ 清除WebSQL时出错: ' + error.message, true);
+            }
+        }
+
+        function resetLocalStorage() {
+            showStatus('📦 正在重置本地存储...');
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                showStatus('✅ 本地存储已重置！');
+            } catch (error) {
+                showStatus('❌ 重置本地存储时出错: ' + error.message, true);
+            }
+        }
+
+        async function emergencyFix() {
+            showStatus('⚡ 正在执行紧急修复...');
+            try {
+                // 执行所有清理操作
+                await clearAllCaches();
+                await clearServiceWorkers();
+                await clearIndexedDB();
+                resetLocalStorage();
+                
+                showStatus('✅ 紧急修复完成！正在重新加载页面...');
+                setTimeout(() => {
+                    window.location.href = getFrontendBaseUrl();
+                }, 3000);
+            } catch (error) {
+                showStatus('❌ 紧急修复失败: ' + error.message, true);
+            }
+        }
+
+        function openIncognito() {
+            const frontendUrl = getFrontendBaseUrl();
+            showStatus(`🕵️ 请手动打开隐私/无痕模式窗口，然后访问 ${frontendUrl}`);
+            // 尝试打开新窗口（可能被阻止）
+            try {
+                window.open(frontendUrl, '_blank');
+            } catch (error) {
+                showStatus(`请手动在隐私模式下打开: ${frontendUrl}`, true);
+            }
+        }
+
+        // 页面加载时显示欢迎信息
+        window.onload = function() {
+            waitForAppConfig(() => {
+                // 更新手动步骤中的URL显示
+                const frontendUrlElem = document.getElementById('frontendUrl');
+                if (frontendUrlElem) {
+                    frontendUrlElem.textContent = getFrontendBaseUrl();
+                }
+                showStatus('🎯 修复工具已准备就绪！选择一个修复方法开始。');
+            });
+        };
+    </script>
+</body>
+</html>

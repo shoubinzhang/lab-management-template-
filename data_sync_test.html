@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实验室管理应用 - 数据同步验证工具</title>
+    <script src="config.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .highlight {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.secondary {
+            background-color: #6c757d;
+        }
+        button.secondary:hover {
+            background-color: #545b62;
+        }
+        button.danger {
+            background-color: #dc3545;
+        }
+        button.danger:hover {
+            background-color: #c82333;
+        }
+        .code {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>实验室管理应用 - 数据同步验证工具</h1>
+    
+    <div class="highlight">
+        <p>此工具用于验证移动端和网页端的数据同步修复效果。点击下方按钮可查看和管理浏览器存储的认证信息，测试数据一致性。</p>
+    </div>
+
+    <h2>存储信息检查</h2>
+    <div class="card">
+        <h3>localStorage 内容</h3>
+        <div class="flex-container">
+            <button id="checkStorage">检查存储</button>
+            <button id="clearStorage" class="danger">清除存储</button>
+        </div>
+        <div id="storageResult" class="code" style="margin-top: 10px;"></div>
+    </div>
+
+    <h2>认证信息分析</h2>
+    <div class="card">
+        <div id="tokenAnalysis"></div>
+    </div>
+
+    <h2>数据一致性测试</h2>
+    <div class="card">
+        <h3>API调用测试</h3>
+        <button id="testApi">测试API调用</button>
+        <div id="apiResult" class="code" style="margin-top: 10px;"></div>
+    </div>
+
+    <h2>验证指南</h2>
+    <div class="card">
+        <h3>步骤1：检查存储状态</h3>
+        <p>点击"检查存储"按钮，确认系统中同时存在 'token' 和 'authToken'，以及 'user' 和 'userInfo' 条目。</p>
+        
+        <h3>步骤2：验证数据一致性</h3>
+        <p>1. 使用网页端登录应用</p>
+        <p>2. 使用移动端登录应用</p>
+        <p>3. 点击"检查存储"按钮，确认所有条目值都相同</p>
+        <p>4. 点击"测试API调用"按钮，验证数据加载是否正常</p>
+        
+        <h3>步骤3：如果遇到问题</h3>
+        <p>如果数据仍不一致：</p>
+        <p>1. 点击"清除存储"按钮</p>
+        <p>2. 重新登录网页端和移动端</p>
+        <p>3. 再次检查数据一致性</p>
+    </div>
+
+    <script>
+        // 配置加载状态管理
+        let configLoaded = false;
+        let configLoadTimeout = null;
+        let configSource = '默认配置';
+        
+        // 等待AppConfig加载完成
+        function waitForAppConfig(callback) {
+            if (window.AppConfig && (window.AppConfig.apiUrl || window.AppConfig.frontendUrl)) {
+                configLoaded = true;
+                configSource = 'config.js';
+                callback();
+            } else {
+                // 设置默认配置，以防config.js加载失败
+                if (!window.AppConfig) {
+                    const currentHost = window.location.hostname === 'localhost' || window.location.hostname === '' ? 'localhost' : window.location.hostname;
+                    window.AppConfig = {
+                        apiUrl: currentHost,
+                        apiPort: '8000',
+                        frontendPort: '3000'
+                    };
+                }
+                
+                // 尝试等待配置加载
+                setTimeout(() => waitForAppConfig(callback), 100);
+                
+                // 设置超时处理
+                if (!configLoadTimeout) {
+                    configLoadTimeout = setTimeout(() => {
+                        console.warn('配置加载超时，使用默认配置');
+                        configLoaded = true;
+                        configSource = '默认配置';
+                        callback();
+                    }, 3000);
+                }
+            }
+        }
+        
+        // 获取API基础URL
+        function getApiBaseUrl() {
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            
+            // 优先使用完整的apiUrl配置
+            if (window.AppConfig && window.AppConfig.apiUrl && window.AppConfig.apiUrl.includes('://')) {
+                // 如果apiUrl已经包含/api后缀，则直接使用，否则添加/api
+                return window.AppConfig.apiUrl.endsWith('/api') ? window.AppConfig.apiUrl : `${window.AppConfig.apiUrl}/api`;
+            }
+            
+            // 其次使用单独配置的apiUrl和apiPort
+            if (window.AppConfig) {
+                const host = window.AppConfig.apiUrl || window.location.hostname === '' ? 'localhost' : window.location.hostname;
+                const port = window.AppConfig.apiPort || '8000';
+                return `${protocol}//${host}:${port}/api`;
+            }
+            
+            // 最后使用当前页面的协议和主机名作为默认值
+            const currentHost = window.location.hostname === '' ? 'localhost' : window.location.hostname;
+            
+            // 避免在当前origin后重复添加端口号
+            if (window.location.port && window.location.port !== '80' && window.location.port !== '443') {
+                // 如果当前URL已经包含端口，尝试使用当前端口作为API端口
+                return `${protocol}//${currentHost}:${window.location.port}/api`;
+            }
+            
+            return `${protocol}//${currentHost}:8000/api`;
+        }
+        
+        // 动态加载config.js
+        function loadConfigJs() {
+            return new Promise((resolve, reject) => {
+                // 检查config.js是否已经加载
+                if (document.querySelector('script[src="config.js"]')) {
+                    resolve();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = 'config.js';
+                script.onload = () => resolve();
+                script.onerror = () => {
+                    console.warn('config.js加载失败，将使用默认配置');
+                    reject(new Error('config.js加载失败'));
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        // 显示配置信息
+        function showConfigInfo() {
+            // 检查是否已存在配置信息区域
+            if (document.getElementById('configInfo')) {
+                return;
+            }
+            
+            // 创建一个配置信息区域
+            const configSection = document.createElement('div');
+            configSection.id = 'configInfo';
+            configSection.className = 'card';
+            configSection.innerHTML = `
+                <h3>配置信息</h3>
+                <div class="highlight">
+                    <p><strong>配置来源:</strong> ${configSource}</p>
+                    <p><strong>API基础URL:</strong> ${getApiBaseUrl()}</p>
+                </div>
+            `;
+            
+            // 将配置信息区域添加到页面顶部
+            const highlightSection = document.querySelector('.highlight');
+            document.body.insertBefore(configSection, highlightSection.nextSibling);
+        };
+        
+        document.getElementById('checkStorage').addEventListener('click', function() {
+            checkStorage();
+        });
+
+        document.getElementById('clearStorage').addEventListener('click', function() {
+            if (confirm('确定要清除所有存储数据吗？这将导致您需要重新登录！')) {
+                localStorage.clear();
+                alert('存储已清除');
+                checkStorage();
+            }
+        });
+
+        document.getElementById('testApi').addEventListener('click', function() {
+            testApiCall();
+        });
+
+        function checkStorage() {
+            const storageResult = document.getElementById('storageResult');
+            const tokenAnalysis = document.getElementById('tokenAnalysis');
+            
+            let output = '';
+            let analysisHtml = '';
+            
+            // 检查所有存储项
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                let value = localStorage.getItem(key);
+                
+                // 尝试格式化JSON
+                try {
+                    const parsed = JSON.parse(value);
+                    value = JSON.stringify(parsed, null, 2);
+                } catch (e) {
+                    // 不是JSON，保持原样
+                }
+                
+                output += `${key}:\n${value}\n\n`;
+            }
+            
+            // 分析token一致性
+            const token = localStorage.getItem('token');
+            const authToken = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+            const userInfo = localStorage.getItem('userInfo');
+            
+            analysisHtml += '<h4>令牌一致性检查：</h4>';
+            
+            if (token === authToken) {
+                analysisHtml += '<div class="highlight success">✓ token 和 authToken 值相同</div>';
+            } else {
+                analysisHtml += '<div class="highlight error">✗ token 和 authToken 值不同</div>';
+                if (token) analysisHtml += '<p>token: ' + (token.length > 50 ? token.substring(0, 50) + '...' : token) + '</p>';
+                if (authToken) analysisHtml += '<p>authToken: ' + (authToken.length > 50 ? authToken.substring(0, 50) + '...' : authToken) + '</p>';
+            }
+            
+            analysisHtml += '<h4>用户信息一致性检查：</h4>';
+            
+            if (user === userInfo) {
+                analysisHtml += '<div class="highlight success">✓ user 和 userInfo 值相同</div>';
+            } else {
+                analysisHtml += '<div class="highlight error">✗ user 和 userInfo 值不同</div>';
+            }
+            
+            // 检查是否存在两种令牌
+            if (!token || !authToken) {
+                analysisHtml += '<div class="highlight warning">⚠️ 缺少其中一个令牌，请重新登录以触发同步机制</div>';
+            }
+            
+            storageResult.textContent = output || 'localStorage为空';
+            tokenAnalysis.innerHTML = analysisHtml;
+        }
+
+        async function testApiCall() {
+            const apiResult = document.getElementById('apiResult');
+            apiResult.textContent = '正在测试API调用...';
+            
+            try {
+                // 获取API基础URL
+                const apiBaseUrl = getApiBaseUrl();
+                
+                // 显示当前使用的API地址
+                apiResult.textContent += `\n当前API地址: ${apiBaseUrl}`;
+                
+                // 获取令牌
+                const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+                
+                if (!token) {
+                    apiResult.textContent = '错误：未找到令牌，请先登录';
+                    return;
+                }
+                
+                // 测试用户信息API
+                const userResponse = await fetch(`${apiBaseUrl}/users/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 5000
+                });
+                
+                const userData = await userResponse.json();
+                
+                // 测试一些基本数据API，如设备列表
+                const devicesResponse = await fetch(`${apiBaseUrl}/devices`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 5000
+                });
+                
+                const devicesData = await devicesResponse.json();
+                
+                // 显示结果摘要
+                let result = 'API调用成功！\n\n';
+                result += '用户信息：\n';
+                result += JSON.stringify(userData, null, 2) + '\n\n';
+                result += '设备数量：' + (devicesData.data ? devicesData.data.length : 0) + '\n';
+                
+                // 如果有设备，显示前两个设备的摘要
+                if (devicesData.data && devicesData.data.length > 0) {
+                    result += '\n部分设备信息：\n';
+                    const devicesToShow = devicesData.data.slice(0, 2);
+                    result += JSON.stringify(devicesToShow, null, 2);
+                }
+                
+                apiResult.textContent = result;
+            } catch (error) {
+                apiResult.textContent = 'API调用失败：' + error.message;
+                console.error('API测试错误:', error);
+            }
+        }
+
+        // 页面加载时自动检查存储
+        window.addEventListener('load', function() {
+            // 尝试动态加载config.js
+            loadConfigJs().catch(() => {
+                // config.js加载失败，创建默认配置
+                if (!window.AppConfig) {
+                    const currentHost = window.location.hostname === 'localhost' || window.location.hostname === '' ? 'localhost' : window.location.hostname;
+                    window.AppConfig = {
+                        apiUrl: currentHost,
+                        apiPort: '8000',
+                        frontendPort: '3000'
+                    };
+                }
+            }).finally(() => {
+                // 无论config.js是否加载成功，都等待配置
+                waitForAppConfig(() => {
+                    console.log('配置加载完成，当前API地址:', getApiBaseUrl());
+                    console.log('配置来源:', configSource);
+                    
+                    // 显示配置信息
+                    showConfigInfo();
+                    
+                    // 检查存储
+                    checkStorage();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

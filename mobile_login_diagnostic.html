@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🔍 移动端登录诊断工具</title>
+    <script src="/config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: auto;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #28a745;
+        }
+        
+        .status-card.error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .status-card.warning {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        
+        .status-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .status-content {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .test-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 10px;
+        }
+        
+        .test-button:active {
+            transform: scale(0.98);
+        }
+        
+        .test-button.secondary {
+            background: #6c757d;
+        }
+        
+        .test-button.success {
+            background: #28a745;
+        }
+        
+        .test-button.danger {
+            background: #dc3545;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .result.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+        
+        .result.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #f44336;
+        }
+        
+        .result.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #2196f3;
+        }
+        
+        .network-info {
+            background: #e8f4f8;
+            border: 1px solid #17a2b8;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .network-info h3 {
+            color: #138496;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .info-item {
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .ip-address {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        .troubleshooting {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .troubleshooting h4 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        
+        .troubleshooting ul {
+            margin-left: 20px;
+            color: #6c757d;
+            font-size: 13px;
+        }
+        
+        .troubleshooting li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 移动端登录诊断工具</h1>
+        
+        <div class="network-info">
+            <h3>📱 网络信息</h3>
+            <div id="networkInfo">
+                <div class="loading"></div>
+            </div>
+        </div>
+        
+        <div class="status-card">
+            <div class="status-title">🎯 诊断步骤</div>
+            <div class="status-content">
+                按照以下步骤逐一排查问题，点击按钮开始测试
+            </div>
+        </div>
+        
+        <button class="test-button" onclick="step1_checkNetwork()">步骤1: 检查网络连接</button>
+        <button class="test-button secondary" onclick="step2_checkCORS()">步骤2: 检查跨域配置</button>
+        <button class="test-button success" onclick="step3_testLogin()">步骤3: 测试登录功能</button>
+        <button class="test-button danger" onclick="step4_fullDiagnostic()">步骤4: 完整诊断</button>
+        
+        <div id="result" class="result hidden"></div>
+        
+        <div class="troubleshooting">
+            <h4>💡 常见问题排查</h4>
+            <ul>
+                <li>确保手机和电脑在同一WiFi网络下</li>
+                <li>检查防火墙是否允许8000端口访问</li>
+                <li>确认后端服务正在运行 (python app.py)</li>
+                <li>尝试关闭手机VPN或代理设置</li>
+                <li>检查浏览器控制台是否有JavaScript错误</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 等待AppConfig加载完成
+        async function waitForAppConfig() {
+            if (window.AppConfig && window.AppConfig.api && window.AppConfig.api.baseUrl) {
+                return window.AppConfig;
+            }
+            return new Promise(resolve => {
+                const checkInterval = setInterval(() => {
+                    if (window.AppConfig && window.AppConfig.api && window.AppConfig.api.baseUrl) {
+                        clearInterval(checkInterval);
+                        resolve(window.AppConfig);
+                    }
+                }, 100);
+            });
+        }
+
+        // 获取API地址
+        function getApiUrl() {
+            // 使用AppConfig中的配置
+            return AppConfig.api.baseUrl;
+        }
+
+        // 显示结果
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // 获取网络信息
+        function getNetworkInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                screen: `${screen.width}x${screen.height}`,
+                window: `${window.innerWidth}x${window.innerHeight}`,
+                isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+                isTouchDevice: 'ontouchstart' in window,
+                currentUrl: window.location.href,
+                apiUrl: getApiUrl(),
+                timestamp: new Date().toLocaleString('zh-CN')
+            };
+
+            const networkInfoDiv = document.getElementById('networkInfo');
+            networkInfoDiv.innerHTML = `
+                <div class="info-item"><strong>当前页面:</strong> ${info.currentUrl}</div>
+                <div class="info-item"><strong>API地址:</strong> ${info.apiUrl}</div>
+                <div class="info-item"><strong>用户代理:</strong> ${info.userAgent}</div>
+                <div class="info-item"><strong>平台:</strong> ${info.platform}</div>
+                <div class="info-item"><strong>屏幕分辨率:</strong> ${info.screen}</div>
+                <div class="info-item"><strong>窗口大小:</strong> ${info.window}</div>
+                <div class="info-item"><strong>移动设备:</strong> ${info.isMobile ? '✅ 是' : '❌ 否'}</div>
+                <div class="info-item"><strong>触摸设备:</strong> ${info.isTouchDevice ? '✅ 是' : '❌ 否'}</div>
+                <div class="info-item"><strong>时间:</strong> ${info.timestamp}</div>
+            `;
+
+            return info;
+        }
+
+        // 步骤1: 检查网络连接
+        async function step1_checkNetwork() {
+            showResult('正在检查网络连接... <div class="loading"></div>', 'info');
+            
+            const apiUrl = getApiUrl();
+            const healthUrl = `${apiUrl}/health`;
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(healthUrl);
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const successMessage = `
+                        ✅ <strong>网络连接正常！</strong><br><br>
+                        <strong>连接详情:</strong><br>
+                        响应时间: ${responseTime}ms<br>
+                        服务状态: ${data.status}<br>
+                        数据库状态: ${data.database}<br>
+                        时间戳: ${data.timestamp}<br><br>
+                        <strong>建议:</strong><br>
+                        网络连接正常，如果登录失败，请继续步骤2检查跨域配置
+                    `;
+                    showResult(successMessage, 'success');
+                } else {
+                    showResult(`❌ 网络连接失败<br>状态码: ${response.status}<br>请检查后端服务是否运行`, 'error');
+                }
+            } catch (error) {
+                    const errorMessage = `
+                        ❌ <strong>网络连接失败</strong><br><br>
+                        <strong>错误信息:</strong> ${error.message}<br><br>
+                        <strong>排查建议:</strong><br>
+                        1. 检查后端服务是否正在运行 (python app.py)<br>
+                        2. 确认防火墙允许8000端口访问<br>
+                        3. 检查手机和电脑是否在同一WiFi网络下<br>
+                        4. 尝试使用不同的IP地址访问<br>
+                        5. 检查AppConfig配置是否正确<br><br>
+                        <strong>当前API地址:</strong> ${apiUrl}<br>
+                        <strong>测试地址:</strong> ${healthUrl}
+                    `;
+                    showResult(errorMessage, 'error');
+                }
+        }
+
+        // 步骤2: 检查跨域配置
+        async function step2_checkCORS() {
+            showResult('正在检查跨域配置... <div class="loading"></div>', 'info');
+            
+            const apiUrl = getApiUrl();
+            const testUrl = `${apiUrl}/health`;
+            
+            try {
+                // 测试预检请求
+                const response = await fetch(testUrl, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'content-type'
+                    }
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials')
+                };
+                
+                let corsResult = '<strong>CORS响应头:</strong><br>';
+                for (const [key, value] of Object.entries(corsHeaders)) {
+                    corsResult += `${key}: ${value || '未设置'}<br>`;
+                }
+                
+                // 测试实际POST请求
+                const testResponse = await fetch(`${apiUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    },
+                    body: JSON.stringify({ username: 'test', password: 'test' })
+                });
+                
+                const originHeader = testResponse.headers.get('Access-Control-Allow-Origin');
+                
+                let resultMessage = `
+                    ✅ <strong>跨域配置检查完成</strong><br><br>
+                    ${corsResult}<br>
+                    <strong>实际请求测试:</strong><br>
+                    状态码: ${testResponse.status}<br>
+                    Access-Control-Allow-Origin: ${originHeader || '未设置'}<br><br>
+                `;
+                
+                if (originHeader === '*' || originHeader === window.location.origin) {
+                    resultMessage += '<strong>✅ CORS配置正常</strong><br>跨域请求应该可以正常进行';
+                    showResult(resultMessage, 'success');
+                } else {
+                    resultMessage += '<strong>⚠️ CORS配置可能有问题</strong><br>请检查后端CORS配置';
+                    showResult(resultMessage, 'warning');
+                }
+                
+            } catch (error) {
+                showResult(`❌ 跨域检查失败: ${error.message}<br>这可能表示CORS配置有问题`, 'error');
+            }
+        }
+
+        // 步骤3: 测试登录功能
+        async function step3_testLogin() {
+            showResult('正在测试登录功能... <div class="loading"></div>', 'info');
+            
+            const apiUrl = getApiUrl();
+            const loginUrl = `${apiUrl}/api/auth/login`;
+            
+            try {
+                // 使用测试凭据进行登录
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'User-Agent': navigator.userAgent
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                const responseText = await response.text();
+                
+                let resultMessage = `
+                    <strong>登录测试结果:</strong><br>
+                    状态码: ${response.status}<br>
+                    响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}<br>
+                    响应体: ${responseText}<br><br>
+                `;
+                
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        if (data.access_token) {
+                            resultMessage += `
+                                ✅ <strong>登录成功！</strong><br>
+                                Token: ${data.access_token.substring(0, 30)}...<br>
+                                Token类型: ${data.token_type}<br><br>
+                                <strong>建议:</strong><br>
+                                登录功能正常，如果手机端仍然失败，请检查网络连接和IP地址配置
+                            `;
+                            showResult(resultMessage, 'success');
+                        } else {
+                            resultMessage += '❌ 登录响应中没有找到access_token';
+                            showResult(resultMessage, 'error');
+                        }
+                    } catch (e) {
+                        resultMessage += `❌ 响应不是有效的JSON格式: ${e.message}`;
+                        showResult(resultMessage, 'error');
+                    }
+                } else {
+                    resultMessage += `
+                        ❌ <strong>登录失败</strong><br>
+                        状态码: ${response.status}<br>
+                        错误信息: ${responseText}<br><br>
+                        <strong>排查建议:</strong><br>
+                        1. 检查用户名密码是否正确 (admin/admin123)<br>
+                        2. 确认后端数据库连接正常<br>
+                        3. 检查是否有其他认证机制干扰
+                    `;
+                    showResult(resultMessage, 'error');
+                }
+                
+            } catch (error) {
+                        const errorMessage = `
+                            ❌ <strong>登录测试失败</strong><br><br>
+                            <strong>错误信息:</strong> ${error.message}<br><br>
+                            <strong>详细排查:</strong><br>
+                            1. 检查网络连接是否正常<br>
+                            2. 确认后端服务正在运行<br>
+                            3. 检查CORS配置是否正确<br>
+                            4. 确认API端点地址是否正确<br>
+                            5. 检查AppConfig配置是否正确<br><br>
+                            <strong>测试地址:</strong> ${loginUrl}
+                        `;
+                        showResult(errorMessage, 'error');
+                    }
+        }
+
+        // 步骤4: 完整诊断
+        async function step4_fullDiagnostic() {
+            showResult('正在进行完整诊断... <div class="loading"></div>', 'info');
+            
+            const results = [];
+            const apiUrl = getApiUrl();
+            
+            // 1. 检查网络连接
+            try {
+                const healthResponse = await fetch(`${apiUrl}/health`);
+                results.push(`✅ 网络连接: ${healthResponse.ok ? '正常' : '失败'}`);
+            } catch (error) {
+                results.push(`❌ 网络连接: ${error.message}`);
+            }
+            
+            // 2. 检查登录
+            try {
+                const loginResponse = await fetch(`${apiUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin123' })
+                });
+                results.push(`✅ 登录功能: ${loginResponse.ok ? '正常' : '失败'}`);
+                
+                if (loginResponse.ok) {
+                    const data = await loginResponse.json();
+                    const token = data.access_token;
+                    
+                    // 3. 检查用户信息
+                    try {
+                        const userResponse = await fetch(`${apiUrl}/api/auth/me`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        results.push(`✅ 用户信息: ${userResponse.ok ? '正常' : '失败'}`);
+                    } catch (error) {
+                        results.push(`❌ 用户信息: ${error.message}`);
+                    }
+                }
+            } catch (error) {
+                results.push(`❌ 登录功能: ${error.message}`);
+            }
+            
+            // 4. 检查其他端点
+            const endpoints = [
+                { name: '设备列表', url: `${apiUrl}/api/devices` },
+                { name: '试剂列表', url: `${apiUrl}/api/reagents` }
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint.url);
+                    results.push(`✅ ${endpoint.name}: ${response.ok ? '正常' : '失败'}`);
+                } catch (error) {
+                    results.push(`❌ ${endpoint.name}: ${error.message}`);
+                }
+            }
+            
+            // 5. 检查设备信息
+            const deviceInfo = getNetworkInfo();
+            results.push(`ℹ️ 设备类型: ${deviceInfo.isMobile ? '移动设备' : '桌面设备'}`);
+            results.push(`ℹ️ 网络连接: ${deviceInfo.isTouchDevice ? '支持触摸' : '不支持触摸'}`);
+            
+            const finalMessage = `
+                <strong>🔍 完整诊断结果</strong><br><br>
+                ${results.join('<br>')}<br><br>
+                <strong>总结:</strong><br>
+                如果网络连接和登录功能都显示正常，但手机端仍然无法登录，<br>
+                问题可能出在手机网络配置或IP地址设置上。<br><br>
+                <strong>建议下一步:</strong><br>
+                1. 确认手机使用的IP地址是否正确<br>
+                2. 检查手机和电脑是否在同一网络下<br>
+                3. 尝试使用手机浏览器访问测试页面
+            `;
+            
+            showResult(finalMessage, 'info');
+        }
+
+        // 页面加载时获取设备信息
+        window.addEventListener('load', async () => {
+            try {
+                await waitForAppConfig();
+                getNetworkInfo();
+                
+                // 显示当前IP地址建议
+                const currentHost = window.location.hostname;
+                const apiUrl = getApiUrl();
+                
+                if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+                    showResult(`
+                        ⚠️ <strong>检测到使用localhost访问</strong><br><br>
+                        当前地址: ${window.location.href}<br>
+                        API地址: ${apiUrl}<br><br>
+                        <strong>重要提示:</strong><br>
+                        手机无法通过localhost访问你的电脑服务。<br>
+                        请使用电脑的IP地址访问，例如:<br>
+                        <div class="ip-address">http://172.30.81.103:3000/mobile_login_final_test.html</div>
+                        <br>
+                        <strong>手机应该使用的API地址:</strong><br>
+                        <div class="ip-address">${apiUrl}</div>
+                        <br>
+                        <strong>AppConfig配置:</strong><br>
+                        API基础URL: ${AppConfig.api.baseUrl}<br>
+                        版本: ${AppConfig.version || '未指定'}
+                    `, 'warning');
+                }
+            } catch (error) {
+                console.error('AppConfig加载失败:', error);
+                showResult(`
+                    ❌ <strong>AppConfig配置加载失败</strong><br><br>
+                    <strong>错误信息:</strong> ${error.message}<br><br>
+                    <strong>排查建议:</strong><br>
+                    1. 确认config.js文件存在并可访问<br>
+                    2. 检查config.js文件格式是否正确<br>
+                    3. 确保AppConfig.api.baseUrl已正确配置
+                `, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

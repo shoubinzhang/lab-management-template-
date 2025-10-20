@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端访问助手 - 实验室管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 24px;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .status-card.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .status-card.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .url-box {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', Courier, monospace;
+            word-break: break-all;
+        }
+        
+        .url-box a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .url-box a:hover {
+            text-decoration: underline;
+        }
+        
+        .step {
+            margin: 20px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .step:before {
+            content: attr(data-number);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .test-button:hover {
+            background: #5a6fd8;
+        }
+        
+        .network-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        
+        .qr-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .qr-code {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .test-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 移动端访问助手</h1>
+        
+        <div class="status-card" id="connection-status">
+            <h3>连接状态检测中...</h3>
+            <p>正在检查与服务器的连接状态...</p>
+        </div>
+        
+        <div class="network-info">
+            <h4>📊 当前网络信息</h4>
+            <div id="network-details">正在获取网络信息...</div>
+        </div>
+        
+        <h2>🚀 快速访问方式</h2>
+        
+        <div class="step" data-number="1">
+            <h3>选择适合您的访问方式</h3>
+            <p>根据您的网络环境选择合适的访问地址：</p>
+            
+            <div class="test-buttons">
+                <a href="http://localhost:8000/mobile_login" class="test-button" target="_blank">
+                    本地访问
+                    <br><small>手机电脑同一设备</small>
+                </a>
+                <a href="/mobile_login" class="test-button">
+                    相对路径
+                    <br><small>当前域名</small>
+                </a>
+                <a href="/static/mobile_login_final.html" class="test-button">
+                    静态页面
+                    <br><small>直接访问</small>
+                </a>
+            </div>
+        </div>
+        
+        <div class="step" data-number="2">
+            <h3>手动输入地址（推荐）</h3>
+            <p>如果上面的按钮无法访问，请手动在手机浏览器中输入：</p>
+            
+            <div class="url-box">
+                <strong>本地访问：</strong><br>
+                <a href="http://localhost:8000/mobile_login" target="_blank">http://localhost:8000/mobile_login</a>
+                <br><small>（手机和电脑是同一台设备时使用）</small>
+            </div>
+            
+            <div class="url-box">
+                <strong>局域网访问：</strong><br>
+                http://<span id="local-ip">[您的电脑IP地址]</span>:8000/mobile_login
+                <br><small>（手机和电脑在同一WiFi网络时使用）</small>
+            </div>
+        </div>
+        
+        <div class="step" data-number="3">
+            <h3>扫码快速访问</h3>
+            <p>使用手机扫描下方二维码直接访问登录页面：</p>
+            
+            <div class="qr-section">
+                <div class="qr-code">
+                    <div id="qr-code-placeholder">
+                        <p>📱 二维码生成中...</p>
+                    </div>
+                </div>
+                <p>扫描后自动跳转到移动端登录页面</p>
+            </div>
+        </div>
+        
+        <div class="step" data-number="4">
+            <h3>登录信息</h3>
+            <p>登录时请使用以下测试账号：</p>
+            <div class="url-box">
+                <strong>用户名：</strong> admin<br>
+                <strong>密码：</strong> admin123
+            </div>
+        </div>
+        
+        <div class="status-card" id="troubleshooting">
+            <h3>🔧 故障排除</h3>
+            <p><strong>如果无法访问，请检查：</strong></p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>确保后端服务器正在运行（端口8000）</li>
+                <li>手机和电脑是否在同一网络</li>
+                <li>防火墙是否阻止了端口8000</li>
+                <li>尝试刷新页面或重新启动浏览器</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 检测连接状态
+        async function checkConnection() {
+            const statusCard = document.getElementById('connection-status');
+            
+            try {
+                const response = await fetch('/api/health', {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    statusCard.innerHTML = `
+                        <h3>✅ 连接正常</h3>
+                        <p>服务器运行正常，可以正常访问移动端功能</p>
+                    `;
+                    statusCard.className = 'status-card success';
+                } else {
+                    throw new Error('服务器响应异常');
+                }
+            } catch (error) {
+                statusCard.innerHTML = `
+                    <h3>❌ 连接失败</h3>
+                    <p>无法连接到服务器：${error.message}</p>
+                    <p><strong>解决方案：</strong>请确保后端服务器正在端口8000上运行</p>
+                `;
+                statusCard.className = 'status-card error';
+            }
+        }
+        
+        // 获取网络信息
+        function getNetworkInfo() {
+            const networkDetails = document.getElementById('network-details');
+            const localIpSpan = document.getElementById('local-ip');
+            
+            const currentUrl = window.location.href;
+            const currentHost = window.location.hostname;
+            const currentPort = window.location.port || '80';
+            const currentProtocol = window.location.protocol;
+            
+            networkDetails.innerHTML = `
+                <strong>当前页面URL：</strong> ${currentUrl}<br>
+                <strong>域名：</strong> ${currentHost}<br>
+                <strong>端口：</strong> ${currentPort}<br>
+                <strong>协议：</strong> ${currentProtocol}<br>
+                <strong>建议访问地址：</strong> ${currentProtocol}//${currentHost}:8000/mobile_login
+            `;
+            
+            // 尝试获取本地IP（简化版）
+            localIpSpan.textContent = currentHost === 'localhost' || currentHost === '127.0.0.1' ? 
+                '请查看电脑IP地址' : currentHost;
+        }
+        
+        // 生成简单的文本二维码（由于安全限制，无法生成真实二维码图片）
+        function generateTextQR() {
+            const qrPlaceholder = document.getElementById('qr-code-placeholder');
+            const currentUrl = window.location.origin + '/mobile_login';
+            
+            qrPlaceholder.innerHTML = `
+                <div style="text-align: center; padding: 10px;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📱</div>
+                    <strong>移动端登录</strong><br>
+                    <small style="color: #666;">请手动输入下方地址</small>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0; font-family: monospace; font-size: 12px; word-break: break-all;">
+                        ${currentUrl}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            checkConnection();
+            getNetworkInfo();
+            generateTextQR();
+            
+            // 5秒后重新检查连接状态
+            setTimeout(checkConnection, 5000);
+        });
+        
+        // 添加fetch的超时处理
+        if (!window.fetch) {
+            window.fetch = function() {
+                return Promise.reject(new Error('fetch not supported'));
+            };
+        }
+        
+        // 为fetch添加timeout支持
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            const [url, options = {}] = args;
+            const { timeout = 8000, ...fetchOptions } = options;
+            
+            if (timeout) {
+                const controller = new AbortController();
+                fetchOptions.signal = controller.signal;
+                
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                
+                return originalFetch(url, fetchOptions)
+                    .then(response => {
+                        clearTimeout(timeoutId);
+                        return response;
+                    })
+                    .catch(error => {
+                        clearTimeout(timeoutId);
+                        throw error;
+                    });
+            }
+            
+            return originalFetch(url, fetchOptions);
+        };
+    </script>
+</body>
+</html>

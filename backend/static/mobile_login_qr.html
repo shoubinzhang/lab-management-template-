@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端登录测试 - 二维码</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .qr-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            background-color: #fafafa;
+        }
+        .qr-code {
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        .url-info {
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .device-info {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .debug-log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .network-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .network-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .network-card h3 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 16px;
+        }
+        .network-card .url {
+            font-family: monospace;
+            font-size: 12px;
+            color: #007bff;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 移动端登录测试</h1>
+        
+        <div class="status info">
+            <strong>💡 使用说明:</strong> 使用手机扫描二维码或直接在手机浏览器中输入下方地址进行测试
+            <br><strong>🔧 当前配置:</strong> 二维码使用AppConfig配置的API地址生成
+            <br><strong>📊 AppConfig状态:</strong> <span id="appConfigStatus">正在加载...</span>
+        </div>
+
+        <div class="qr-section">
+            <h2>📱 手机扫码测试</h2>
+            <p>使用手机扫描二维码即可访问移动端登录页面</p>
+            
+            <div class="qr-code" id="qrCode">
+                <div style="text-align: center; color: #666;">
+                    <p>正在生成二维码...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="network-info">
+            <div class="network-card">
+                <h3>🔗 本地网络地址</h3>
+                <div class="url" id="localUrl"></div>
+            </div>
+            <div class="network-card">
+                <h3>🌐 本机网络地址</h3>
+                <div class="url" id="networkUrl"></div>
+            </div>
+        </div>
+
+        <div class="device-info" id="deviceInfo">
+            <h3>📋 设备信息</h3>
+            <div id="deviceDetails"></div>
+        </div>
+
+        <div class="test-buttons">
+            <button class="btn-primary" onclick="generateQRCode()">🔄 重新生成二维码</button>
+            <button class="btn-success" onclick="copyToClipboard()">📋 复制地址</button>
+            <button class="btn-warning" onclick="refreshDeviceInfo()">🔄 刷新设备信息</button>
+            <button class="btn-primary" onclick="testConnection()">🔗 测试连接</button>
+        </div>
+
+        <div class="debug-log" id="debugLog"></div>
+
+        <div class="status info">
+            <strong>📝 测试步骤:</strong>
+            <ol style="text-align: left; margin: 10px 0;">
+                <li>使用手机扫描二维码或手动输入地址</li>
+                <li>在移动端页面输入用户名和密码</li>
+                <li>点击登录按钮进行测试</li>
+                <li>查看登录结果和调试信息</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script>
+        let debugLog = '';
+        let currentUrl = '';
+        
+        // 等待AppConfig加载完成
+        function waitForAppConfig() {
+            return new Promise((resolve) => {
+                if (typeof AppConfig !== 'undefined') {
+                    resolve();
+                } else {
+                    const checkInterval = setInterval(() => {
+                        if (typeof AppConfig !== 'undefined') {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 50);
+                }
+            });
+        }
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog += `[${timestamp}] ${message}\n`;
+            document.getElementById('debugLog').textContent = debugLog;
+            console.log(message);
+        }
+
+        function getNetworkInfo() {
+            // 确保AppConfig已经加载
+            if (typeof AppConfig === 'undefined') {
+                log('AppConfig尚未加载，使用默认配置');
+                const protocol = 'http:';
+                const backendPort = '8000';
+                const hostname = window.location.hostname;
+                const ipAddress = hostname === 'localhost' ? '172.30.81.97' : hostname;
+                
+                const localUrl = `${protocol}//localhost:${backendPort}/static/mobile_login_final.html`;
+                const networkUrl = `${protocol}//${ipAddress}:${backendPort}/static/mobile_login_final.html`;
+                
+                document.getElementById('localUrl').textContent = localUrl;
+                document.getElementById('networkUrl').textContent = networkUrl;
+                
+                return { localUrl, networkUrl };
+            }
+            
+            const baseUrl = AppConfig.api.baseUrl;
+            const urlObj = new URL(baseUrl);
+            const ipAddress = urlObj.hostname === 'localhost' ? '172.30.81.97' : urlObj.hostname;
+            const protocol = urlObj.protocol;
+            const port = urlObj.port || '8000';
+            
+            // 获取正确的网络地址 - 使用IP地址而不是localhost
+            const localUrl = `${protocol}//localhost:${port}/static/mobile_login_final.html`;
+            const networkUrl = `${protocol}//${ipAddress}:${port}/static/mobile_login_final.html`;
+            
+            document.getElementById('localUrl').textContent = localUrl;
+            document.getElementById('networkUrl').textContent = networkUrl;
+            
+            log(`网络地址信息 - 本地: ${localUrl}, 网络: ${networkUrl}`);
+            log(`💡 重要: 地址指向后端服务器提供的移动端登录页面`);
+            
+            return { localUrl, networkUrl };
+        }
+
+        async function generateQRCode() {
+            try {
+                // 等待AppConfig加载完成
+                await waitForAppConfig();
+                
+                // 使用AppConfig中的API基础地址，但二维码应该指向后端服务器提供的移动端登录页面
+                const baseUrl = AppConfig.api.baseUrl;
+                // 获取当前电脑的IP地址，确保手机可以访问
+                const urlObj = new URL(baseUrl);
+                const ipAddress = urlObj.hostname === 'localhost' ? '172.30.81.97' : urlObj.hostname;
+                const protocol = urlObj.protocol;
+                const port = urlObj.port || '8000';
+                
+                // 二维码应该指向后端服务器提供的移动端登录页面，使用IP地址而不是localhost
+                currentUrl = `${protocol}//${ipAddress}:${port}/static/mobile_login_final.html`;
+                
+                log(`使用AppConfig配置的API地址: ${baseUrl}`);
+                log(`检测到IP地址: ${ipAddress}`);
+            
+            log(`生成二维码地址: ${currentUrl}`);
+            log(`注意: 当前页面访问地址为 ${window.location.href}`);
+            log(`二维码将指向: ${currentUrl}`);
+            log(`💡 重要: 二维码现在使用IP地址 ${ipAddress}，确保手机可以访问`);
+            
+            const qrCodeDiv = document.getElementById('qrCode');
+            qrCodeDiv.innerHTML = ''; // 清空之前的二维码
+                
+                try {
+                    new QRCode(qrCodeDiv, {
+                    text: currentUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                log('✅ 二维码生成成功');
+                log('📱 请确保手机和电脑在同一WiFi网络下');
+                log('🔍 如果二维码无法扫描，请手动输入上方显示的IP地址');
+                log('💡 二维码地址: ' + currentUrl);
+                } catch (error) {
+                    log(`❌ 二维码生成失败: ${error.message}`);
+                    qrCodeDiv.innerHTML = '<div style="color: red;">二维码生成失败，请手动输入地址</div>';
+                }
+            } catch (error) {
+                log(`❌ AppConfig错误: ${error.message}`);
+                document.getElementById('appConfigStatus').textContent = `加载失败: ${error.message}`;
+                document.getElementById('appConfigStatus').style.color = '#dc3545';
+                // 如果AppConfig加载失败，使用默认后端地址（端口8000），使用IP地址而不是localhost
+                const protocol = 'http:';
+                const port = '8000';
+                const ipAddress = '172.30.81.97';
+                currentUrl = `${protocol}//${ipAddress}:${port}/static/mobile_login_final.html`;
+                
+                const qrCodeDiv = document.getElementById('qrCode');
+                qrCodeDiv.innerHTML = '';
+                
+                try {
+                    new QRCode(qrCodeDiv, {
+                        text: currentUrl,
+                        width: 200,
+                        height: 200,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } catch (err) {
+                    log(`❌ 二维码生成失败: ${err.message}`);
+                    qrCodeDiv.innerHTML = '<div style="color: red;">二维码生成失败，请手动输入地址</div>';
+                }
+            }
+        }
+
+        function copyToClipboard() {
+            if (!currentUrl) {
+                log('❌ 没有可复制的地址');
+                return;
+            }
+            
+            navigator.clipboard.writeText(currentUrl).then(() => {
+                log('✅ 地址已复制到剪贴板');
+                showNotification('地址已复制到剪贴板');
+            }).catch(err => {
+                log(`❌ 复制失败: ${err.message}`);
+            });
+        }
+
+        function refreshDeviceInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                hostname: window.location.hostname,
+                protocol: window.location.protocol,
+                port: window.location.port,
+                href: window.location.href
+            };
+
+            let deviceHtml = '';
+            Object.entries(info).forEach(([key, value]) => {
+                deviceHtml += `<div><strong>${key}:</strong> ${value}</div>`;
+            });
+
+            document.getElementById('deviceDetails').innerHTML = deviceHtml;
+            
+            // 检测移动设备
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isSmallScreen = window.innerWidth <= 768;
+            const hasTouch = 'ontouchstart' in window;
+            
+            log(`移动设备检测: isMobile=${isMobile}, isSmallScreen=${isSmallScreen}, hasTouch=${hasTouch}`);
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #28a745;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                font-size: 14px;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 3000);
+        }
+
+        async function testConnection() {
+            log('开始连接测试...');
+            
+            // 确保AppConfig已经加载
+            await waitForAppConfig();
+            
+            // 使用AppConfig中的API基础地址
+            const baseUrl = AppConfig.api.baseUrl;
+            const hostname = window.location.hostname;
+            const urlObj = new URL(baseUrl);
+            const ipAddress = urlObj.hostname;
+            const port = urlObj.port;
+            
+            const testUrls = [
+                `${urlObj.protocol}//localhost:${port}/health`,
+                `${urlObj.protocol}//${ipAddress}:${port}/health`
+            ];
+            
+            for (const url of testUrls) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        mode: 'cors',
+                        timeout: 5000
+                    });
+                    
+                    if (response.ok) {
+                        log(`✅ ${url} - 连接成功`);
+                    } else {
+                        log(`❌ ${url} - 连接失败: ${response.status}`);
+                    }
+                } catch (error) {
+                    log(`❌ ${url} - 连接错误: ${error.message}`);
+                }
+            }
+        }
+
+        // 页面加载时初始化
+        window.onload = async function() {
+            log('📱 移动端登录测试页面加载完成');
+            
+            try {
+                // 等待AppConfig加载完成
+                await waitForAppConfig();
+                
+                log(`AppConfig加载完成，API基础地址: ${AppConfig.api.baseUrl}`);
+                document.getElementById('appConfigStatus').textContent = `已加载: ${AppConfig.api.baseUrl}`;
+                document.getElementById('appConfigStatus').style.color = '#28a745';
+            } catch (error) {
+                log(`❌ AppConfig加载失败: ${error.message}`);
+                document.getElementById('appConfigStatus').textContent = `加载失败: ${error.message}`;
+                document.getElementById('appConfigStatus').style.color = '#dc3545';
+            }
+            
+            // 重新获取网络信息
+            getNetworkInfo();
+            
+            // 生成二维码
+            await generateQRCode();
+            
+            refreshDeviceInfo();
+            
+            // 自动检测设备类型
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                log('📱 检测到移动设备访问，建议切换到桌面模式查看二维码');
+            }
+        };
+    </script>
+</body>
+</html>

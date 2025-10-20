@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token测试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        button { padding: 10px 15px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Token存储和读取测试</h1>
+    
+    <div class="section info">
+        <h3>当前localStorage内容</h3>
+        <div id="localStorageContent"></div>
+    </div>
+    
+    <div class="section">
+        <h3>Token操作</h3>
+        <button class="btn-primary" onclick="saveTestToken()">保存测试Token</button>
+        <button class="btn-success" onclick="readTokens()">读取所有Token</button>
+        <button class="btn-danger" onclick="clearTokens()">清除所有Token</button>
+    </div>
+    
+    <div class="section">
+        <h3>Token读取结果</h3>
+        <div id="tokenResults"></div>
+    </div>
+    
+    <div class="section">
+        <h3>页面跳转测试</h3>
+        <button class="btn-primary" onclick="goToLogin()">跳转到登录页</button>
+        <button class="btn-success" onclick="goToDashboard()">跳转到仪表盘</button>
+    </div>
+    
+    <script>
+        // 显示当前localStorage内容
+        function displayLocalStorage() {
+            const contentDiv = document.getElementById('localStorageContent');
+            let content = '<ul>';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                content += `<li><strong>${key}:</strong> ${value}</li>`;
+            }
+            content += '</ul>';
+            contentDiv.innerHTML = content;
+        }
+        
+        // 保存测试token
+        function saveTestToken() {
+            const testToken = 'test_token_' + Date.now();
+            localStorage.setItem('authToken', testToken);
+            localStorage.setItem('token', testToken);
+            localStorage.setItem('access_token', testToken);
+            alert('测试Token已保存: ' + testToken);
+            displayLocalStorage();
+        }
+        
+        // 读取所有token
+        function readTokens() {
+            const resultsDiv = document.getElementById('tokenResults');
+            const keys = ['authToken', 'token', 'access_token'];
+            let result = '<h4>Token读取结果:</h4><ul>';
+            
+            for (const key of keys) {
+                const value = localStorage.getItem(key);
+                result += `<li><strong>${key}:</strong> ${value || '未找到'}</li>`;
+            }
+            
+            result += '</ul>';
+            resultsDiv.innerHTML = result;
+        }
+        
+        // 清除所有token
+        function clearTokens() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            alert('所有Token已清除');
+            displayLocalStorage();
+        }
+        
+        // 页面跳转
+        function goToLogin() {
+            window.location.href = '/static/mobile_login_final.html';
+        }
+        
+        function goToDashboard() {
+            window.location.href = '/static/mobile_dashboard.html';
+        }
+        
+        // 页面加载时显示localStorage内容
+        document.addEventListener('DOMContentLoaded', function() {
+            displayLocalStorage();
+        });
+    </script>
+</body>
+</html>

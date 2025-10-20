@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 移动端</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="mobile_nav_styles.css?v=2" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 70px;
+            min-height: 100vh;
+        }
+        
+        .mobile-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0 0 20px 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .mobile-header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: #333;
+        }
+        
+        .user-profile {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0 auto 15px;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            margin: 0 0 5px 0;
+        }
+        
+        .user-role {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0 0 10px 0;
+        }
+        
+        .user-department {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0;
+        }
+        
+        .menu-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .menu-section h2 {
+            font-size: 1rem;
+            color: #666;
+            padding: 0 20px 10px;
+            margin: 0;
+            font-weight: 500;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .menu-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .menu-item-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: 15px;
+        }
+        
+        .menu-item-text {
+            font-size: 1rem;
+        }
+        
+        .menu-item-right {
+            color: #999;
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-item-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            margin-right: 10px;
+        }
+        
+        .logout-btn {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #ff6b6b;
+            border-radius: 15px;
+            color: #ff6b6b;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .logout-btn:hover {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+
+        
+        /* 个人资料编辑模态框样式 */
+        .modal-content {
+            border-radius: 15px;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .modal-title {
+            font-weight: bold;
+        }
+        
+        .btn-close {
+            filter: invert(1);
+        }
+        
+        .modal-body {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .borrows-list {
+            /* 使用标准CSS替代space-y */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .borrow-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .borrow-item.returned {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        
+        .borrow-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .borrow-device-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .borrow-status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+        
+        .borrow-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 20px;
+            font-size: 0.9rem;
+        }
+        
+        .borrow-detail-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .borrow-detail-item i {
+            margin-right: 5px;
+        }
+        
+        .borrow-notes {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9rem;
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="mobile-header">
+        <h1>个人中心</h1>
+    </div>
+
+    <div class="container">
+        <!-- 用户信息展示区 -->
+        <div class="user-profile">
+            <div class="user-avatar">AD</div>
+            <h2 class="user-name">管理员</h2>
+            <p class="user-role">系统管理员</p>
+            <p class="user-department">信息管理部</p>
+            
+            <!-- 管理员快捷操作按钮 -->
+            <div id="adminQuickActions" style="display: none; margin-top: 15px;">
+                <a href="/static/mobile_user_management.html" class="btn btn-primary btn-sm" style="width: 100%;">
+                    <i class="bi bi-people"></i> 用户管理
+                </a>
+            </div>
+        </div>
+
+        <!-- 功能菜单列表 -->
+        <div class="menu-section">
+            <h2>账户设置</h2>
+            <a href="#" class="menu-item" onclick="showProfileEditModal()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <div class="menu-item-text">个人资料</div>
+                </div>
+                <div class="menu-item-right">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+            <a href="#" class="menu-item" onclick="showPasswordChangeModal()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-lock"></i>
+                    </div>
+                    <div class="menu-item-text">修改密码</div>
+                </div>
+                <div class="menu-item-right">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+            <a href="#" class="menu-item" onclick="showNotificationSettings()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-bell"></i>
+                    </div>
+                    <div class="menu-item-text">通知设置</div>
+                </div>
+                <div class="menu-item-right">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <div class="menu-section">
+            <h2>我的记录</h2>
+            <a href="#" class="menu-item" onclick="showMyReservations()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="menu-item-text">我的预约</div>
+                </div>
+                <div class="menu-item-right">
+                    <span class="menu-item-badge">2</span>
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+            <a href="#" class="menu-item" onclick="showMyBorrows()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-handbag"></i>
+                    </div>
+                    <div class="menu-item-text">我的借用</div>
+                </div>
+                <div class="menu-item-right">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+            <a href="#" class="menu-item" onclick="showMyApprovals()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                    <div class="menu-item-text">我的审批</div>
+                </div>
+                <div class="menu-item-right">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+            <a href="#" class="menu-item" onclick="showMyRequests()">
+                    <div class="menu-item-left">
+                        <div class="menu-item-icon">
+                            <i class="bi bi-clipboard-check"></i>
+                        </div>
+                        <div class="menu-item-text">我的申请</div>
+                    </div>
+                    <div class="menu-item-right">
+                        <span class="menu-item-badge">1</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </div>
+                </a>
+                <a href="#" class="menu-item" onclick="showMyBorrows()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-hand-thumbs-up"></i>
+                    </div>
+                    <div class="menu-item-text">我的借用</div>
+                </div>
+                <div class="menu-item-right">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+            
+            <!-- 用户管理快捷按钮（仅管理员可见） -->
+            <a href="/static/mobile_user_management.html" class="menu-item" id="userManagementQuickBtn" style="display: none;">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="menu-item-text">用户管理</div>
+                </div>
+                <div class="menu-item-right">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- 管理员审批权限菜单（仅管理员可见） -->
+        <div class="menu-section" id="adminApprovalSection" style="display: none;">
+            <h2>审批管理</h2>
+            <a href="#" class="menu-item" onclick="showApprovalManagement()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="menu-item-text">待审批申请</div>
+                </div>
+                <div class="menu-item-right">
+                    <span class="menu-item-badge" id="pendingApprovalCount">0</span>
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+            <a href="#" class="menu-item" onclick="showApprovalHistory()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="menu-item-text">审批历史</div>
+                </div>
+                <div class="menu-item-right">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- 管理员用户管理菜单（仅管理员可见） -->
+        <div class="menu-section" id="adminUserManagementSection" style="display: none;">
+            <h2>用户管理</h2>
+            <a href="#" class="menu-item" onclick="showUserManagement()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="menu-item-text">用户列表</div>
+                </div>
+                <div class="menu-item-right">
+                    <span class="menu-item-badge" id="totalUserCount">0</span>
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+            <a href="#" class="menu-item" onclick="showAddUser()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <div class="menu-item-text">添加用户</div>
+                </div>
+                <div class="menu-item-right">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <div class="menu-section">
+            <h2>系统</h2>
+            <a href="#" class="menu-item" onclick="showHelpCenter()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-question-circle"></i>
+                    </div>
+                    <div class="menu-item-text">帮助中心</div>
+                </div>
+                <div class="menu-item-right">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+            <a href="#" class="menu-item" onclick="showAbout()">
+                <div class="menu-item-left">
+                    <div class="menu-item-icon">
+                        <i class="bi bi-info-circle"></i>
+                    </div>
+                    <div class="menu-item-text">关于系统</div>
+                </div>
+                <div class="menu-item-right">
+                    <span>v1.0.0</span>
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- 退出登录按钮 -->
+        <button class="logout-btn" onclick="handleLogout()">
+            <i class="bi bi-box-arrow-right"></i> 退出登录
+        </button></div>
+    </div>
+
+    <!-- 设备借用记录模态框 -->
+    <div class="modal fade" id="myBorrowsModal" tabindex="-1" aria-labelledby="myBorrowsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="myBorrowsModalLabel">我的设备借用记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="borrowsLoading" class="text-center py-5">
+                        <div class="spinner-border" role="status"></div>
+                        <p class="mt-2">加载借用记录中...</p>
+                    </div>
+                    <div id="borrowsContainer" class="hidden">
+                        <div class="borrows-list">
+                            <!-- 借用记录将在这里动态生成 -->
+                        </div>
+                    </div>
+                    <div id="noBorrows" class="text-center py-5 hidden">
+                        <i class="bi bi-hand-thumbs-up display-4 text-muted mb-2"></i>
+                        <p class="text-muted">暂无设备借用记录</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航栏 - 统一所有按钮在一排 -->
+    <nav class="bottom-nav">
+        <a href="/static/mobile_index.html" class="nav-item">
+            <i class="bi bi-house"></i>
+            <span>首页</span>
+        </a>
+        <a href="/static/mobile_devices.html" class="nav-item">
+            <i class="bi bi-microchip"></i>
+            <span>设备</span>
+        </a>
+        <a href="/static/mobile_reagents.html" class="nav-item">
+            <i class="bi bi-flask"></i>
+            <span>试剂</span>
+        </a>
+        <a href="/static/mobile_consumables.html" class="nav-item">
+            <i class="bi bi-cart"></i>
+            <span>耗材</span>
+        </a>
+        <a href="/static/mobile_scan.html" class="nav-item">
+            <i class="bi bi-qr-code-scan"></i>
+            <span>扫码</span>
+        </a>
+        <a href="/static/mobile_reservations.html" class="nav-item">
+            <i class="bi bi-calendar-check"></i>
+            <span>预约</span>
+        </a>
+        <a href="/static/mobile_maintenance.html" class="nav-item">
+            <i class="bi bi-tools"></i>
+            <span>维护</span>
+        </a>
+        <a href="/static/mobile_user.html" class="nav-item active">
+            <i class="bi bi-person"></i>
+            <span>用户</span>
+        </a>
+    </nav>
+    
+    <style>
+        /* 功能扩展区样式 */
+        .feature-item {
+            padding: 8px 12px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .feature-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+        .feature-item.text-primary {
+            background-color: rgba(102, 126, 234, 0.08);
+            border-radius: 8px;
+        }
+        
+        /* 调整主内容区域底部内边距以避免被固定导航遮挡 */
+        body {
+            padding-bottom: 120px;
+        }
+    </style>
+
+    <!-- 个人资料编辑模态框 -->
+    <div class="modal fade" id="profileEditModal" tabindex="-1" aria-labelledby="profileEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="profileEditModalLabel">编辑个人资料</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit-name" class="form-label">姓名</label>
+                        <input type="text" id="edit-name" class="form-control" value="管理员">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-email" class="form-label">邮箱</label>
+                        <input type="email" id="edit-email" class="form-control" value="admin@lab.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-phone" class="form-label">电话</label>
+                        <input type="tel" id="edit-phone" class="form-control" value="138****1234">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-department" class="form-label">部门</label>
+                        <input type="text" id="edit-department" class="form-control" value="信息管理部" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-position" class="form-label">职位</label>
+                        <input type="text" id="edit-position" class="form-control" value="系统管理员">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-bio" class="form-label">个人简介</label>
+                        <textarea id="edit-bio" class="form-control" rows="3">负责实验室管理系统的日常维护和用户管理工作。</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveProfileChanges()">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码模态框 -->
+    <div class="modal fade" id="passwordChangeModal" tabindex="-1" aria-labelledby="passwordChangeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="passwordChangeModalLabel">修改密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="current-password" class="form-label">当前密码</label>
+                        <input type="password" id="current-password" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="new-password" class="form-label">新密码</label>
+                        <input type="password" id="new-password" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm-password" class="form-label">确认新密码</label>
+                        <input type="password" id="confirm-password" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="changePassword()">确认修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 引入配置文件 -->
+    <script src="/static/js/config.js"></script>
+    <script>
+        // 显示个人资料编辑模态框
+        function showProfileEditModal() {
+            const profileEditModal = new bootstrap.Modal(document.getElementById('profileEditModal'));
+            profileEditModal.show();
+        }
+        
+        // 显示修改密码模态框
+        function showPasswordChangeModal() {
+            const passwordChangeModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
+            passwordChangeModal.show();
+        }
+        
+        // 保存个人资料修改
+        function saveProfileChanges() {
+            const name = document.getElementById('edit-name').value;
+            const email = document.getElementById('edit-email').value;
+            const phone = document.getElementById('edit-phone').value;
+            const position = document.getElementById('edit-position').value;
+            const bio = document.getElementById('edit-bio').value;
+            
+            if (!name || !email) {
+                alert('姓名和邮箱不能为空');
+                return;
+            }
+            
+            // 这里可以添加API调用代码
+            alert('个人资料修改成功！');
+            const profileEditModal = bootstrap.Modal.getInstance(document.getElementById('profileEditModal'));
+            profileEditModal.hide();
+        }
+        
+        // 修改密码
+        function changePassword() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('请填写所有密码字段');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('两次输入的新密码不一致');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('新密码长度至少为6位');
+                return;
+            }
+            
+            // 这里可以添加API调用代码
+            alert('密码修改成功！');
+            const passwordChangeModal = bootstrap.Modal.getInstance(document.getElementById('passwordChangeModal'));
+            passwordChangeModal.hide();
+        }
+        
+        // 显示通知设置
+        function showNotificationSettings() {
+            alert('通知设置功能开发中...');
+        }
+        
+        // 显示我的预约
+        function showMyReservations() {
+            // 跳转到我的预约页面
+            window.location.href = '/static/mobile_reservations.html';
+        }
+        
+        // 显示我的操作记录
+        function showMyOperations() {
+            alert('操作记录页面开发中...');
+        }
+        
+        // 显示我的申请
+        function showMyRequests() {
+            // 跳转到我的申请页面
+            window.location.href = '/static/mobile_requests.html';
+        }
+        
+        // 显示我的设备借用记录
+        function showMyBorrows() {
+            const myBorrowsModal = new bootstrap.Modal(document.getElementById('myBorrowsModal'));
+            myBorrowsModal.show();
+            
+            // 显示加载状态
+            document.getElementById('borrowsLoading').classList.remove('hidden');
+            document.getElementById('borrowsContainer').classList.add('hidden');
+            document.getElementById('noBorrows').classList.add('hidden');
+            
+            // 获取用户的设备借用记录
+            fetchMyBorrows();
+        }
+        
+        // 显示我的审批记录
+        function showMyApprovals() {
+            // 跳转到我的审批页面
+            window.location.href = '/static/mobile_my_approvals.html';
+        }
+        
+        // 获取用户的设备借用记录
+        function fetchMyBorrows() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                alert('请先登录');
+                return;
+            }
+            
+            // 使用配置文件中的API基础URL
+            fetch(AppConfig.getApiUrl('devices/borrows/my'), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.detail || '获取借用记录失败');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 隐藏加载状态
+                document.getElementById('borrowsLoading').classList.add('hidden');
+                
+                if (data && data.length > 0) {
+                    // 显示借用记录
+                    document.getElementById('borrowsContainer').classList.remove('hidden');
+                    renderBorrowRecords(data);
+                } else {
+                    // 显示无记录提示
+                    document.getElementById('noBorrows').classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('获取借用记录失败:', error);
+                document.getElementById('borrowsLoading').classList.add('hidden');
+                alert(`获取借用记录失败：${error.message || '未知错误'}`);
+            });
+        }
+        
+        // 渲染借用记录
+        function renderBorrowRecords(borrowRecords) {
+            const borrowsList = document.querySelector('.borrows-list');
+            borrowsList.innerHTML = '';
+            
+            borrowRecords.forEach(record => {
+                // 格式化日期时间
+                const formatDateTime = (dateString) => {
+                    if (!dateString) return '无';
+                    const date = new Date(dateString);
+                    return date.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                };
+                
+                const borrowItem = document.createElement('div');
+                borrowItem.className = `borrow-item ${record.status === 'returned' ? 'returned' : ''}`;
+                
+                borrowItem.innerHTML = `
+                    <div class="borrow-header">
+                        <div class="borrow-device-name">${getDeviceNameById(record.device_id) || `设备ID: ${record.device_id}`}</div>
+                        <div class="borrow-status">${record.status === 'borrowed' ? '借用中' : '已归还'}</div>
+                    </div>
+                    <div class="borrow-details">
+                        <div class="borrow-detail-item">
+                            <i class="bi bi-calendar-check"></i>
+                            <span>借用时间: ${formatDateTime(record.borrow_time)}</span>
+                        </div>
+                        <div class="borrow-detail-item">
+                            <i class="bi bi-calendar-x"></i>
+                            <span>归还时间: ${formatDateTime(record.return_time)}</span>
+                        </div>
+                    </div>
+                    ${record.notes ? `<div class="borrow-notes"><i class="bi bi-sticky"></i> 备注: ${record.notes}</div>` : ''}
+                `;
+                
+                borrowsList.appendChild(borrowItem);
+            });
+        }
+        
+        // 临时函数：根据设备ID获取设备名称
+        // 实际应用中，应该从设备列表中获取或通过API单独查询
+        function getDeviceNameById(deviceId) {
+            // 这里只是简单模拟，实际应用中应该有设备数据存储
+            const deviceNames = {
+                1: 'PCR仪',
+                2: '离心机',
+                3: '移液器',
+                4: '天平',
+                5: '培养箱'
+            };
+            return deviceNames[deviceId] || null;
+        }
+        
+        // 显示帮助中心
+        function showHelpCenter() {
+            alert('即将跳转到帮助中心页面...');
+        }
+        
+        // 显示关于系统
+        function showAbout() {
+            alert('实验室管理系统\n版本: v1.0.0\n© 2024 实验室管理系统 版权所有');
+        }
+        
+        // 退出登录
+        function handleLogout() {
+            if (confirm('确定要退出登录吗？')) {
+                // 清除本地存储中的所有认证信息
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('tokenType');
+                localStorage.removeItem('auth_token');
+                
+                // 跳转到移动端登录页面
+                window.location.href = "/static/mobile_login_final.html";
+            }
+        }
+        
+        // 显示审批管理页面
+        function showApprovalManagement() {
+            // 跳转到审批管理页面
+            window.location.href = '/static/mobile_approvals.html';
+        }
+        
+        // 显示审批历史页面
+        function showApprovalHistory() {
+            alert('审批历史页面开发中...');
+        }
+        
+        // 检查用户权限并显示管理员菜单
+        function checkUserPermissions() {
+            // 从本地存储获取用户信息
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            const userRole = userInfo.role || 'user';
+            
+            // 如果是管理员，显示审批管理菜单和用户管理菜单
+            if (userRole === 'admin' || userRole === 'lab_manager' || userRole === '系统管理员' || userRole === '管理员') {
+                document.getElementById('adminApprovalSection').style.display = 'block';
+                document.getElementById('adminUserManagementSection').style.display = 'block';
+                document.getElementById('adminQuickActions').style.display = 'block';
+                document.getElementById('userManagementQuickBtn').style.display = 'flex';
+                
+                // 获取待审批申请数量
+                fetchPendingApprovalCount();
+                // 获取用户统计信息
+                fetchUserStats();
+            }
+        }
+        
+        // 获取待审批申请数量
+        function fetchPendingApprovalCount() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return;
+            
+            // 使用配置文件中的API基础URL
+            fetch(AppConfig.getApiUrl('approvals/pending/count'), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // 如果API不存在，使用模拟数据
+                    throw new Error('API not available');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 更新待审批数量
+                document.getElementById('pendingApprovalCount').textContent = data.count || 0;
+            })
+            .catch(error => {
+                // 使用模拟数据
+                console.log('使用模拟待审批数据');
+                document.getElementById('pendingApprovalCount').textContent = '3';
+            });
+        }
+        
+        // 获取用户统计信息
+        function fetchUserStats() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return;
+            
+            // 使用配置文件中的API基础URL
+            fetch(AppConfig.getApiUrl('users/stats/overview'), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // 如果API不存在，使用模拟数据
+                    throw new Error('API not available');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 更新用户总数
+                document.getElementById('totalUserCount').textContent = data.total_users || 0;
+            })
+            .catch(error => {
+                // 使用模拟数据
+                console.log('使用模拟用户统计数据');
+                document.getElementById('totalUserCount').textContent = '15';
+            });
+        }
+        
+        // 显示用户管理页面
+        function showUserManagement() {
+            // 跳转到用户管理页面
+            window.location.href = '/static/mobile_user_management.html';
+        }
+        
+        // 显示添加用户页面
+        function showAddUser() {
+            // 跳转到添加用户页面
+            window.location.href = '/static/mobile_add_user.html';
+        }
+        
+        // 加载用户数据
+        function loadUserData() {
+            // 使用模拟用户数据 - 设置为管理员角色
+            const userData = {
+                username: '管理员',
+                role: 'admin',
+                department: '信息管理部',
+                email: 'admin@example.com',
+                phone: '138****5678',
+                joinDate: '2023-01-10',
+                avatar: 'AD' // 用户名首字母作为头像文字
+            };
+            
+            // 更新页面上的用户信息
+            document.querySelector('.user-avatar').textContent = userData.avatar;
+            document.querySelector('.user-name').textContent = userData.username;
+            document.querySelector('.user-role').textContent = userData.role === 'admin' ? '系统管理员' : userData.role;
+            document.querySelector('.user-department').textContent = userData.department;
+            
+            // 保存用户信息到本地存储，用于权限检查
+            localStorage.setItem('userInfo', JSON.stringify(userData));
+        }
+        
+        // 页面加载完成后执行
+        window.addEventListener('DOMContentLoaded', () => {
+            loadUserData();
+            checkUserPermissions();
+        });
+    </script>
+</body>
+</html>

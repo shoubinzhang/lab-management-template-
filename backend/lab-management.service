@@ -1,0 +1,69 @@
+[Unit]
+Description=Lab Management System Gunicorn Application
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+# 服务类型
+Type=notify
+
+# 用户和组
+User=labuser
+Group=labuser
+
+# 工作目录
+WorkingDirectory=/opt/lab-management-app/backend
+
+# 环境变量
+Environment=PATH=/opt/lab-management-app/venv/bin
+Environment=PYTHONPATH=/opt/lab-management-app/backend
+EnvironmentFile=/opt/lab-management-app/backend/.env.production
+
+# 执行命令
+ExecStart=/opt/lab-management-app/venv/bin/gunicorn \
+    --name lab-management \
+    --bind 127.0.0.1:8000 \
+    --workers 4 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --worker-connections 1000 \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
+    --timeout 30 \
+    --keep-alive 2 \
+    --preload \
+    --enable-stdio-inheritance \
+    --log-level info \
+    --log-file /var/log/lab-management/gunicorn.log \
+    --access-logfile /var/log/lab-management/access.log \
+    --error-logfile /var/log/lab-management/error.log \
+    --pid /var/run/lab-management/gunicorn.pid \
+    --capture-output \
+    app:app
+
+# 重启策略
+Restart=always
+RestartSec=3
+
+# 进程管理
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# 资源限制
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# 安全设置
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/lab-management-app /var/log/lab-management /var/run/lab-management
+
+# 标准输出和错误
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lab-management
+
+[Install]
+WantedBy=multi-user.target

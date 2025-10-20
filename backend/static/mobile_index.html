@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实验室管理系统 - 移动端</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="mobile_nav_styles.css?v=2" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 70px;
+            min-height: 100vh;
+        }
+        
+        .mobile-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0 0 20px 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mobile-header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: #333;
+        }
+        
+        .mobile-header .user-info {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .mobile-header .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-card .stat-label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .quick-actions {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .quick-actions h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 10px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .action-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .action-btn span {
+            font-size: 0.8rem;
+            text-align: center;
+        }
+        
+        .alerts-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .alerts-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .alert-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .alert-item i {
+            color: #856404;
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+        
+        .alert-item .alert-content {
+            flex: 1;
+        }
+        
+        .alert-item .alert-title {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin: 0;
+            color: #856404;
+        }
+        
+        .alert-item .alert-description {
+            font-size: 0.8rem;
+            color: #856404;
+            margin: 2px 0 0 0;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.75rem;
+        }
+        
+        .nav-item.active {
+            color: #667eea;
+        }
+        
+        .nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        @media (max-width: 480px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="mobile-header">
+        <h1>实验室管理系统</h1>
+        <div class="user-info">
+            <div class="user-avatar">AD</div>
+            <div>
+                <div style="font-weight: 500;">管理员</div>
+                <div style="font-size: 0.8rem; color: #666;">最后登录: 今天 09:30</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 统计数据 -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <i class="bi bi-gear" style="position: absolute; top: 10px; right: 10px; color: #667eea; opacity: 0.3; font-size: 2rem;"></i>
+                <div class="stat-value" id="device-count">42</div>
+                <div class="stat-label">设备总数</div>
+            </div>
+            <div class="stat-card">
+                <i class="bi bi-flask-conical" style="position: absolute; top: 10px; right: 10px; color: #667eea; opacity: 0.3; font-size: 2rem;"></i>
+                <div class="stat-value" id="reagent-count">128</div>
+                <div class="stat-label">试剂总数</div>
+            </div>
+            <div class="stat-card">
+                <i class="bi bi-clock" style="position: absolute; top: 10px; right: 10px; color: #667eea; opacity: 0.3; font-size: 2rem;"></i>
+                <div class="stat-value" id="expiring-reagents">5</div>
+                <div class="stat-label">即将过期试剂</div>
+            </div>
+            <div class="stat-card">
+                <i class="bi bi-box" style="position: absolute; top: 10px; right: 10px; color: #667eea; opacity: 0.3; font-size: 2rem;"></i>
+                <div class="stat-value" id="low-stock-consumables">3</div>
+                <div class="stat-label">低库存耗材</div>
+            </div>
+        </div>
+
+        <!-- 快捷操作 -->
+        <div class="quick-actions">
+            <h2><i class="bi bi-lightning-charge"></i> 快捷操作</h2>
+            <div class="action-buttons">
+                <a href="/static/mobile_devices.html" class="action-btn">
+                    <i class="bi bi-gear"></i>
+                    <span>设备管理</span>
+                </a>
+                <a href="/static/mobile_reagents.html" class="action-btn">
+                    <i class="bi bi-flask-conical" style="font-size: 1.4rem; color: #667eea;"></i>
+                    <span>试剂管理</span>
+                </a>
+                <a href="/static/mobile_consumables.html" class="action-btn">
+                    <i class="bi bi-box"></i>
+                    <span>耗材管理</span>
+                </a>
+                <a href="/static/mobile_scan.html" class="action-btn">
+                    <i class="bi bi-qr-code-scan"></i>
+                    <span>扫码</span>
+                </a>
+                <a href="#" class="action-btn" onclick="showReservationModal()">
+                    <i class="bi bi-calendar-check" style="font-size: 1.4rem; color: white;"></i>
+                    <span>预约设备</span>
+                </a>
+                <a href="#" class="action-btn" onclick="showMaintenanceModal()">
+                    <i class="bi bi-tools" style="font-size: 1.4rem; color: white;"></i>
+                    <span>设备维护</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 警报信息 -->
+        <div class="alerts-section">
+            <h2><i class="bi bi-exclamation-triangle"></i> 预警信息</h2>
+            <div id="alert-list">
+                <div class="alert-item">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <div class="alert-content">
+                        <p class="alert-title">5种试剂即将过期</p>
+                        <p class="alert-description">请及时处理或采购新试剂</p>
+                    </div>
+                </div>
+                <div class="alert-item">
+                    <i class="bi bi-thermometer-half"></i>
+                    <div class="alert-content">
+                        <p class="alert-title">2台设备需要校准</p>
+                        <p class="alert-description">全自动生化分析仪、PCR仪</p>
+                    </div>
+                </div>
+                <div class="alert-item">
+                    <i class="bi bi-box"></i>
+                    <div class="alert-content">
+                        <p class="alert-title">3种耗材库存不足</p>
+                        <p class="alert-description">一次性手套、移液器吸头、培养皿</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- 预约设备模态框 -->
+    <div class="modal fade" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reservationModalLabel">预约设备</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="device-select" class="form-label">选择设备</label>
+                        <select id="device-select" class="form-control">
+                            <option value="1">全自动生化分析仪</option>
+                            <option value="2">PCR仪</option>
+                            <option value="3">显微镜</option>
+                            <option value="4">离心机</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reservation-date" class="form-label">预约日期</label>
+                        <input type="date" id="reservation-date" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="reservation-time" class="form-label">预约时间</label>
+                        <input type="time" id="reservation-time" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="reservation-purpose" class="form-label">预约用途</label>
+                        <input type="text" id="reservation-purpose" class="form-control" placeholder="请输入预约用途">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitReservation()">提交预约</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设备维护模态框 -->
+    <div class="modal fade" id="maintenanceModal" tabindex="-1" aria-labelledby="maintenanceModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="maintenanceModalLabel">设备维护记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="maintenance-device" class="form-label">选择设备</label>
+                        <select id="maintenance-device" class="form-control">
+                            <option value="1">全自动生化分析仪</option>
+                            <option value="2">PCR仪</option>
+                            <option value="3">显微镜</option>
+                            <option value="4">离心机</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="maintenance-date" class="form-label">维护日期</label>
+                        <input type="date" id="maintenance-date" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="maintenance-type" class="form-label">维护类型</label>
+                        <select id="maintenance-type" class="form-control">
+                            <option value="日常清洁">日常清洁</option>
+                            <option value="校准">校准</option>
+                            <option value="维修">维修</option>
+                            <option value="更换部件">更换部件</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="maintenance-details" class="form-label">维护详情</label>
+                        <textarea id="maintenance-details" class="form-control" rows="3" placeholder="请输入维护详情"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitMaintenance()">保存记录</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 引入应用配置文件 -->
+    <script src="/static/js/config.js"></script>
+    <script>
+        // 提交预约表单
+        function submitReservation(deviceId) {
+            const startTime = document.getElementById(`startTime-${deviceId}`).value;
+            const endTime = document.getElementById(`endTime-${deviceId}`).value;
+            const notes = document.getElementById(`notes-${deviceId}`).value;
+            
+            if (!startTime || !endTime) {
+                showAlert('warning', '请选择预约时间');
+                return;
+            }
+            
+            if (new Date(startTime) >= new Date(endTime)) {
+                showAlert('warning', '结束时间必须晚于开始时间');
+                return;
+            }
+            
+            const requestBody = {
+                device_id: deviceId,
+                start_time: startTime,
+                end_time: endTime,
+                notes: notes || null
+            };
+            
+            // 使用AppConfig获取API URL
+            fetch(AppConfig.getApiUrl(`devices/${deviceId}/reservations`), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.detail || '预约失败');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showAlert('success', '预约成功！');
+                // 关闭模态框
+                document.getElementById(`reservationModal-${deviceId}`).querySelector('.btn-close').click();
+                // 刷新页面数据
+                loadStats();
+                loadAlerts();
+            })
+            .catch(error => {
+                console.error('预约失败:', error);
+                showAlert('danger', `预约失败：${error.message || '未知错误'}`);
+            });
+        }
+        
+        // 提交设备维护表单
+        function submitMaintenance(deviceId) {
+            const issue = document.getElementById(`issue-${deviceId}`).value;
+            const priority = document.getElementById(`priority-${deviceId}`).value;
+            
+            if (!issue) {
+                showAlert('warning', '请描述问题');
+                return;
+            }
+            
+            const requestBody = {
+                device_id: deviceId,
+                issue: issue,
+                priority: priority
+            };
+            
+            // 使用AppConfig获取API URL
+            fetch(AppConfig.getApiUrl(`devices/${deviceId}/maintenance`), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.detail || '提交失败');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showAlert('success', '维护申请已提交！');
+                // 关闭模态框
+                document.getElementById(`maintenanceModal-${deviceId}`).querySelector('.btn-close').click();
+                // 刷新页面数据
+                loadAlerts();
+            })
+            .catch(error => {
+                console.error('提交维护申请失败:', error);
+                showAlert('danger', `提交失败：${error.message || '未知错误'}`);
+            });
+        }
+        
+        // 加载统计数据
+        function loadStats() {
+            // 使用模拟数据
+            const mockStats = {
+                totalDevices: 45,
+                availableDevices: 32,
+                totalReagents: 120,
+                lowStockReagents: 15,
+                totalConsumables: 85,
+                lowStockConsumables: 10,
+                upcomingReservations: 5
+            };
+            
+            // 更新统计卡片
+            document.getElementById('totalDevices').textContent = mockStats.totalDevices;
+            document.getElementById('availableDevices').textContent = mockStats.availableDevices;
+            document.getElementById('totalReagents').textContent = mockStats.totalReagents;
+            document.getElementById('lowStockReagents').textContent = mockStats.lowStockReagents;
+            document.getElementById('totalConsumables').textContent = mockStats.totalConsumables;
+            document.getElementById('lowStockConsumables').textContent = mockStats.lowStockConsumables;
+            document.getElementById('upcomingReservations').textContent = mockStats.upcomingReservations;
+        }
+        
+        // 加载提醒信息
+        function loadAlerts() {
+            // 使用模拟数据
+            const mockAlerts = [
+                { id: 1, type: 'warning', message: 'PCR仪需要校准', time: '20分钟前' },
+                { id: 2, type: 'danger', message: 'DNA提取试剂盒库存不足', time: '2小时前' },
+                { id: 3, type: 'info', message: '明天下午2点有设备预约', time: '5小时前' }
+            ];
+            
+            // 更新提醒列表
+            const alertsList = document.getElementById('alertsList');
+            alertsList.innerHTML = '';
+            
+            mockAlerts.forEach(alert => {
+                const alertItem = document.createElement('div');
+                alertItem.className = 'alert-item';
+                alertItem.innerHTML = `
+                    <div class="alert-icon bg-${alert.type}">
+                        <i class="bi ${alert.type === 'warning' ? 'bi-exclamation-triangle' : alert.type === 'danger' ? 'bi-exclamation-circle' : 'bi-info-circle'}"></i>
+                    </div>
+                    <div class="alert-content">
+                        <p>${alert.message}</p>
+                        <small>${alert.time}</small>
+                    </div>
+                `;
+                alertsList.appendChild(alertItem);
+            });
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载统计数据
+            loadStats();
+            // 加载提醒信息
+            loadAlerts();
+            
+            // 显示欢迎消息
+            showAlert('info', '欢迎使用实验室管理系统移动端');
+        });
+        
+        // Toast通知系统
+        function showToast(message, type = 'info', duration = 3000) {
+            // 兼容性处理：如果调用方式是旧的(type, message)，则交换参数
+            if (typeof message === 'string' && ['success', 'error', 'warning', 'info', 'danger'].includes(message)) {
+                const temp = message;
+                message = type;
+                type = temp;
+            }
+            
+            // 检查是否已存在toast容器，不存在则创建
+            let toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toastContainer';
+                toastContainer.style.position = 'fixed';
+                toastContainer.style.top = '20px';
+                toastContainer.style.right = '20px';
+                toastContainer.style.zIndex = '9999';
+                toastContainer.style.display = 'flex';
+                toastContainer.style.flexDirection = 'column';
+                toastContainer.style.gap = '10px';
+                document.body.appendChild(toastContainer);
+            }
+            
+            // 创建toast元素
+            const toast = document.createElement('div');
+            
+            // 根据类型设置背景色
+            const bgColors = {
+                success: 'rgba(40, 167, 69, 0.95)',
+                error: 'rgba(220, 53, 69, 0.95)',
+                warning: 'rgba(255, 193, 7, 0.95)',
+                info: 'rgba(23, 162, 184, 0.95)',
+                danger: 'rgba(220, 53, 69, 0.95)'
+            };
+            
+            // 根据类型设置图标
+            const icons = {
+                success: 'bi-check-circle',
+                error: 'bi-exclamation-circle',
+                warning: 'bi-exclamation-triangle',
+                info: 'bi-info-circle',
+                danger: 'bi-exclamation-circle'
+            };
+            
+            toast.style.backgroundColor = bgColors[type] || bgColors.info;
+            toast.style.color = 'white';
+            toast.style.padding = '12px 20px';
+            toast.style.borderRadius = '8px';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '10px';
+            toast.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            toast.style.maxWidth = '350px';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            toast.style.cursor = 'pointer';
+            
+            toast.innerHTML = `
+                <i class="bi ${icons[type] || icons.info}" style="font-size: 1.2rem;"></i>
+                <span>${message}</span>
+            `;
+            
+            // 添加到容器
+            toastContainer.appendChild(toast);
+            
+            // 触发动画
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // 点击关闭
+            toast.addEventListener('click', () => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            });
+            
+            // 自动关闭
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, duration);
+        }
+        
+        // 为了兼容性保留showAlert函数，但内部调用showToast
+        function showAlert(type, message) {
+            // 将bootstrap的alert类型映射到toast类型
+            const typeMap = {
+                success: 'success',
+                danger: 'error',
+                warning: 'warning',
+                info: 'info'
+            };
+            showToast(message, typeMap[type] || 'info');
+        }
+    </script>
+    
+    <!-- 底部导航栏 - 统一所有按钮在一排 -->
+    <nav class="bottom-nav">
+        <a href="/static/mobile_index.html" class="nav-item active">
+            <i class="bi bi-house"></i>
+            <span>首页</span>
+        </a>
+        <a href="/static/mobile_devices.html" class="nav-item">
+            <i class="bi bi-microchip"></i>
+            <span>设备</span>
+        </a>
+        <a href="/static/mobile_reagents.html" class="nav-item">
+            <i class="bi bi-flask"></i>
+            <span>试剂</span>
+        </a>
+        <a href="/static/mobile_consumables.html" class="nav-item">
+            <i class="bi bi-cart"></i>
+            <span>耗材</span>
+        </a>
+        <a href="/static/mobile_scan.html" class="nav-item">
+            <i class="bi bi-qr-code-scan"></i>
+            <span>扫码</span>
+        </a>
+        <a href="/static/mobile_reservations.html" class="nav-item">
+            <i class="bi bi-calendar-check"></i>
+            <span>预约</span>
+        </a>
+        <a href="/static/mobile_maintenance.html" class="nav-item">
+            <i class="bi bi-tools"></i>
+            <span>维护</span>
+        </a>
+        <a href="/static/mobile_user.html" class="nav-item">
+            <i class="bi bi-person"></i>
+            <span>用户</span>
+        </a>
+    </nav>
+</body>
+</html>

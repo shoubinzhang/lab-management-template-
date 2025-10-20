@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f0f0f0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { background: #e6ffe6; color: #006600; }
+        .error { background: #ffe6e6; color: #660000; }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>简单API测试</h2>
+        
+        <button onclick="testHealth()">测试健康检查</button>
+        <button onclick="testLogin()">测试登录</button>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        
+        function showResult(message, isError = false) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = 'result ' + (isError ? 'error' : 'success');
+        }
+        
+        async function testHealth() {
+            showResult('正在测试健康检查...');
+            
+            try {
+                console.log('发送健康检查请求到:', API_URL + '/health');
+                const response = await fetch(API_URL + '/health');
+                console.log('响应状态:', response.status);
+                console.log('响应头:', response.headers);
+                
+                const data = await response.json();
+                console.log('响应数据:', data);
+                
+                showResult('健康检查成功:\n' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                console.error('健康检查失败:', error);
+                showResult('健康检查失败:\n' + error.message, true);
+            }
+        }
+        
+        async function testLogin() {
+            showResult('正在测试登录...');
+            
+            try {
+                const loginData = {
+                    username: 'admin',
+                    password: 'admin123'
+                };
+                
+                console.log('发送登录请求到:', API_URL + '/api/auth/login');
+                console.log('请求数据:', loginData);
+                
+                const response = await fetch(API_URL + '/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData)
+                });
+                
+                console.log('响应状态:', response.status);
+                console.log('响应头:', response.headers);
+                
+                const data = await response.json();
+                console.log('响应数据:', data);
+                
+                showResult('登录成功:\n' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                console.error('登录失败:', error);
+                showResult('登录失败:\n' + error.message, true);
+            }
+        }
+        
+        // 页面加载时显示基本信息
+        console.log('页面加载完成');
+        console.log('API地址:', API_URL);
+        showResult('页面加载完成，点击按钮开始测试');
+    </script>
+</body>
+</html>

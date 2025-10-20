@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>移动端登录 - 修复版</title>
+    <script src="/config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background-color: #f8fafc;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            text-align: center;
+            min-height: 20px;
+        }
+        
+        .result.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .result.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .result.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .connection-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .connection-status.connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .connection-status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            input, .btn-login {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status disconnected" id="connectionStatus">
+        未连接
+    </div>
+    
+    <div class="login-container">
+        <div class="logo">📱</div>
+        <h1>实验室管理系统</h1>
+        <p class="subtitle">移动端登录</p>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" placeholder="请输入用户名" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" placeholder="请输入密码" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn-login" id="loginBtn">
+                登录
+            </button>
+        </form>
+        
+        <div class="result" id="result"></div>
+        <div class="debug-info" id="debugInfo" style="display: none;"></div>
+    </div>
+
+    <script>
+        class MobileLoginApp {
+            constructor() {
+            this.apiUrl = AppConfig.api.baseUrl;
+                this.debugMode = false;
+                this.debugLog = [];
+                this.init();
+            }
+            
+            init() {
+                this.bindEvents();
+                this.testConnection();
+                this.log('📱 移动端登录应用初始化完成');
+            }
+            
+            getApiUrl() {
+            // 使用AppConfig中的配置
+            return AppConfig.api.baseUrl;
+        }
+            
+            bindEvents() {
+                const form = document.getElementById('loginForm');
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleLogin();
+                });
+                
+                // 自动保存用户名
+                const username = localStorage.getItem('username');
+                if (username) {
+                    document.getElementById('username').value = username;
+                }
+                
+                // 监听输入变化
+                document.getElementById('username').addEventListener('input', (e) => {
+                    localStorage.setItem('username', e.target.value);
+                });
+            }
+            
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logMessage = `[${timestamp}] ${message}`;
+                this.debugLog.push(logMessage);
+                
+                // 限制日志数量
+                if (this.debugLog.length > 50) {
+                    this.debugLog.shift();
+                }
+                
+                console.log(logMessage);
+                
+                if (this.debugMode) {
+                    this.updateDebugDisplay();
+                }
+            }
+            
+            updateDebugDisplay() {
+                const debugElement = document.getElementById('debugInfo');
+                if (debugElement) {
+                    debugElement.textContent = this.debugLog.join('\n');
+                    debugElement.scrollTop = debugElement.scrollHeight;
+                }
+            }
+            
+            showResult(message, type = 'info') {
+                const resultElement = document.getElementById('result');
+                resultElement.className = `result ${type}`;
+                resultElement.textContent = message;
+                
+                // 3秒后清除结果
+                setTimeout(() => {
+                    resultElement.className = 'result';
+                    resultElement.textContent = '';
+                }, 3000);
+            }
+            
+            async testConnection() {
+                try {
+                    this.log('🔄 开始连接测试...');
+                    
+                    const testUrl = `${this.apiUrl}/health`;
+                    this.log(`🚀 测试地址: ${testUrl}`);
+                    
+                    // 使用fetch API进行连接测试
+                    const response = await fetch(testUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        mode: 'cors', // 明确指定CORS模式
+                        credentials: 'omit' // 不发送cookies
+                    });
+                    
+                    this.log(`📥 响应状态: ${response.status}`);
+                    
+                    const responseText = await response.text();
+                    this.log(`📄 响应内容: ${responseText}`);
+                    
+                    if (response.ok) {
+                        try {
+                            const data = JSON.parse(responseText);
+                            
+                            if (data.status === 'healthy') {
+                                this.log('✅ 连接测试成功');
+                                this.showResult('🟢 连接测试成功', 'success');
+                                this.updateConnectionStatus(true);
+                            } else {
+                                this.log(`⚠️ 服务状态异常: ${data.status}`);
+                                this.showResult(`服务状态异常: ${data.status}`, 'error');
+                                this.updateConnectionStatus(false);
+                            }
+                        } catch (e) {
+                            this.log(`❌ JSON解析错误: ${e.message}`);
+                            this.showResult('服务器响应格式错误', 'error');
+                            this.updateConnectionStatus(false);
+                        }
+                    } else {
+                        this.log(`❌ 连接失败，状态码: ${response.status}`);
+                        this.showResult(`连接失败，状态码: ${response.status}`, 'error');
+                        this.updateConnectionStatus(false);
+                    }
+                    
+                } catch (error) {
+                    this.log(`❌ 连接测试错误: ${error.message}`);
+                    
+                    // 更详细的错误分析
+                    let errorMsg = '连接测试失败';
+                    if (error.message.includes('Failed to fetch')) {
+                        errorMsg = '网络连接失败，请检查：\n1. 后端服务是否运行\n2. 网络连接是否正常\n3. 防火墙设置';
+                    } else if (error.message.includes('CORS')) {
+                        errorMsg = '跨域请求被阻止，请检查后端CORS配置';
+                    } else if (error.message.includes('timeout')) {
+                        errorMsg = '请求超时，请检查网络连接';
+                    } else {
+                        errorMsg = `连接测试错误: ${error.message}`;
+                    }
+                    
+                    this.showResult(errorMsg, 'error');
+                    this.updateConnectionStatus(false);
+                }
+            }
+            
+            updateConnectionStatus(connected) {
+                const statusElement = document.getElementById('connectionStatus');
+                if (connected) {
+                    statusElement.className = 'connection-status connected';
+                    statusElement.textContent = '已连接';
+                } else {
+                    statusElement.className = 'connection-status disconnected';
+                    statusElement.textContent = '未连接';
+                }
+            }
+            
+            async handleLogin() {
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                
+                if (!username || !password) {
+                    this.showResult('请输入用户名和密码', 'error');
+                    return;
+                }
+                
+                const loginBtn = document.getElementById('loginBtn');
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '登录中<span class="loading"></span>';
+                
+                try {
+                    this.log(`🔐 开始登录: ${username}`);
+                    
+                    const loginData = {
+                        username: username,
+                        password: password
+                    };
+                    
+                    const loginUrl = `${this.apiUrl}/api/auth/login`;
+                    this.log(`🚀 请求地址: ${loginUrl}`);
+                    this.log(`📤 请求数据: ${JSON.stringify(loginData)}`);
+                    
+                    // 使用fetch API，但添加更详细的错误处理
+                    const response = await fetch(loginUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(loginData),
+                        mode: 'cors', // 明确指定CORS模式
+                        credentials: 'omit' // 不发送cookies
+                    });
+                    
+                    this.log(`📥 响应状态: ${response.status}`);
+                    
+                    const responseText = await response.text();
+                    this.log(`📄 响应内容: ${responseText}`);
+                    
+                    if (response.ok) {
+                        const data = JSON.parse(responseText);
+                        
+                        if (data.access_token) {
+                            // 保存token
+                            localStorage.setItem('token', data.access_token);
+                            localStorage.setItem('username', username);
+                            
+                            this.log(`✅ 登录成功，Token: ${data.access_token.substring(0, 20)}...`);
+                            this.showResult('🎉 登录成功！', 'success');
+                            
+                            // 获取用户信息
+                            await this.getUserInfo(data.access_token);
+                            
+                            // 2秒后跳转到主页或其他页面
+                            setTimeout(() => {
+                                window.location.href = '/index.html';
+                            }, 2000);
+                        } else {
+                            this.log('❌ 登录失败：未获取到Token');
+                            this.showResult('登录失败：未获取到Token', 'error');
+                        }
+                    } else {
+                        let errorMessage = '登录失败';
+                        try {
+                            const errorData = JSON.parse(responseText);
+                            errorMessage = errorData.detail || errorData.message || `登录失败 (${response.status})`;
+                        } catch (e) {
+                            errorMessage = `${responseText} (${response.status})`;
+                        }
+                        
+                        this.log(`❌ 登录失败: ${errorMessage}`);
+                        this.showResult(errorMessage, 'error');
+                    }
+                } catch (error) {
+                    this.log(`❌ 登录错误: ${error.message}`);
+                    
+                    // 更详细的错误分析
+                    let errorMsg = '登录失败';
+                    if (error.message.includes('Failed to fetch')) {
+                        errorMsg = '网络连接失败，请检查：\n1. 后端服务是否运行\n2. 网络连接是否正常\n3. 防火墙设置\n4. AppConfig配置是否正确';
+                    } else if (error.message.includes('CORS')) {
+                        errorMsg = '跨域请求被阻止，请检查后端CORS配置';
+                    } else if (error.message.includes('timeout')) {
+                        errorMsg = '请求超时，请检查网络连接';
+                    } else {
+                        errorMsg = `登录错误: ${error.message}`;
+                    }
+                    
+                    this.showResult(errorMsg, 'error');
+                } finally {
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '登录';
+                }
+            }
+            
+            async getUserInfo(token) {
+                try {
+                    const userUrl = `${this.apiUrl}/api/auth/me`;
+                    this.log(`👤 获取用户信息: ${userUrl}`);
+                    
+                    const response = await fetch(userUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        mode: 'cors'
+                    });
+                    
+                    if (response.ok) {
+                        const userData = await response.json();
+                        this.log(`✅ 获取用户信息成功: ${JSON.stringify(userData)}`);
+                    } else {
+                        this.log(`❌ 获取用户信息失败: ${response.status}`);
+                    }
+                } catch (error) {
+                    this.log(`❌ 获取用户信息错误: ${error.message}`);
+                }
+            }
+        }
+        
+        // 等待AppConfig加载完成
+        async function waitForAppConfig() {
+            if (window.AppConfig && window.AppConfig.api && window.AppConfig.api.baseUrl) {
+                return window.AppConfig;
+            }
+            return new Promise(resolve => {
+                const checkInterval = setInterval(() => {
+                    if (window.AppConfig && window.AppConfig.api && window.AppConfig.api.baseUrl) {
+                        clearInterval(checkInterval);
+                        resolve(window.AppConfig);
+                    }
+                }, 100);
+            });
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await waitForAppConfig();
+                new MobileLoginApp();
+            } catch (error) {
+                console.error('AppConfig加载失败:', error);
+                alert('系统配置加载失败，请刷新页面重试。');
+            }
+        });
+        
+        // 调试模式切换（双击标题激活）
+        let debugClickCount = 0;
+        document.addEventListener('dblclick', (e) => {
+            if (e.target.tagName === 'H1') {
+                debugClickCount++;
+                if (debugClickCount >= 3) {
+                    const debugElement = document.getElementById('debugInfo');
+                    if (debugElement.style.display === 'none') {
+                        debugElement.style.display = 'block';
+                        console.log('🔧 调试模式已激活');
+                    } else {
+                        debugElement.style.display = 'none';
+                        console.log('🔧 调试模式已关闭');
+                    }
+                    debugClickCount = 0;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

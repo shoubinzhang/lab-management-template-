@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端登录故障排查工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .diagnostic-section {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title::before {
+            content: "🔍";
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .network-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .info-value {
+            color: #007bff;
+            font-family: monospace;
+            background: #e3f2fd;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .test-btn:active {
+            transform: translateY(0);
+        }
+        
+        .test-btn.success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        
+        .test-btn.error {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+        
+        .results {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 100px;
+        }
+        
+        .result-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+            background: white;
+        }
+        
+        .result-item.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .result-item.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .link-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            border: 2px solid transparent;
+        }
+        
+        .link-card:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .link-icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+        
+        .link-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .link-desc {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-offline {
+            background: #dc3545;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .troubleshooting-tips {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .tip-icon {
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .diagnostic-section {
+                padding: 20px;
+            }
+            
+            .test-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 移动端登录故障排查工具</h1>
+            <p>专业诊断您的移动端登录问题，提供实时解决方案</p>
+        </div>
+        
+        <div class="diagnostic-section">
+            <h2 class="section-title">📱 网络信息检测</h2>
+            <div class="network-info">
+                <div class="info-item">
+                    <span class="info-label">本机IP地址:</span>
+                    <span class="info-value" id="local-ip">172.30.81.103</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">后端服务端口:</span>
+                    <span class="info-value">8000</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">前端服务端口:</span>
+                    <span class="info-value">3000</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">手机访问地址:</span>
+                    <span class="info-value">http://172.30.81.103:3000</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="diagnostic-section">
+            <h2 class="section-title">🧪 连接诊断测试</h2>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="testBackendHealth()">
+                    <span>🏥</span>
+                    <span>后端健康检查</span>
+                </button>
+                <button class="test-btn" onclick="testLoginEndpoint()">
+                    <span>🔐</span>
+                    <span>登录接口测试</span>
+                </button>
+                <button class="test-btn" onclick="testCORS()">
+                    <span>🔗</span>
+                    <span>跨域配置检查</span>
+                </button>
+                <button class="test-btn" onclick="testNetworkConnectivity()">
+                    <span>🌐</span>
+                    <span>网络连通性测试</span>
+                </button>
+            </div>
+            
+            <div class="results" id="test-results">
+                <div style="text-align: center; color: #666;">
+                    点击上方按钮开始诊断测试...
+                </div>
+            </div>
+        </div>
+        
+        <div class="diagnostic-section">
+            <h2 class="section-title">🚀 快速访问链接</h2>
+            <div class="quick-links">
+                <a href="http://172.30.81.103:3000/mobile_login_diagnostic.html" class="link-card" target="_blank">
+                    <div class="link-icon">🔍</div>
+                    <div class="link-title">移动端诊断工具</div>
+                    <div class="link-desc">在手机浏览器中打开进行详细诊断</div>
+                </a>
+                <a href="http://172.30.81.103:3000/mobile_login_final_test.html" class="link-card" target="_blank">
+                    <div class="link-icon">📱</div>
+                    <div class="link-title">最终测试页面</div>
+                    <div class="link-desc">完整的移动端登录测试</div>
+                </a>
+                <a href="http://172.30.81.103:8000/health" class="link-card" target="_blank">
+                    <div class="link-icon">💓</div>
+                    <div class="link-title">后端健康检查</div>
+                    <div class="link-desc">直接访问后端健康检查接口</div>
+                </a>
+                <a href="http://172.30.81.103:3000" class="link-card" target="_blank">
+                    <div class="link-icon">🏠</div>
+                    <div class="link-title">主应用页面</div>
+                    <div class="link-desc">访问完整的应用程序</div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="diagnostic-section">
+            <h2 class="section-title">💡 故障排查建议</h2>
+            <div class="troubleshooting-tips">
+                <div class="tip-item">
+                    <span class="tip-icon">📱</span>
+                    <div>
+                        <strong>确保手机连接正确网络:</strong>
+                        手机必须连接到与电脑相同的WiFi网络（172.30.81.x网段）
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <span class="tip-icon">🌐</span>
+                    <div>
+                        <strong>使用正确的IP地址:</strong>
+                        在手机浏览器中输入: <code>http://172.30.81.103:3000</code>
+                        不要使用localhost或127.0.0.1
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <span class="tip-icon">🔒</span>
+                    <div>
+                        <strong>关闭VPN和代理:</strong>
+                        确保手机没有启用VPN、代理服务器或SOCKS代理
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <span class="tip-icon">🔄</span>
+                    <div>
+                        <strong>清除浏览器缓存:</strong>
+                        清除手机浏览器的缓存和Cookie，或使用无痕模式
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <span class="tip-icon">📍</span>
+                    <div>
+                        <strong>检查防火墙设置:</strong>
+                        确保Windows防火墙允许端口3000和8000的入站连接
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 配置信息显示区域 -->
+    <div id="config-info" class="config-info">
+        <div class="config-item">
+            <strong>配置来源:</strong> <span id="config-source">加载中...</span>
+        </div>
+        <div class="config-item">
+            <strong>API基础URL:</strong> <span id="api-base-url">加载中...</span>
+        </div>
+    </div>
+
+    <style>
+        .config-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .config-item {
+            margin-bottom: 8px;
+        }
+        .config-item:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+
+    <script>
+        // 全局配置对象和配置来源跟踪
+        window.AppConfig = window.AppConfig || {};
+        let configSource = '默认配置';
+
+        // 动态加载config.js文件
+        async function loadConfigJs() {
+            return new Promise((resolve, reject) => {
+                // 检查config.js是否已经加载
+                if (window.__configJsLoaded) {
+                    configSource = '预加载的config.js';
+                    return resolve(window.AppConfig);
+                }
+
+                const script = document.createElement('script');
+                script.src = 'config.js';
+                script.type = 'text/javascript';
+                
+                script.onload = () => {
+                    window.__configJsLoaded = true;
+                    configSource = '动态加载的config.js';
+                    resolve(window.AppConfig || {});
+                };
+                
+                script.onerror = () => {
+                    console.warn('无法加载config.js，使用默认配置');
+                    configSource = '默认配置';
+                    resolve({});
+                };
+                
+                document.head.appendChild(script);
+            });
+        }
+
+        // 初始化配置
+        async function initializeConfig() {
+            try {
+                // 尝试加载config.js
+                const loadedConfig = await loadConfigJs();
+                
+                // 获取当前页面的协议和主机名
+                const currentOrigin = window.location.origin;
+                const currentProtocol = window.location.protocol;
+                const currentHostname = window.location.hostname;
+                const defaultPort = 8000;
+                
+                // 构建默认配置，使用当前主机名
+                const defaultConfig = {
+                    api: {
+                        // 优先使用完整URL配置，其次使用单独配置的主机和端口，最后使用当前页面的协议和主机名
+                        baseUrl: `${currentProtocol}//${currentHostname}:${defaultPort}`
+                    },
+                    frontend: {
+                        port: 3000
+                    }
+                };
+                
+                // 合并配置
+                window.AppConfig = {
+                    api: {
+                        ...defaultConfig.api,
+                        ...loadedConfig.api
+                    },
+                    frontend: {
+                        ...defaultConfig.frontend,
+                        ...loadedConfig.frontend
+                    }
+                };
+                
+                // 确保API基础URL格式正确
+                if (!window.AppConfig.api.baseUrl) {
+                    const port = window.AppConfig.api.port || defaultPort;
+                    window.AppConfig.api.baseUrl = `${currentProtocol}//${currentHostname}:${port}`;
+                }
+                
+                // 显示配置信息
+                updateConfigDisplay();
+                
+            } catch (error) {
+                console.error('配置初始化失败:', error);
+                
+                // 使用回退默认配置
+                const currentProtocol = window.location.protocol;
+                const currentHostname = window.location.hostname;
+                
+                window.AppConfig = {
+                    api: {
+                        baseUrl: `${currentProtocol}//${currentHostname}:8000`
+                    },
+                    frontend: {
+                        port: 3000
+                    }
+                };
+                
+                configSource = '错误回退配置';
+                updateConfigDisplay();
+            }
+        }
+
+        // 更新配置信息显示
+        function updateConfigDisplay() {
+            const configSourceEl = document.getElementById('config-source');
+            const apiBaseUrlEl = document.getElementById('api-base-url');
+            
+            if (configSourceEl) configSourceEl.textContent = configSource;
+            if (apiBaseUrlEl) apiBaseUrlEl.textContent = window.AppConfig?.api?.baseUrl || '未配置';
+        }
+
+        // 测试函数
+        async function testBackendHealth() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<div class="loading"></div> 正在测试后端健康状态...';
+            
+            try {
+                const apiBaseUrl = AppConfig.api.baseUrl;
+                const response = await fetch(`${apiBaseUrl}/health`, {
+                const data = await response.json();
+                
+                results.innerHTML = `
+                    <div class="result-item success">
+                        <span class="status-indicator status-online"></span>
+                        <strong>后端健康检查:</strong> 正常 (状态码: ${response.status})
+                        <br><small>响应数据: ${JSON.stringify(data)}</small>
+                    </div>
+                `;
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="result-item error">
+                        <span class="status-indicator status-offline"></span>
+                        <strong>后端健康检查:</strong> 失败
+                        <br><small>错误信息: ${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testLoginEndpoint() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<div class="loading"></div> 正在测试登录接口...';
+            
+            try {
+                const loginData = {
+                    username: 'admin',
+                    password: 'admin123'
+                };
+                
+                const apiBaseUrl = AppConfig.api.baseUrl;
+                const response = await fetch(`${apiBaseUrl}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    results.innerHTML = `
+                        <div class="result-item success">
+                            <span class="status-indicator status-online"></span>
+                            <strong>登录接口测试:</strong> 成功
+                            <br><small>Token: ${data.access_token ? data.access_token.substring(0, 20) + '...' : '无令牌'}</small>
+                        </div>
+                    `;
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="result-item error">
+                        <span class="status-indicator status-offline"></span>
+                        <strong>登录接口测试:</strong> 失败
+                        <br><small>错误信息: ${error.message}</small>
+                        <br><small>请确保AppConfig已正确加载</small>
+                    </div>
+                `;
+                } else {
+                    results.innerHTML = `
+                        <div class="result-item error">
+                            <span class="status-indicator status-offline"></span>
+                            <strong>登录接口测试:</strong> 失败
+                            <br><small>状态码: ${response.status}, 错误: ${JSON.stringify(data)}</small>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="result-item error">
+                        <span class="status-indicator status-offline"></span>
+                        <strong>登录接口测试:</strong> 失败
+                        <br><small>错误信息: ${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testCORS() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<div class="loading"></div> 正在测试跨域配置...';
+            
+            try {
+                const apiBaseUrl = AppConfig.api.baseUrl;
+                const response = await fetch(`${apiBaseUrl}/health`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                results.innerHTML = `
+                    <div class="result-item success">
+                        <span class="status-indicator status-online"></span>
+                        <strong>跨域配置检查:</strong> 正常
+                        <br><small>成功从浏览器发起跨域请求</small>
+                    </div>
+                `;
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="result-item error">
+                        <span class="status-indicator status-offline"></span>
+                        <strong>跨域配置检查:</strong> 失败
+                        <br><small>错误信息: ${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testNetworkConnectivity() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<div class="loading"></div> 正在测试网络连通性...';
+            
+            const tests = [];
+            
+            try {
+                const apiBaseUrl = AppConfig.api.baseUrl;
+                const urlObj = new URL(apiBaseUrl);
+                const currentProtocol = urlObj.protocol;
+                const currentHostname = urlObj.hostname;
+                const backendPort = urlObj.port || '8000';
+                const frontendPort = AppConfig.frontend.port || '3000';
+                
+                const urls = [
+                    `${apiBaseUrl}/health`,
+                    `${currentProtocol}//${currentHostname}:${frontendPort}`,
+                    'http://localhost:8000/health',
+                    'http://127.0.0.1:8000/health'
+                ];
+                
+                for (const url of urls) {
+                    try {
+                        const start = Date.now();
+                        const response = await fetch(url, { 
+                            method: 'GET', 
+                            mode: 'no-cors',
+                            timeout: 5000 
+                        });
+                    const duration = Date.now() - start;
+                    
+                    tests.push({
+                        url,
+                        status: 'success',
+                        duration: `${duration}ms`
+                    });
+                } catch (error) {
+                    tests.push({
+                        url,
+                        status: 'failed',
+                        error: error.message
+                    });
+                }
+            }
+            
+            let html = '<h4>网络连通性测试结果:</h4>';
+            tests.forEach(test => {
+                if (test.status === 'success') {
+                    html += `
+                        <div class="result-item success">
+                            <span class="status-indicator status-online"></span>
+                            <strong>${test.url}</strong>: 连接成功 (${test.duration})
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="result-item error">
+                            <span class="status-indicator status-offline"></span>
+                            <strong>${test.url}</strong>: 连接失败
+                            <br><small>${test.error}</small>
+                        </div>
+                    `;
+                }
+            });
+            
+            results.innerHTML = html;
+        }
+        
+        // 页面加载完成后执行初始化
+        window.addEventListener('load', async function() {
+            // 初始化AppConfig
+            await initializeConfig();
+        });
+    </script>
+</body>
+</html>

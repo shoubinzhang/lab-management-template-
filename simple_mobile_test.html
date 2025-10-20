@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单移动端登录测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .debug {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .debug-line {
+            margin: 2px 0;
+            padding: 2px 0;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>简单移动端登录测试</h2>
+        
+        <div class="form-group">
+            <label for="apiUrl">API地址:</label>
+            <input type="text" id="apiUrl" value="http://localhost:8000" placeholder="http://localhost:8000"> // 使用本地后端服务
+        </div>
+        
+        <div class="form-group">
+            <label for="username">用户名:</label>
+            <input type="text" id="username" value="admin">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">密码:</label>
+            <input type="password" id="password" value="admin123">
+        </div>
+        
+        <button onclick="testLogin()">测试登录</button>
+        <button onclick="testConnection()">测试连接</button>
+        <button onclick="clearDebug()">清除日志</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+        <div id="debug" class="debug"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const debugDiv = document.getElementById('debug');
+            const timestamp = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.className = 'debug-line';
+            line.textContent = `[${timestamp}] ${message}`;
+            debugDiv.appendChild(line);
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+            log(`结果: ${message}`);
+        }
+        
+        function clearDebug() {
+            document.getElementById('debug').innerHTML = '';
+        }
+        
+        function getApiUrl() {
+            return document.getElementById('apiUrl').value.trim();
+        }
+        
+        async function testConnection() {
+            try {
+                const apiUrl = getApiUrl();
+                log(`开始连接测试...`);
+                log(`API地址: ${apiUrl}`);
+                
+                // 测试健康检查端点
+                const healthUrl = `${apiUrl}/health`;
+                log(`测试健康检查: ${healthUrl}`);
+                
+                const healthResponse = await fetch(healthUrl, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                log(`健康检查状态: ${healthResponse.status} ${healthResponse.statusText}`);
+                
+                if (healthResponse.ok) {
+                    const healthData = await healthResponse.json();
+                    log(`健康检查数据: ${JSON.stringify(healthData)}`);
+                }
+                
+                // 测试登录端点是否存在
+                const loginUrl = `${apiUrl}/api/auth/login`;
+                log(`测试登录端点: ${loginUrl}`);
+                
+                const loginResponse = await fetch(loginUrl, {
+                    method: 'HEAD',
+                    mode: 'cors'
+                });
+                
+                log(`登录端点状态: ${loginResponse.status} ${loginResponse.statusText}`);
+                
+                if (healthResponse.ok) {
+                    showResult('连接测试成功！', 'success');
+                } else {
+                    showResult(`连接失败: 健康检查=${healthResponse.status}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`连接错误: ${error.message}`, 'error');
+                log(`连接错误详情: ${error.stack}`);
+            }
+        }
+        
+        async function testLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!username || !password) {
+                showResult('请输入用户名和密码', 'error');
+                return;
+            }
+            
+            try {
+                const apiUrl = getApiUrl();
+                const loginUrl = `${apiUrl}/api/auth/login`;
+                
+                log(`开始登录测试...`);
+                log(`登录URL: ${loginUrl}`);
+                log(`用户名: ${username}`);
+                log(`密码: ${'*'.repeat(password.length)}`);
+                
+                const requestData = {
+                    username: username,
+                    password: password
+                };
+                
+                log(`请求数据: ${JSON.stringify(requestData)}`);
+                showResult('正在发送登录请求...', 'info');
+                
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(requestData),
+                    mode: 'cors'
+                });
+                
+                log(`响应状态: ${response.status} ${response.statusText}`);
+                log(`响应URL: ${response.url}`);
+                
+                const responseText = await response.text();
+                log(`响应内容: ${responseText}`);
+                
+                let responseData;
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    log(`解析JSON失败: ${e.message}`);
+                    responseData = { detail: responseText };
+                }
+                
+                if (response.ok) {
+                    showResult(`登录成功！Token: ${responseData.access_token ? responseData.access_token.substring(0, 20) + '...' : '无token'}`, 'success');
+                    log(`登录成功，Token: ${responseData.access_token || '无token'}`);
+                } else {
+                    showResult(`登录失败: ${responseData.detail || response.statusText}`, 'error');
+                    log(`登录失败详情: ${JSON.stringify(responseData)}`);
+                    
+                    if (response.status === 404) {
+                        log('❌ 404错误 - 登录端点不存在，请检查API配置');
+                    } else if (response.status === 401) {
+                        log('❌ 401错误 - 用户名或密码错误');
+                    } else if (response.status === 422) {
+                        log('❌ 422错误 - 请求数据验证失败');
+                        if (responseData.errors) {
+                            responseData.errors.forEach(error => {
+                                log(`错误详情: ${error.msg} (${error.loc.join('.')})`);
+                            });
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                showResult(`登录错误: ${error.message}`, 'error');
+                log(`登录错误详情: ${error.stack}`);
+                
+                if (error.message.includes('Failed to fetch')) {
+                    log('❌ 网络错误 - 请检查：');
+                    log('1. API地址是否正确');
+                    log('2. 后端服务是否运行');
+                    log('3. 网络连接是否正常');
+                    log('4. CORS配置是否正确');
+                }
+            }
+        }
+        
+        // 页面加载时自动测试连接
+        window.onload = function() {
+            log('页面加载完成');
+            log('浏览器信息: ' + navigator.userAgent);
+            log('当前URL: ' + window.location.href);
+        };
+    </script>
+</body>
+</html>

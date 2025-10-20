@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API测试</title>
+    <!-- 引入配置文件 -->
+    <script src="config.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 3px; white-space: pre-wrap; font-family: monospace; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>实验室管理系统 API 测试</h1>
+        
+        <div class="test-section">
+            <h3>1. 测试后端连接</h3>
+            <button onclick="testBackendConnection()">测试后端健康检查</button>
+            <div id="health-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. 用户登录</h3>
+            <button onclick="testLogin()">登录 (admin/admin123)</button>
+            <div id="login-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. 设备API测试</h3>
+            <button onclick="testDevicesAPI()">获取设备列表</button>
+            <div id="devices-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. 当前状态</h3>
+            <button onclick="showCurrentStatus()">显示当前状态</button>
+            <div id="status-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 配置加载状态管理
+        function waitForAppConfig(callback, timeout = 5000) {
+            let attempts = 0;
+            const maxAttempts = timeout / 100;
+            
+            const checkConfig = () => {
+                attempts++;
+                
+                if (window.AppConfig) {
+                    console.log('AppConfig已加载:', window.AppConfig);
+                    if (callback) callback();
+                    return;
+                }
+                
+                if (attempts >= maxAttempts) {
+                    console.log('AppConfig加载超时，使用默认配置');
+                    // 初始化默认配置
+                    window.AppConfig = window.AppConfig || {
+                        apiUrl: `http://${window.location.hostname}:8001`,
+                        apiPort: '8001'
+                    };
+                    if (callback) callback();
+                    return;
+                }
+                
+                // 继续检查
+                setTimeout(checkConfig, 100);
+            };
+            
+            // 开始检查
+            setTimeout(checkConfig, 100);
+        }
+        
+        // 获取API基础URL
+        function getApiBaseUrl() {
+            try {
+                if (window.AppConfig && window.AppConfig.apiUrl) {
+                    return window.AppConfig.apiUrl;
+                }
+                // 使用当前主机名和配置的端口
+                const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+                return `${protocol}//${window.location.hostname}:${window.AppConfig?.apiPort || '8001'}`;
+            } catch (error) {
+                console.error('获取API URL失败:', error);
+                return `http://${window.location.hostname}:8001`;
+            }
+        }
+        
+        async function testBackendConnection() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.textContent = '正在测试后端连接...';
+            
+            try {
+                const apiBaseUrl = getApiBaseUrl();
+                const response = await fetch(`${apiBaseUrl}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `后端连接成功！\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `后端连接失败: ${response.status} ${response.statusText}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `连接错误: ${error.message}`;
+            }
+        }
+        
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            resultDiv.textContent = '正在登录...';
+            
+            try {
+                const apiBaseUrl = getApiBaseUrl();
+                const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify({ username: 'admin' }));
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `登录成功！\nToken: ${data.access_token.substring(0, 50)}...\nToken类型: ${data.token_type}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `登录失败: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `登录错误: ${error.message}`;
+            }
+        }
+        
+        async function testDevicesAPI() {
+            const resultDiv = document.getElementById('devices-result');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '请先登录获取token';
+                return;
+            }
+            
+            resultDiv.textContent = '正在获取设备列表...';
+            
+            try {
+                const apiBaseUrl = getApiBaseUrl();
+                const response = await fetch(`${apiBaseUrl}/api/devices`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `设备API调用成功！\n状态: ${response.status}\n数据: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `设备API调用失败: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `设备API错误: ${error.message}`;
+            }
+        }
+        
+        function showCurrentStatus() {
+            const resultDiv = document.getElementById('status-result');
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const apiBaseUrl = getApiBaseUrl();
+            
+            resultDiv.className = 'result';
+            resultDiv.textContent = `当前状态:\nToken: ${token ? `${token.substring(0, 30)}...` : '无'}\nToken长度: ${token ? token.length : 0}\n用户: ${user || '无'}\nAPI地址: ${apiBaseUrl}\n配置来源: ${window.AppConfig ? '已加载AppConfig' : '使用默认配置'}`;
+        }
+        
+        // 页面加载时等待配置完成后再显示状态
+        window.onload = function() {
+            // 如果config.js加载失败，手动添加备用配置
+            if (!window.AppConfig) {
+                const configScript = document.createElement('script');
+                configScript.src = 'config.js';
+                configScript.onload = function() {
+                    console.log('config.js 加载完成');
+                    showCurrentStatus();
+                };
+                configScript.onerror = function() {
+                    console.warn('config.js 加载失败，使用默认配置');
+                    window.AppConfig = {
+                        apiUrl: `${window.location.protocol}//${window.location.hostname}:8001`,
+                        apiPort: '8001'
+                    };
+                    showCurrentStatus();
+                };
+                document.head.appendChild(configScript);
+            } else {
+                waitForAppConfig(function() {
+                    showCurrentStatus();
+                });
+            }
+        };
+    </script>
+</body>
+</html>

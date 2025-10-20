@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>移动端登录 - 实验室管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            text-align: left;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #666;
+            text-align: left;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 调试容器样式 */
+        .connection-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        .debug-container {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .debug-container h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .debug-log {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .debug-log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        
+        .debug-error {
+            color: #f56565;
+        }
+        
+        .debug-warn {
+            color: #ed8936;
+        }
+        
+        .debug-info {
+            color: #4299e1;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">Lab</div>
+        <h1>实验室管理系统</h1>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" placeholder="请输入密码" required>
+            </div>
+            
+            <button type="submit" id="loginBtn">
+                登录
+                <span id="spinner" class="spinner hidden"></span>
+            </button>
+        </form>
+        
+        <div id="status" class="status hidden"></div>
+        
+        <div class="connection-info">
+            <strong>连接信息：</strong><br>
+            API地址: <span id="apiUrl">http://172.30.81.97:8000</span><br>
+            状态: <span id="connStatus">等待连接测试</span><br>
+            错误详情: <span id="errorDetails">无</span>
+            <button onclick="fixDataSync()" style="margin-top: 10px; background-color: #ff6b6b;">修复数据同步</button>
+        </div>
+        
+        <!-- 调试日志区域 -->
+        <div id="debug-log-container" class="debug-container" style="display: none;">
+            <h3>调试日志</h3>
+            <div id="debug-log" class="debug-log"></div>
+        </div>
+
+    <script>
+        // API配置 - 动态检测API地址
+        let API_BASE_URL = '';
+        const DEBUG_MODE = true; // 调试模式开关
+        
+        // 动态加载config.js文件
+        function loadConfig() {
+            return new Promise((resolve, reject) => {
+                // 检查config.js是否已经加载
+                if (window.AppConfig) {
+                    log('使用预加载的config.js配置', 'info');
+                    resolve();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = '/static/js/config.js';
+                script.onload = () => {
+                    if (window.AppConfig) {
+                        log('config.js加载成功', 'success');
+                        resolve();
+                    } else {
+                        log('config.js加载成功但未定义AppConfig', 'warn');
+                        reject(new Error('config.js加载成功但未定义AppConfig'));
+                    }
+                };
+                script.onerror = () => {
+                    log('无法加载config.js文件，使用默认配置', 'warn');
+                    reject(new Error('无法加载config.js文件'));
+                };
+                
+                document.head.appendChild(script);
+            });
+        }
+        
+        // 显示调试日志
+        function log(message, level = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] [${level}] ${message}`;
+            
+            // 控制台输出
+            if (level === 'error') {
+                console.error(logEntry);
+            } else if (level === 'warn') {
+                console.warn(logEntry);
+            } else {
+                console.log(logEntry);
+            }
+            
+            // 页面显示（如果DEBUG_MODE开启）
+            if (DEBUG_MODE) {
+                const debugLog = document.getElementById('debug-log');
+                if (debugLog) {
+                    const logElement = document.createElement('div');
+                    logElement.className = `debug-log-entry debug-${level}`;
+                    logElement.textContent = logEntry;
+                    debugLog.appendChild(logElement);
+                    debugLog.scrollTop = debugLog.scrollHeight;
+                    document.getElementById('debug-log-container').style.display = 'block';
+                }
+            }
+        }
+        
+        // 获取API基础URL
+        async function getApiUrl() {
+            try {
+                // 1. 优先使用AppConfig中的配置
+                if (window.AppConfig && window.AppConfig.api && window.AppConfig.api.baseUrl) {
+                    return window.AppConfig.api.baseUrl;
+                }
+                
+                // 2. 检查localStorage中的标准API配置
+                const storedApiUrl = localStorage.getItem('apiBaseUrl');
+                if (storedApiUrl) {
+                    log(`使用存储的API配置: ${storedApiUrl}`, 'info');
+                    return storedApiUrl;
+                }
+                
+                // 3. 使用服务器的实际IP地址，确保手机能正确连接
+                // 服务器运行在172.30.81.97:8000，使用这个地址确保连接正确
+                const serverIP = '172.30.81.97';
+                const serverPort = '8000';
+                const currentProtocol = window.location.protocol;
+                
+                // 使用服务器的IP地址，而不是相对路径
+                API_BASE_URL = `${currentProtocol}//${serverIP}:${serverPort}`;
+                
+                log(`设置API地址为: ${API_BASE_URL}`, 'info');
+                
+                // 测试API连接
+                try {
+                    log(`测试API连接: ${API_BASE_URL}/health`, 'debug');
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 2000);
+                    
+                    const response = await fetch(`${API_BASE_URL}/health`, {
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (response.ok) {
+                        log(`API连接测试成功`, 'success');
+                    } else {
+                        log(`API连接测试失败: ${response.status}`, 'warn');
+                    }
+                } catch (error) {
+                    log(`API连接测试异常: ${error.message}`, 'warn');
+                }
+                
+                // 将API地址保存到localStorage
+                localStorage.setItem('apiBaseUrl', API_BASE_URL);
+                log(`API配置已保存到localStorage`, 'info');
+                
+                // 显示当前API地址
+                if (document.getElementById('apiUrl')) {
+                    document.getElementById('apiUrl').textContent = API_BASE_URL;
+                }
+                
+                log(`API地址已设置为: ${API_BASE_URL}`, 'info');
+                
+                return API_BASE_URL;
+            } catch (error) {
+                log(`获取API地址失败: ${error.message}`, 'error');
+                log(`异常堆栈: ${error.stack}`, 'debug');
+                API_BASE_URL = ''; // 使用相对路径作为默认值
+                return API_BASE_URL;
+            }
+        }
+        
+        // DOM元素
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const spinner = document.getElementById('spinner');
+        const status = document.getElementById('status');
+        const apiUrl = document.getElementById('apiUrl');
+        const connStatus = document.getElementById('connStatus');
+        const errorDetails = document.getElementById('errorDetails');
+        
+        // 状态管理
+        let isConnecting = false;
+        
+        // 显示状态信息
+        function showStatus(message, type = 'info') {
+            status.className = `status ${type}`;
+            status.textContent = message;
+            status.classList.remove('hidden');
+        }
+        
+        // 隐藏状态信息
+        function hideStatus() {
+            status.classList.add('hidden');
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            loginBtn.disabled = true;
+            spinner.classList.remove('hidden');
+        }
+        
+        // 隐藏加载状态
+        function hideLoading() {
+            loginBtn.disabled = false;
+            spinner.classList.add('hidden');
+        }
+        
+        // 测试API连接
+        async function testConnection() {
+            if (isConnecting) return;
+            
+            isConnecting = true;
+            connStatus.textContent = '连接中...';
+            connStatus.style.color = '#ffc107';
+            log(`=== 开始API连接测试 ===`, 'info');
+            
+            try {
+                const healthUrl = `${API_BASE_URL}/health`;
+                log(`测试连接URL: ${healthUrl}`, 'info');
+                
+                // 显示测试URL在界面上
+                if (errorDetails) {
+                    errorDetails.textContent = `测试URL: ${healthUrl}`;
+                }
+                
+                log(`准备发送健康检查请求...`, 'debug');
+                const startTime = performance.now();
+                
+                // 使用AbortController实现超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(healthUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                const endTime = performance.now();
+                const requestTime = endTime - startTime;
+                log(`连接测试完成，耗时: ${requestTime.toFixed(2)}ms`, 'debug');
+                log(`连接测试响应状态: ${response.status} ${response.statusText}`, 'info');
+                
+                // 记录响应头信息
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+                log(`连接测试响应头: ${JSON.stringify(headers)}`, 'debug');
+                
+                // 显示状态码在界面上
+                if (errorDetails) {
+                    errorDetails.textContent += `\n状态码: ${response.status} ${response.statusText}`;
+                }
+                
+                const responseText = await response.text();
+                log(`连接测试响应内容: ${responseText}`, 'debug');
+                
+                let data = null;
+                try {
+                    data = JSON.parse(responseText);
+                    log(`解析响应数据成功: ${JSON.stringify(data)}`);
+                } catch (jsonError) {
+                    log(`响应JSON解析失败: ${jsonError.message}`, 'warn');
+                    // 检查是否返回HTML
+                    if (responseText.trim().startsWith('<')) {
+                        log('检测到服务器返回HTML内容而不是JSON', 'warn');
+                    }
+                }
+                
+                if (response.ok && data && data.status === 'healthy') {
+                    log('API连接成功，服务器状态健康', 'info');
+                    connStatus.textContent = '连接成功';
+                    connStatus.style.color = '#28a745';
+                    showStatus('API连接正常，可以登录', 'success');
+                    setTimeout(hideStatus, 3000);
+                } else {
+                    log('服务器返回非健康状态', 'warn');
+                    connStatus.textContent = '连接失败';
+                    connStatus.style.color = '#dc3545';
+                    
+                    // 更详细的错误信息
+                    const errorMsg = data?.status === 'error' ? data.error : 
+                                    data?.message || 
+                                    `服务器返回非预期响应 (状态码: ${response.status})`;
+                    
+                    errorDetails.textContent = errorMsg;
+                    showStatus(`API连接失败: ${errorMsg}`, 'error');
+                }
+            } catch (error) {
+                log(`连接异常: ${error.message}`, 'error');
+                connStatus.textContent = '连接失败';
+                connStatus.style.color = '#dc3545';
+                errorDetails.textContent = error.message;
+                showStatus(`连接失败: ${error.message}`, 'error');
+            } finally {
+                isConnecting = false;
+            }
+        }
+        
+        // 登录功能
+        async function login(username, password) {
+            log(`=== 开始登录流程 ===`, 'info');
+            log(`用户名: ${username}`, 'info');
+            showLoading();
+            showStatus('正在登录...', 'info');
+            
+            try {
+                const loginUrl = `${API_BASE_URL}/api/auth/login`;
+                log(`向登录API发送请求: ${loginUrl}`, 'info');
+                
+                // 记录完整请求信息
+                log(`请求参数: {username: ${username}, password: [已隐藏]}`, 'debug');
+                log(`完整请求URL: ${loginUrl}`, 'debug');
+                
+                // 显示请求URL在界面上，方便调试
+                if (errorDetails) {
+                    errorDetails.textContent = `请求URL: ${loginUrl}`;
+                }
+                
+                log(`准备发送fetch请求...`, 'debug');
+                const startTime = performance.now();
+                
+                // 使用AbortController实现超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                const endTime = performance.now();
+                const requestTime = endTime - startTime;
+                log(`请求完成，耗时: ${requestTime.toFixed(2)}ms`, 'debug');
+                log(`响应状态码: ${response.status} ${response.statusText}`, 'info');
+                
+                // 记录响应头信息
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+                log(`响应头信息: ${JSON.stringify(headers)}`, 'debug');
+                
+                // 显示状态码在界面上
+                if (errorDetails) {
+                    errorDetails.textContent += `\n状态码: ${response.status} ${response.statusText}`;
+                }
+                
+                log(`登录请求响应状态: ${response.status}`);
+                
+                const responseText = await response.text();
+                log(`登录响应内容: ${responseText}`);
+                
+                let data = null;
+                try {
+                    data = JSON.parse(responseText);
+                    log(`解析响应数据: ${JSON.stringify(data)}`);
+                    
+                    // 详细记录响应结构
+                    if (data) {
+                        log(`响应包含access_token: ${data.access_token ? '是' : '否'}`);
+                        log(`响应包含detail字段: ${data.detail ? '是' : '否'}`);
+                        log(`响应包含message字段: ${data.message ? '是' : '否'}`);
+                    }
+                } catch (jsonError) {
+                    log(`响应JSON解析失败: ${jsonError.message}`, 'warn');
+                    // 显示响应文本的前200个字符用于调试
+                    log(`响应文本前200字符: ${responseText.substring(0, 200)}`, 'debug');
+                    
+                    // 检查是否返回HTML
+                    if (responseText.trim().startsWith('<')) {
+                        log('检测到服务器返回HTML内容而不是JSON', 'error');
+                        errorDetails.textContent = '服务器返回HTML内容而非预期的JSON响应';
+                    }
+                }
+                
+                if (response.ok && data && data.access_token) {
+                    // 登录成功
+                    log(`=== 登录成功 ===`, 'success');
+                    log(`用户: ${data.user.username}, 角色: ${data.user.role}`, 'success');
+                    log(`生成的token长度: ${data.access_token.length}字符`, 'debug');
+                    
+                    // 验证localStorage是否可用
+                    try {
+                        localStorage.setItem('test', 'test');
+                        localStorage.removeItem('test');
+                        log('localStorage可用', 'debug');
+                    } catch (storageError) {
+                        log(`localStorage不可用: ${storageError.message}`, 'warn');
+                    }
+                    
+                    showStatus('登录成功！正在跳转...', 'success');
+                    
+                    // 统一存储键名 - 与网页端保持一致
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('authToken', data.access_token); // 网页端使用的键名
+                    localStorage.setItem('user', username); // 网页端使用的键名
+                    localStorage.setItem('userInfo', JSON.stringify({
+                        username: username,
+                        access_token: data.access_token
+                    })); // 网页端使用的键名
+                    
+                    // 同时保存移动端兼容键名
+                    localStorage.setItem('auth_token', data.access_token);
+                    localStorage.setItem('username', username);
+                    
+                    // 保存API配置
+                    localStorage.setItem('apiBaseUrl', API_BASE_URL);
+                    
+                    log('登录成功！数据存储已统一', 'success');
+                    
+                    // 验证保存是否成功
+                    const savedToken = localStorage.getItem('authToken');
+                    log(`Token保存${savedToken ? '成功' : '失败'}`, 'debug');
+                    log(`登录状态存储：token=${savedToken ? '已保存' : '未保存'}, user=${localStorage.getItem('userInfo') ? '已保存' : '未保存'}`, 'debug');
+                    
+                    // 跳转到移动端仪表盘页面 - 保留在后端服务端口
+                    log('准备跳转到移动端仪表盘页面');
+                    setTimeout(() => {
+                        try {
+                            // 使用后端服务器提供的移动端仪表盘页面
+                            const redirectUrl = `${window.location.protocol}//${window.location.host}/static/mobile_dashboard.html`;
+                            log(`准备跳转到移动端仪表盘: ${redirectUrl}`, 'info');
+                            
+                            // 先测试跳转地址是否可访问
+                            fetch(redirectUrl, { method: 'HEAD' })
+                                .then(response => {
+                                    if (response.ok) {
+                                        log(`跳转地址可访问，执行跳转`, 'info');
+                                        window.location.href = redirectUrl;
+                                    } else {
+                                        log(`跳转地址不可访问，使用备用地址`, 'warn');
+                                        window.location.href = "/static/mobile_dashboard.html";
+                                    }
+                                })
+                                .catch(error => {
+                                    log(`跳转地址测试失败: ${error.message}，使用备用地址`, 'warn');
+                                    window.location.href = "/static/mobile_dashboard.html";
+                                });
+                        } catch (e) {
+                            // 备用：使用直接地址
+                            log(`动态构建地址失败，使用直接地址`, 'warn');
+                            window.location.href = "/static/mobile_dashboard.html";
+                        }
+                    }, 1500);
+                    
+                } else {
+                    // 登录失败
+                    const errorMsg = data?.detail || data?.message || responseText || `登录失败 (状态码: ${response.status})`;
+                    log(`登录失败: ${errorMsg}`, 'error');
+                    log(`详细错误信息 - 状态码: ${response.status}, 响应类型: ${response.headers.get('content-type')}`, 'debug');
+                    
+                    // 显示更详细的错误信息
+                    let displayErrorMsg = errorMsg;
+                    if (response.status === 401) {
+                        displayErrorMsg = '用户名或密码错误，请重新输入';
+                    } else if (response.status === 422) {
+                        displayErrorMsg = '请求格式错误，请刷新页面后重试';
+                    } else if (response.status >= 500) {
+                        displayErrorMsg = '服务器内部错误，请稍后再试';
+                    }
+                    
+                    showStatus(displayErrorMsg, 'error');
+                    errorDetails.textContent = errorMsg;
+                }
+            } catch (error) {
+                log(`登录请求异常: ${error.message}`, 'error');
+                log(`异常类型: ${error.name}`, 'debug');
+                log(`异常堆栈: ${error.stack}`, 'debug');
+                
+                // 显示友好的错误信息
+                let friendlyError = '登录请求发生异常';
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    friendlyError = '无法连接到服务器，请检查网络连接';
+                }
+                
+                showStatus(`登录失败: ${friendlyError}`, 'error');
+                errorDetails.textContent = error.message;
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 表单提交事件
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showStatus('请输入用户名和密码', 'error');
+                return;
+            }
+            
+            // 确保API_BASE_URL已经被正确设置
+            if (!API_BASE_URL) {
+                API_BASE_URL = await getApiUrl();
+            }
+            
+            await login(username, password);
+        });
+        
+        // 数据同步检测和修复
+        function checkDataSync() {
+            log('开始数据同步检测...', 'info');
+            
+            // 检查存储键名一致性
+            const mobileKeys = ['token', 'auth_token', 'username'];
+            const webKeys = ['token', 'authToken', 'user', 'userInfo'];
+            
+            let mobileData = {};
+            let webData = {};
+            
+            // 检查移动端键名
+            mobileKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                mobileData[key] = value;
+                if (value) {
+                    log(`移动端键名 ${key}: 已设置`, 'info');
+                } else {
+                    log(`移动端键名 ${key}: 未设置`, 'warn');
+                }
+            });
+            
+            // 检查网页端键名
+            webKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                webData[key] = value;
+                if (value) {
+                    log(`网页端键名 ${key}: 已设置`, 'info');
+                } else {
+                    log(`网页端键名 ${key}: 未设置`, 'warn');
+                }
+            });
+            
+            // 检查API配置
+            const apiUrl = localStorage.getItem('apiBaseUrl');
+            if (apiUrl) {
+                log(`API配置: ${apiUrl}`, 'info');
+            } else {
+                log('API配置: 未设置', 'warn');
+            }
+            
+            // 检查数据一致性
+            const tokenConsistent = mobileData.token === webData.token;
+            const authConsistent = mobileData.auth_token === webData.authToken;
+            
+            // 安全地检查用户一致性，避免JSON解析错误
+            let userConsistent = false;
+            if (webData.user) {
+                try {
+                    const userObj = JSON.parse(webData.user);
+                    userConsistent = mobileData.username === userObj.username;
+                } catch (e) {
+                    // 如果解析失败，直接比较字符串
+                    userConsistent = mobileData.username === webData.user;
+                }
+            } else {
+                userConsistent = mobileData.username === null;
+            }
+            
+            log(`Token一致性: ${tokenConsistent ? '一致' : '不一致'}`, tokenConsistent ? 'success' : 'error');
+            log(`认证一致性: ${authConsistent ? '一致' : '不一致'}`, authConsistent ? 'success' : 'error');
+            log(`用户一致性: ${userConsistent ? '一致' : '不一致'}`, userConsistent ? 'success' : 'error');
+            
+            // 数据同步建议
+            log('数据同步建议:', 'info');
+            log('- 如果发现数据不一致，请重新登录以统一存储', 'info');
+            log('- 清除浏览器缓存可能导致数据丢失', 'info');
+            log('- 建议使用统一的数据同步工具进行修复', 'info');
+            
+            return {
+                mobileData,
+                webData,
+                apiUrl,
+                consistent: tokenConsistent && authConsistent && userConsistent
+            };
+        }
+        
+        // 修复数据同步
+        function fixDataSync() {
+            log('开始修复数据同步...', 'info');
+            
+            const syncResult = checkDataSync();
+            
+            if (syncResult.consistent) {
+                log('数据已经一致，无需修复', 'success');
+                return;
+            }
+            
+            // 获取当前有效的token和用户信息
+            const token = syncResult.mobileData.token || syncResult.webData.token || syncResult.mobileData.auth_token || syncResult.webData.authToken;
+            const username = syncResult.mobileData.username || (syncResult.webData.user ? JSON.parse(syncResult.webData.user).username : null);
+            
+            if (!token || !username) {
+                log('未找到有效的登录信息，请重新登录', 'error');
+                return;
+            }
+            
+            // 统一存储键名
+            log('正在统一存储键名...', 'info');
+            
+            // 设置统一的token
+            localStorage.setItem('token', token);
+            localStorage.setItem('authToken', token);
+            localStorage.setItem('auth_token', token);
+            
+            // 设置统一的用户信息
+            localStorage.setItem('user', username);
+            localStorage.setItem('username', username);
+            localStorage.setItem('userInfo', JSON.stringify({
+                username: username,
+                access_token: token
+            }));
+            
+            // 保存API配置
+            if (syncResult.apiUrl) {
+                localStorage.setItem('apiBaseUrl', syncResult.apiUrl);
+            }
+            
+            log('数据同步修复完成！', 'success');
+            log('建议重新加载页面以应用修复', 'info');
+            
+            // 显示修复结果
+            setTimeout(() => {
+                checkDataSync();
+            }, 1000);
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', async () => {
+            try {
+                // 先加载config.js配置
+                await loadConfig();
+                log('配置加载完成，开始初始化', 'info');
+            } catch (error) {
+                log(`配置加载失败: ${error.message}，使用默认配置`, 'warn');
+            }
+            
+            // 然后获取API地址并赋值给全局变量
+            API_BASE_URL = await getApiUrl();
+            // 然后测试连接
+            testConnection();
+            // 数据同步检测
+            checkDataSync();
+        });
+        
+        // 输入框回车事件
+        document.getElementById('username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('password').focus();
+            }
+        });
+        
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loginForm.dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        // 调试工具（已禁用，避免不必要的错误）
+    </script>
+</body>
+</html>

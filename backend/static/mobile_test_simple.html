@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端连接测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>移动端连接测试</h2>
+        <div id="status" class="status info">准备测试...</div>
+        <button onclick="testConnection()">测试连接</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testConnection() {
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            
+            status.textContent = '正在测试连接...';
+            status.className = 'status info';
+            
+            try {
+                // 直接使用服务器IP地址
+                const apiUrl = 'http://172.30.81.97:8000/health';
+                
+                result.innerHTML = `测试URL: ${apiUrl}<br>`;
+                
+                // 测试fetch请求
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    status.textContent = '连接成功！';
+                    status.className = 'status success';
+                    result.innerHTML += `响应状态: ${response.status}<br>`;
+                    result.innerHTML += `响应数据: ${JSON.stringify(data)}<br>`;
+                    result.innerHTML += `CORS头: ${response.headers.get('Access-Control-Allow-Origin') || '未设置'}<br>`;
+                } else {
+                    status.textContent = `HTTP错误: ${response.status}`;
+                    status.className = 'status error';
+                    result.innerHTML += `错误状态: ${response.status}<br>`;
+                }
+                
+            } catch (error) {
+                status.textContent = '连接失败';
+                status.className = 'status error';
+                result.innerHTML = `错误类型: ${error.name}<br>`;
+                result.innerHTML += `错误信息: ${error.message}<br>`;
+                result.innerHTML += `错误详情: ${error.stack || '无堆栈信息'}<br>`;
+                
+                // 检查是否是CORS错误
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    result.innerHTML += '<strong>可能是CORS错误或网络连接问题</strong><br>';
+                }
+            }
+        }
+        
+        // 页面加载时自动测试
+        window.addEventListener('load', () => {
+            setTimeout(testConnection, 1000);
+        });
+    </script>
+</body>
+</html>

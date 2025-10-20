@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网络连接诊断工具</title>
+    <script src="/config.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 实验室管理系统 - 网络连接诊断工具</h1>
+        
+        <div class="test-section">
+            <h2>📊 系统状态概览</h2>
+            <div id="systemStatus">
+                <div class="info">正在检测系统状态...</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🌐 网络连接测试</h2>
+            <button onclick="testConnections()">开始连接测试</button>
+            <div id="connectionResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 详细诊断信息</h2>
+            <button onclick="showNetworkInfo()">显示网络信息</button>
+            <div id="networkInfo"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🚀 快速访问链接</h2>
+            <div>
+                <button onclick="openApp('localhost')">打开应用 (localhost)</button>
+                <button onclick="openApp('ip')">打开应用 (IP地址)</button>
+                <button onclick="testAPI()">测试API连接</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>💡 问题解决方案</h2>
+            <div id="solutions">
+                <div class="info">
+                    <strong>常见解决方案：</strong><br>
+                    1. 确保前端和后端服务器都在运行<br>
+                    2. 检查防火墙设置，允许端口3000和8000<br>
+                    3. 确保设备连接到同一WiFi网络<br>
+                    4. 尝试重启服务器<br>
+                    5. 清除浏览器缓存
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 配置加载状态管理
+        let configLoaded = false;
+        let configLoadTimeout = null;
+        let configSource = '默认配置';
+
+        // 等待AppConfig加载完成
+        function waitForAppConfig(callback) {
+            if (window.AppConfig && (window.AppConfig.apiUrl || window.AppConfig.frontendUrl)) {
+                configLoaded = true;
+                configSource = 'config.js';
+                callback();
+            } else {
+                // 设置默认配置，以防config.js加载失败
+                if (!window.AppConfig) {
+                    const currentHost = window.location.hostname === 'localhost' || window.location.hostname === '' ? 'localhost' : window.location.hostname;
+                    window.AppConfig = {
+                        apiUrl: currentHost,
+                        apiPort: '8000',
+                        frontendPort: '3000'
+                    };
+                }
+                
+                // 尝试等待配置加载
+                setTimeout(() => waitForAppConfig(callback), 100);
+                
+                // 设置超时处理
+                if (!configLoadTimeout) {
+                    configLoadTimeout = setTimeout(() => {
+                        console.warn('配置加载超时，使用默认配置');
+                        configLoaded = true;
+                        configSource = '默认配置';
+                        callback();
+                    }, 3000);
+                }
+            }
+        }
+        
+        // 动态加载config.js
+        function loadConfigJs() {
+            return new Promise((resolve, reject) => {
+                // 检查config.js是否已经加载
+                if (document.querySelector('script[src="config.js"]')) {
+                    resolve();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = 'config.js';
+                script.onload = () => resolve();
+                script.onerror = () => {
+                    console.warn('config.js加载失败，将使用默认配置');
+                    reject(new Error('config.js加载失败'));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // 获取API基础URL
+        function getApiBaseUrl() {
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            
+            // 优先使用完整的apiUrl配置
+            if (window.AppConfig && window.AppConfig.apiUrl && window.AppConfig.apiUrl.includes('://')) {
+                return window.AppConfig.apiUrl;
+            }
+            
+            // 其次使用单独配置的apiUrl和apiPort
+            if (window.AppConfig) {
+                const host = window.AppConfig.apiUrl || window.location.hostname === '' ? 'localhost' : window.location.hostname;
+                const port = window.AppConfig.apiPort || '8000';
+                return `${protocol}//${host}:${port}`;
+            }
+            
+            // 最后使用当前页面的协议和主机名作为默认值
+            const currentHost = window.location.hostname === '' ? 'localhost' : window.location.hostname;
+            
+            // 避免在当前origin后重复添加端口号
+            if (window.location.port && window.location.port !== '80' && window.location.port !== '443') {
+                // 如果当前URL已经包含端口，尝试使用当前端口作为API端口
+                return `${protocol}//${currentHost}:${window.location.port}`;
+            }
+            
+            return `${protocol}//${currentHost}:8000`;
+        }
+
+        // 获取前端基础URL
+        function getFrontendBaseUrl() {
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            
+            // 优先使用完整的frontendUrl配置
+            if (window.AppConfig && window.AppConfig.frontendUrl && window.AppConfig.frontendUrl.includes('://')) {
+                return window.AppConfig.frontendUrl;
+            }
+            
+            // 其次使用单独配置的主机和端口
+            if (window.AppConfig) {
+                const host = window.location.hostname === '' ? 'localhost' : window.location.hostname;
+                const port = window.AppConfig.frontendPort || '3000';
+                return `${protocol}//${host}:${port}`;
+            }
+            
+            // 最后使用当前页面的协议和主机名作为默认值
+            const currentHost = window.location.hostname === '' ? 'localhost' : window.location.hostname;
+            
+            // 避免在当前origin后重复添加端口号
+            if (window.location.port && window.location.port !== '80' && window.location.port !== '443') {
+                // 如果当前URL已经包含端口，尝试使用当前端口作为前端端口
+                return `${protocol}//${currentHost}:${window.location.port}`;
+            }
+            
+            return `${protocol}//${currentHost}:3000`;
+        }
+
+        // 获取localhost前端地址
+        function getLocalhostFrontendUrl() {
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            const port = window.AppConfig && window.AppConfig.frontendPort ? window.AppConfig.frontendPort : '3000';
+            return `${protocol}//localhost:${port}`;
+        }
+        
+        // 显示配置信息
+        function showConfigInfo() {
+            // 检查是否已存在配置信息区域
+            if (document.getElementById('configInfo')) {
+                return;
+            }
+            
+            // 创建一个配置信息区域
+            const configSection = document.createElement('div');
+            configSection.id = 'configInfo';
+            configSection.className = 'test-section';
+            configSection.innerHTML = `
+                <h2><i class="bi bi-gear"></i> 配置信息</h2>
+                <pre>
+配置来源: ${configSource}
+API基础URL: ${getApiBaseUrl()}
+前端URL: ${getFrontendBaseUrl()}
+Localhost URL: ${getLocalhostFrontendUrl()}
+使用配置: ${configLoaded ? '已加载AppConfig' : '默认配置'}
+当前协议: ${window.location.protocol === 'https:' ? 'https:' : 'http:'}
+当前主机: ${window.location.hostname}
+当前端口: ${window.location.port || '默认'}
+                </pre>
+            `;
+            
+            // 将配置信息区域添加到页面顶部
+            const mainContainer = document.querySelector('.container');
+            const firstSection = mainContainer.querySelector('.test-section');
+            mainContainer.insertBefore(configSection, firstSection);
+        }
+        
+        // 获取当前网络信息
+        function showNetworkInfo() {
+            const info = {
+                'User Agent': navigator.userAgent,
+                '当前URL': window.location.href,
+                '协议': window.location.protocol,
+                '主机': window.location.host,
+                '端口': window.location.port || '默认',
+                '时间': new Date().toLocaleString(),
+                '语言': navigator.language,
+                '在线状态': navigator.onLine ? '在线' : '离线',
+                'API基础URL': getApiBaseUrl(),
+                '前端URL': getFrontendBaseUrl(),
+                'Localhost URL': getLocalhostFrontendUrl(),
+                '配置来源': configLoaded ? '已加载AppConfig' : '使用默认配置'
+            };
+            
+            let html = '<pre>';
+            for (const [key, value] of Object.entries(info)) {
+                html += `${key}: ${value}\n`;
+            }
+            html += '</pre>';
+            
+            document.getElementById('networkInfo').innerHTML = html;
+        }
+
+        // 测试连接
+        function testConnections() {
+            const results = document.getElementById('connectionResults');
+            results.innerHTML = '<div class="info">正在测试连接...</div>';
+            
+            waitForAppConfig(() => {
+                try {
+                    const apiBase = getApiBaseUrl();
+                    const frontendBase = getFrontendBaseUrl();
+                    const localhostFrontend = getLocalhostFrontendUrl();
+                    
+                    const tests = [
+                        { name: '后端健康检查', url: `${apiBase}/health` },
+                        { name: '前端应用 (IP)', url: frontendBase },
+                        { name: '前端应用 (localhost)', url: localhostFrontend },
+                        { name: 'API用户接口', url: `${apiBase}/api/users/me` }
+                    ];
+                
+                let html = '';
+                
+                for (const test of tests) {
+                    try {
+                        const startTime = Date.now();
+                        fetch(test.url, { 
+                            method: 'GET',
+                            mode: 'cors',
+                            cache: 'no-cache'
+                        })
+                        .then(response => {
+                            const endTime = Date.now();
+                            const responseTime = endTime - startTime;
+                            
+                            if (response.ok) {
+                                html += `<div class="success">✅ ${test.name}: 成功 (${response.status}) - ${responseTime}ms</div>`;
+                            } else {
+                                html += `<div class="warning">⚠️ ${test.name}: HTTP ${response.status} - ${responseTime}ms</div>`;
+                            }
+                        })
+                        .catch(error => {
+                            html += `<div class="error">❌ ${test.name}: 失败 - ${error.message}</div>`;
+                        });
+                    } catch (error) {
+                        html += `<div class="error">❌ ${test.name}: 失败 - ${error.message}</div>`;
+                    }
+                }
+                
+                // 添加配置来源显示
+                setTimeout(() => {
+                    html += `<div class="config-info">配置来源: ${configLoaded ? '已加载AppConfig' : '使用默认配置'}</div>`;
+                    results.innerHTML = html;
+                }, 1500);
+            } catch (error) {
+                results.innerHTML = `<div class="error">测试失败: ${error.message}</div>`;
+            });
+        }
+
+        // 测试API
+        async function testAPI() {
+            try {
+                // 确保AppConfig已经加载
+                await waitForAppConfig();
+                
+                const apiBase = getApiBaseUrl();
+                const response = await fetch(`${apiBase}/health`);
+                const data = await response.json();
+                alert(`API测试成功！\\n状态: ${data.status}\\n数据库: ${data.database}\\n时间: ${data.timestamp}\\nAPI地址: ${apiBase}`);
+            } catch (error) {
+                alert(`API测试失败: ${error.message}\\n请检查config.js文件是否正确配置`);
+            }
+        }
+
+        // 打开应用
+        function openApp(type) {
+            let url = '';
+            if (type === 'localhost') {
+                url = getLocalhostFrontendUrl();
+            } else {
+                url = getFrontendBaseUrl();
+            }
+            
+            window.open(url, '_blank');
+        }
+
+        // 页面加载时自动检测
+        window.onload = function() {
+            // 尝试动态加载config.js
+            loadConfigJs().catch(() => {
+                // config.js加载失败，创建默认配置
+                if (!window.AppConfig) {
+                    const currentHost = window.location.hostname === 'localhost' || window.location.hostname === '' ? 'localhost' : window.location.hostname;
+                    window.AppConfig = {
+                        apiUrl: currentHost,
+                        apiPort: '8000',
+                        frontendPort: '3000'
+                    };
+                }
+            }).finally(() => {
+                // 等待配置加载完成后再初始化
+                waitForAppConfig(() => {
+                    try {
+                        // 显示配置信息
+                        showConfigInfo();
+                        
+                        showNetworkInfo();
+                        
+                        // 显示系统状态
+                        const status = document.getElementById('systemStatus');
+                        
+                        const apiBase = getApiBaseUrl();
+                        const frontendBase = getFrontendBaseUrl();
+                        const localhostFrontend = getLocalhostFrontendUrl();
+                        const currentHost = window.location.hostname;
+                        
+                        let configInfo = `
+                            <div class="info">
+                                <strong>当前配置:</strong><br>
+                                前端地址: ${frontendBase}<br>
+                                后端地址: ${apiBase}<br>
+                                本地访问: ${localhostFrontend}<br>
+                                配置来源: ${configSource}
+                            </div>
+                        `;
+                        
+                        // 如果使用localhost访问，显示提示
+                        if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+                            configInfo += `
+                                <div class="warning">
+                                    <strong>⚠️ 注意:</strong><br>
+                                    当前使用localhost访问，手机无法通过此地址连接。<br>
+                                    请使用电脑的实际IP地址访问此页面。
+                                </div>
+                            `;
+                        }
+                        
+                        status.innerHTML = configInfo;
+                        
+                        // 自动运行连接测试
+                        setTimeout(testConnections, 1000);
+                    } catch (error) {
+                        console.error('初始化失败:', error);
+                    }
+                });
+            });
+        };
+    </script>
+</body>
+</html>

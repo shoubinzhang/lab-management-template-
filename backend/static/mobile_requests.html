@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的申请 - 实验室管理系统</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css?v=2" rel="stylesheet">
+    <!-- 引入Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="mobile_nav_styles.css?v=2" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 引入Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- 引入配置文件 -->
+    <script src="/static/js/config.js"></script>
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#6b7280',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#3b82f6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- 自定义样式 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .card-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white nav-shadow fixed top-0 left-0 right-0 z-30">
+        <div class="flex items-center justify-between px-4 py-3">
+            <div class="flex items-center">
+                <button id="back-button" class="mr-4 text-gray-600">
+                    <i class="fa fa-arrow-left text-xl"></i>
+                </button>
+                <h1 class="text-lg font-semibold text-gray-800">我的申请</h1>
+            </div>
+            <button id="refresh-button" class="text-gray-600">
+                <i class="fa fa-refresh text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- 状态切换选项卡 -->
+        <div class="flex px-4 border-b">
+            <button class="status-tab px-4 py-2 font-medium text-primary border-b-2 border-primary" data-status="all">全部</button>
+            <button class="status-tab px-4 py-2 font-medium text-gray-500" data-status="pending">待审批</button>
+            <button class="status-tab px-4 py-2 font-medium text-gray-500" data-status="approved">已批准</button>
+            <button class="status-tab px-4 py-2 font-medium text-gray-500" data-status="rejected">已拒绝</button>
+            <button class="status-tab px-4 py-2 font-medium text-gray-500" data-status="completed">已完成</button>
+        </div>
+    </header>
+
+    <!-- 主内容区域 -->
+    <main class="pt-28 pb-20 px-4">
+        <!-- 申请列表 -->
+        <div id="request-list" class="space-y-4">
+            <!-- 申请卡片将在这里动态生成 -->
+        </div>
+        
+        <!-- 空状态提示 -->
+        <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 text-gray-500">
+            <i class="fa fa-clipboard text-6xl mb-4 text-gray-300"></i>
+            <p class="text-lg">暂无申请记录</p>
+            <p class="text-sm mt-2">您还没有提交任何申请</p>
+        </div>
+        
+        <!-- 加载中状态 -->
+        <div id="loading-state" class="flex flex-col items-center justify-center py-16 text-gray-500">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">加载中...</span>
+            </div>
+            <p class="mt-4">正在加载申请记录...</p>
+        </div>
+    </main>
+
+    <!-- 底部导航栏 - 统一所有按钮在一排 -->
+    <nav class="bottom-nav">
+        <a href="/static/mobile_index.html" class="nav-item">
+            <i class="bi bi-house"></i>
+            <span>首页</span>
+        </a>
+        <a href="/static/mobile_devices.html" class="nav-item">
+            <i class="bi bi-microchip"></i>
+            <span>设备</span>
+        </a>
+        <a href="/static/mobile_reagents.html" class="nav-item">
+            <i class="bi bi-flask"></i>
+            <span>试剂</span>
+        </a>
+        <a href="/static/mobile_consumables.html" class="nav-item">
+            <i class="bi bi-cart"></i>
+            <span>耗材</span>
+        </a>
+        <a href="/static/mobile_scan.html" class="nav-item">
+            <i class="bi bi-qr-code-scan"></i>
+            <span>扫码</span>
+        </a>
+        <a href="/static/mobile_reservations.html" class="nav-item">
+            <i class="bi bi-calendar-check"></i>
+            <span>预约</span>
+        </a>
+        <a href="/static/mobile_maintenance.html" class="nav-item">
+            <i class="bi bi-tools"></i>
+            <span>维护</span>
+        </a>
+        <a href="/static/mobile_user.html" class="nav-item">
+            <i class="bi bi-person"></i>
+            <span>用户</span>
+        </a>
+    </nav>
+    
+    <style>
+        /* 功能扩展区样式 */
+        .feature-item {
+            padding: 8px 12px;
+            transition: all 0.3s ease;
+        }
+        .feature-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+        .feature-item.text-primary {
+            background-color: rgba(22, 93, 255, 0.08);
+            border-radius: 8px;
+        }
+    </style>
+
+    <!-- 申请详情模态框 -->
+    <div class="modal fade" id="requestDetailModal" tabindex="-1" aria-labelledby="requestDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="requestDetailModalLabel">申请详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="request-detail-content">
+                    <!-- 申请详情内容将动态生成 -->
+                </div>
+                <div class="modal-footer" id="request-actions">
+                    <!-- 操作按钮将动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // 全局变量
+        let currentStatus = 'all';
+        let requestList = [];
+        const requestDetailModal = new bootstrap.Modal(document.getElementById('requestDetailModal'));
+        let selectedRequest = null;
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化事件监听
+            initEventListeners();
+            
+            // 加载申请数据
+            loadMyRequests(currentStatus);
+        });
+
+        // 初始化事件监听
+        function initEventListeners() {
+            // 返回按钮事件
+            document.getElementById('back-button').addEventListener('click', function() {
+                window.location.href = '/static/mobile_dashboard.html';
+            });
+            
+            // 刷新按钮事件
+            document.getElementById('refresh-button').addEventListener('click', function() {
+                loadMyRequests(currentStatus);
+            });
+            
+            // 状态选项卡事件
+            document.querySelectorAll('.status-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有选项卡的激活状态
+                    document.querySelectorAll('.status-tab').forEach(t => {
+                        t.classList.remove('text-primary', 'border-primary');
+                        t.classList.add('text-gray-500');
+                    });
+                    
+                    // 设置当前选项卡为激活状态
+                    this.classList.remove('text-gray-500');
+                    this.classList.add('text-primary', 'border-primary');
+                    
+                    // 更新当前状态并重新加载数据
+                    currentStatus = this.dataset.status;
+                    loadMyRequests(currentStatus);
+                });
+            });
+        }
+
+        // 加载我的申请记录
+        function loadMyRequests(status = 'all') {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = '/static/mobile_login.html';
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('request-list').classList.add('hidden');
+            
+            // 构建API URL
+            let apiUrl = AppConfig.getApiUrl('requests/my');
+            if (status !== 'all') {
+                apiUrl += `?status=${status}`;
+            }
+            
+            fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                requestList = data.requests || [];
+                renderRequestList(requestList);
+            })
+            .catch(error => {
+                console.error('加载申请记录失败:', error);
+                // 显示模拟数据用于演示
+                showMockData();
+            })
+            .finally(() => {
+                document.getElementById('loading-state').classList.add('hidden');
+            });
+        }
+
+        // 显示模拟数据（用于演示）
+        function showMockData() {
+            requestList = [
+                {
+                    id: 1,
+                    type: '设备借用',
+                    title: '显微镜借用申请',
+                    description: '用于细胞观察实验',
+                    status: 'pending',
+                    createTime: '2024-01-15 10:30:00',
+                    applicant: '张三',
+                    department: '生物实验室'
+                },
+                {
+                    id: 2,
+                    type: '耗材申请',
+                    title: '试管申请',
+                    description: '需要50支试管进行实验',
+                    status: 'approved',
+                    createTime: '2024-01-14 14:20:00',
+                    applicant: '李四',
+                    department: '化学实验室'
+                },
+                {
+                    id: 3,
+                    type: '试剂申请',
+                    title: '乙醇申请',
+                    description: '需要500ml乙醇用于消毒',
+                    status: 'rejected',
+                    createTime: '2024-01-13 09:15:00',
+                    applicant: '王五',
+                    department: '物理实验室'
+                }
+            ];
+            renderRequestList(requestList);
+        }
+
+        // 渲染申请列表
+        function renderRequestList(requests) {
+            const requestListElement = document.getElementById('request-list');
+            const emptyStateElement = document.getElementById('empty-state');
+            
+            if (requests.length === 0) {
+                requestListElement.classList.add('hidden');
+                emptyStateElement.classList.remove('hidden');
+                return;
+            }
+            
+            requestListElement.innerHTML = '';
+            
+            requests.forEach(request => {
+                const requestCard = createRequestCard(request);
+                requestListElement.appendChild(requestCard);
+            });
+            
+            requestListElement.classList.remove('hidden');
+            emptyStateElement.classList.add('hidden');
+        }
+
+        // 创建申请卡片
+        function createRequestCard(request) {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-lg shadow-sm border border-gray-200 p-4 card-shadow';
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(request.status)}">
+                            ${getStatusText(request.status)}
+                        </span>
+                        <span class="ml-2 text-sm text-gray-500">${request.type}</span>
+                    </div>
+                    <span class="text-sm text-gray-400">${formatDate(request.createTime)}</span>
+                </div>
+                
+                <h3 class="font-medium text-gray-900 mb-2">${request.title}</h3>
+                <p class="text-sm text-gray-600 mb-3">${request.description}</p>
+                
+                <div class="flex justify-between items-center">
+                    <div class="text-sm text-gray-500">
+                        <span>申请人: ${request.applicant}</span>
+                        <span class="mx-2">•</span>
+                        <span>部门: ${request.department}</span>
+                    </div>
+                    <button class="text-primary text-sm font-medium view-detail-btn" data-id="${request.id}">
+                        查看详情
+                    </button>
+                </div>
+            `;
+            
+            // 添加查看详情事件
+            card.querySelector('.view-detail-btn').addEventListener('click', function() {
+                showRequestDetail(request.id);
+            });
+            
+            return card;
+        }
+
+        // 显示申请详情
+        function showRequestDetail(requestId) {
+            const request = requestList.find(r => r.id === requestId);
+            if (!request) return;
+            
+            selectedRequest = request;
+            
+            // 填充详情内容
+            const detailContent = document.getElementById('request-detail-content');
+            detailContent.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">申请类型:</span>
+                        <span>${request.type}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">申请标题:</span>
+                        <span>${request.title}</span>
+                    </div>
+                    <div>
+                        <span class="font-medium">申请描述:</span>
+                        <p class="mt-1 text-gray-600">${request.description}</p>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">申请人:</span>
+                        <span>${request.applicant}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">部门:</span>
+                        <span>${request.department}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">申请时间:</span>
+                        <span>${formatDate(request.createTime)}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">当前状态:</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(request.status)}">
+                            ${getStatusText(request.status)}
+                        </span>
+                    </div>
+                </div>
+            `;
+            
+            // 设置操作按钮
+            const actionsElement = document.getElementById('request-actions');
+            actionsElement.innerHTML = '';
+            
+            if (request.status === 'pending') {
+                actionsElement.innerHTML = `
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-danger" onclick="cancelRequest(${request.id})">取消申请</button>
+                `;
+            } else {
+                actionsElement.innerHTML = `
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                `;
+            }
+            
+            requestDetailModal.show();
+        }
+
+        // 取消申请
+        function cancelRequest(requestId) {
+            if (!confirm('确定要取消这个申请吗？')) {
+                return;
+            }
+            
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                alert('请先登录');
+                return;
+            }
+            
+            fetch(AppConfig.getApiUrl(`requests/${requestId}/cancel`), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('取消申请失败');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('申请已取消');
+                requestDetailModal.hide();
+                loadMyRequests(currentStatus);
+            })
+            .catch(error => {
+                console.error('取消申请失败:', error);
+                alert('取消申请失败，请重试');
+            });
+        }
+
+        // 获取状态对应的CSS类
+        function getStatusClass(status) {
+            switch (status) {
+                case 'pending': return 'bg-yellow-100 text-yellow-800';
+                case 'approved': return 'bg-green-100 text-green-800';
+                case 'rejected': return 'bg-red-100 text-red-800';
+                case 'completed': return 'bg-blue-100 text-blue-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // 获取状态文本
+        function getStatusText(status) {
+            switch (status) {
+                case 'pending': return '待审批';
+                case 'approved': return '已批准';
+                case 'rejected': return '已拒绝';
+                case 'completed': return '已完成';
+                default: return '未知';
+            }
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+    </script>
+</body>
+</html>

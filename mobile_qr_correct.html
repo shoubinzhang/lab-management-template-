@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端二维码访问指南</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+        
+        .qr-section {
+            margin: 30px 0;
+        }
+        
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            background: #f0f0f0;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+        }
+        
+        .url-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        
+        .instructions {
+            text-align: left;
+            margin: 20px 0;
+        }
+        
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 10px 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .network-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 移动端二维码访问</h1>
+        
+        <div class="status status-success">
+            ✅ 后端服务器运行正常 (端口8000)
+        </div>
+        
+        <div class="status status-error">
+            ⚠️ 前端服务器没有移动端页面 (端口3000)
+        </div>
+        
+        <div class="qr-section">
+            <h2>正确的二维码访问地址</h2>
+            <div class="qr-code">
+                <span style="color: #666;">请使用手机扫描此区域</span>
+            </div>
+            <div class="url-display" id="correctUrl">
+                http://172.30.81.97:8000/mobile_login_final
+            </div>
+            <button class="btn" onclick="copyUrl()">复制地址</button>
+            <button class="btn" onclick="testUrl()">测试连接</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>使用说明：</h3>
+            <ol>
+                <li><strong>使用手机扫描上方的二维码区域</strong></li>
+                <li><strong>或者手动输入地址</strong>：http://172.30.81.97:8000/mobile_login_final</li>
+                <li><strong>确保手机和电脑在同一网络</strong></li>
+                <li><strong>如果无法连接，请检查防火墙设置</strong></li>
+            </ol>
+        </div>
+        
+        <div class="network-info">
+            <h3>网络信息：</h3>
+            <p><strong>电脑IP地址</strong>: 172.30.81.97</p>
+            <p><strong>后端服务端口</strong>: 8000</p>
+            <p><strong>移动端登录页面</strong>: /mobile_login_final</p>
+            <p><strong>数据同步指南</strong>: /mobile_data_sync_guide</p>
+        </div>
+        
+        <div class="instructions">
+            <h3>其他访问方式：</h3>
+            <p>如果上述地址无法访问，请尝试：</p>
+            <ul>
+                <li><a href="http://localhost:8000/mobile_login_final" target="_blank">本地访问</a></li>
+                <li><a href="http://172.30.81.97:8000/mobile_access_friendly" target="_blank">访问助手页面</a></li>
+                <li><a href="http://172.30.81.97:8000/mobile_data_sync_guide" target="_blank">数据同步指南</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // 复制URL到剪贴板
+        function copyUrl() {
+            const url = document.getElementById('correctUrl').textContent;
+            navigator.clipboard.writeText(url).then(function() {
+                alert('地址已复制到剪贴板！');
+            }, function(err) {
+                console.error('复制失败: ', err);
+            });
+        }
+        
+        // 测试URL连接
+        function testUrl() {
+            const url = document.getElementById('correctUrl').textContent;
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        alert('✅ 连接测试成功！页面可以正常访问。');
+                    } else {
+                        alert('⚠️ 连接测试失败，状态码: ' + response.status);
+                    }
+                })
+                .catch(error => {
+                    alert('❌ 连接测试失败: ' + error.message);
+                });
+        }
+        
+        // 页面加载时显示当前网络信息
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取当前主机信息
+            const hostname = window.location.hostname;
+            const port = window.location.port;
+            
+            console.log('当前访问信息:', {
+                hostname: hostname,
+                port: port,
+                fullUrl: window.location.href
+            });
+        });
+    </script>
+</body>
+</html>

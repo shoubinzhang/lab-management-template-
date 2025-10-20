@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实验室管理系统 - 手机访问指南</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        h1 {
+            color: #ffcc00;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .qr-code-container {
+            text-align: center;
+            margin: 20px 0;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .qr-code-container img {
+            max-width: 250px;
+            height: auto;
+        }
+        .url-display {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            color: #00cc66;
+        }
+        .btn-primary {
+            background-color: #17a2b8;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #138496;
+            transform: translateY(-2px);
+        }
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .instructions h4 {
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+        .instructions ul {
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        .status-message {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .loading {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-mobile-alt"></i> 手机访问指南</h1>
+        
+        <div id="statusMessage" class="status-message loading">正在获取正确的访问地址...</div>
+        
+        <div id="qrContainer" class="qr-code-container" style="display: none;">
+            <img id="qrcode" src="" alt="手机访问二维码">
+        </div>
+        
+        <div id="urlContainer" class="url-display" style="display: none;">
+            <strong>访问地址:</strong> <span id="mobileUrl"></span>
+        </div>
+        
+        <div class="text-center mt-4">
+            <button id="refreshBtn" class="btn btn-primary" disabled>
+                <i class="fas fa-sync-alt"></i> 刷新二维码
+            </button>
+        </div>
+        
+        <div class="instructions">
+            <h4>使用说明</h4>
+            <ul>
+                <li>确保手机和电脑连接到同一网络</li>
+                <li>使用手机相机或扫描工具扫描上方二维码</li>
+                <li>自动跳转到实验室管理系统移动端登录页面</li>
+                <li>登录后即可在手机上使用系统功能</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusMessage = document.getElementById('statusMessage');
+            const qrContainer = document.getElementById('qrContainer');
+            const urlContainer = document.getElementById('urlContainer');
+            const qrcode = document.getElementById('qrcode');
+            const mobileUrlDisplay = document.getElementById('mobileUrl');
+            const refreshBtn = document.getElementById('refreshBtn');
+            
+            // 生成手机访问二维码
+            function generateMobileQRCode() {
+                statusMessage.textContent = '正在获取正确的访问地址...';
+                statusMessage.className = 'status-message loading';
+                qrContainer.style.display = 'none';
+                urlContainer.style.display = 'none';
+                refreshBtn.disabled = true;
+                
+                try {
+                    // 获取本机IP地址（直接使用系统环境中的IP地址）
+                    // 这里直接使用已知的IP地址，避免WebRTC获取可能出现的延迟
+                    const ipAddress = '172.30.81.103'; // 系统当前的IP地址
+                    const port = '8000'; // 后端服务端口
+                    const protocol = 'http:';
+                    const mobileUrl = `${protocol}//${ipAddress}:${port}/mobile_login`;
+                    
+                    console.log('生成的二维码URL:', mobileUrl);
+                    
+                    // 生成二维码图片
+                    const qrSize = 250;
+                    const qrServiceUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(mobileUrl)}`;
+                    
+                    // 验证二维码图片
+                    const img = new Image();
+                    img.onload = function() {
+                        qrcode.src = qrServiceUrl;
+                        mobileUrlDisplay.textContent = mobileUrl;
+                        statusMessage.textContent = '二维码生成成功';
+                        statusMessage.className = 'status-message success';
+                        qrContainer.style.display = 'block';
+                        urlContainer.style.display = 'block';
+                        refreshBtn.disabled = false;
+                    };
+                    img.onerror = function() {
+                        statusMessage.textContent = '二维码生成失败，请稍后重试';
+                        statusMessage.className = 'status-message error';
+                        refreshBtn.disabled = false;
+                    };
+                    img.src = qrServiceUrl;
+                } catch (error) {
+                    console.error('生成二维码时发生错误:', error);
+                    statusMessage.textContent = '生成二维码时发生错误';
+                    statusMessage.className = 'status-message error';
+                    refreshBtn.disabled = false;
+                }
+            }
+            
+            // 绑定刷新按钮事件
+            refreshBtn.addEventListener('click', generateMobileQRCode);
+            
+            // 初始生成二维码
+            generateMobileQRCode();
+        });
+    </script>
+</body>
+</html>

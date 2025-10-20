@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>移动端登录测试 - 最终版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: auto;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .test-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .test-button {
+            background: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .test-button.connection {
+            background: #2196F3;
+        }
+        
+        .test-button.device {
+            background: #FF9800;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .result.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+        
+        .result.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #f44336;
+        }
+        
+        .result.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #2196f3;
+        }
+        
+        .device-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .device-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .info-item {
+            margin-bottom: 5px;
+            color: #666;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+    <script src="/config.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 移动端登录测试</h1>
+        
+        <div class="device-info">
+            <h3>📱 设备信息</h3>
+            <div id="deviceInfo">
+                <div class="loading"></div>
+            </div>
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" value="admin" required>
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" value="admin123" required>
+            </div>
+            <button type="submit">登录</button>
+        </form>
+        
+        <div class="test-section">
+            <button class="test-button connection" onclick="testConnection()">测试网络连接</button>
+            <button class="test-button device" onclick="getDeviceInfo()">刷新设备信息</button>
+            <button class="test-button" onclick="testFullLogin()">完整登录测试</button>
+        </div>
+        
+        <div id="result" class="result hidden"></div>
+    </div>
+
+    <script>
+        let AppConfig = {};
+
+        // 等待AppConfig加载完成
+        function waitForAppConfig() {
+            return new Promise((resolve) => {
+                if (typeof window.AppConfig !== 'undefined') {
+                    AppConfig = window.AppConfig;
+                    resolve();
+                } else {
+                    const checkInterval = setInterval(() => {
+                        if (typeof window.AppConfig !== 'undefined') {
+                            clearInterval(checkInterval);
+                            AppConfig = window.AppConfig;
+                            resolve();
+                        }
+                    }, 50);
+                }
+            });
+        }
+
+        // 获取API地址
+        function getApiUrl() {
+            // 确保AppConfig已经加载
+            if (typeof AppConfig === 'undefined') {
+                console.log('AppConfig尚未加载，使用默认配置');
+                const protocol = window.location.protocol;
+                const hostname = window.location.hostname;
+                const defaultUrl = `${protocol}//${hostname}:8000`;
+                console.log(`使用默认API URL: ${defaultUrl}`);
+                return defaultUrl;
+            }
+            
+            const apiBaseUrl = AppConfig.api.baseUrl;
+            console.log(`使用AppConfig配置的API基础地址: ${apiBaseUrl}`);
+            return apiBaseUrl;
+        }
+
+        // 显示结果
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // 获取设备信息
+        function getDeviceInfo() {
+            const deviceInfo = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+                isTouchDevice: 'ontouchstart' in window,
+                connection: navigator.connection ? {
+                    effectiveType: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink
+                } : null,
+                apiUrl: getApiUrl(),
+                timestamp: new Date().toLocaleString('zh-CN')
+            };
+
+            const deviceInfoDiv = document.getElementById('deviceInfo');
+            deviceInfoDiv.innerHTML = `
+                <div class="info-item"><strong>用户代理:</strong> ${deviceInfo.userAgent}</div>
+                <div class="info-item"><strong>平台:</strong> ${deviceInfo.platform}</div>
+                <div class="info-item"><strong>屏幕:</strong> ${deviceInfo.screenWidth}x${deviceInfo.screenHeight}</div>
+                <div class="info-item"><strong>窗口:</strong> ${deviceInfo.windowWidth}x${deviceInfo.windowHeight}</div>
+                <div class="info-item"><strong>移动设备:</strong> ${deviceInfo.isMobile ? '是' : '否'}</div>
+                <div class="info-item"><strong>触摸设备:</strong> ${deviceInfo.isTouchDevice ? '是' : '否'}</div>
+                <div class="info-item"><strong>网络类型:</strong> ${deviceInfo.connection ? deviceInfo.connection.effectiveType : '未知'}</div>
+                <div class="info-item"><strong>API地址:</strong> ${deviceInfo.apiUrl}</div>
+                <div class="info-item"><strong>时间:</strong> ${deviceInfo.timestamp}</div>
+            `;
+
+            return deviceInfo;
+        }
+
+        // 测试网络连接
+        async function testConnection() {
+            showResult('正在测试网络连接...', 'info');
+            
+            try {
+                // 等待AppConfig加载完成
+                await waitForAppConfig();
+                
+                const apiUrl = getApiUrl();
+                const healthUrl = AppConfig.getApiUrl('health');
+                
+                const response = await fetch(healthUrl);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ 网络连接成功！<br>服务器状态: ${data.status}<br>时间: ${new Date().toLocaleString('zh-CN')}`, 'success');
+                } else {
+                    showResult(`❌ 网络连接失败<br>状态码: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ 网络连接失败<br>错误: ${error.message}<br><br>请检查:<br>1. 手机和电脑是否在同一WiFi<br>2. 防火墙设置<br>3. 后端服务是否运行<br>4. AppConfig配置是否正确`, 'error');
+            }
+        }
+
+        // 完整登录测试
+        async function testFullLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            showResult('正在进行完整登录测试...', 'info');
+            
+            // 等待AppConfig加载完成
+            await waitForAppConfig();
+            
+            const apiUrl = getApiUrl();
+            const loginUrl = AppConfig.getApiUrl('auth/login');
+            
+            try {
+                // 步骤1: 测试登录
+                showResult('步骤1: 正在登录...', 'info');
+                
+                const loginResponse = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'User-Agent': navigator.userAgent
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!loginResponse.ok) {
+                    const errorData = await loginResponse.text();
+                    throw new Error(`登录失败: ${loginResponse.status} - ${errorData}`);
+                }
+
+                const loginData = await loginResponse.json();
+                const token = loginData.access_token;
+                
+                if (!token) {
+                    throw new Error('未获取到访问令牌');
+                }
+
+                showResult('✅ 登录成功！正在测试用户信息...', 'success');
+
+                // 步骤2: 测试获取用户信息
+                const userUrl = AppConfig.getApiUrl('auth/me');
+                const userResponse = await fetch(userUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'User-Agent': navigator.userAgent
+                    }
+                });
+
+                if (!userResponse.ok) {
+                    throw new Error(`获取用户信息失败: ${userResponse.status}`);
+                }
+
+                const userData = await userResponse.json();
+                
+                // 步骤3: 测试其他端点
+                showResult('✅ 用户信息获取成功！正在测试其他功能...', 'success');
+                
+                const endpoints = [
+                    { name: '设备列表', url: AppConfig.getApiUrl('devices') },
+                    { name: '试剂列表', url: AppConfig.getApiUrl('reagents') }
+                ];
+                
+                const endpointResults = [];
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(endpoint.url, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'User-Agent': navigator.userAgent
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            endpointResults.push(`✅ ${endpoint.name}: ${data.length || 0} 条记录`);
+                        } else {
+                            endpointResults.push(`⚠️ ${endpoint.name}: ${response.status}`);
+                        }
+                    } catch (error) {
+                        endpointResults.push(`❌ ${endpoint.name}: ${error.message}`);
+                    }
+                }
+
+                const successMessage = `
+                    ✅ 完整登录测试通过！<br><br>
+                    <strong>登录信息:</strong><br>
+                    用户名: ${userData.username}<br>
+                    角色: ${userData.role}<br>
+                    Token: ${token.substring(0, 30)}...<br><br>
+                    <strong>功能测试:</strong><br>
+                    ${endpointResults.join('<br>')}
+                `;
+                
+                showResult(successMessage, 'success');
+                
+            } catch (error) {
+                showResult(`❌ 完整登录测试失败<br>错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 表单提交处理
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            showResult('正在登录...', 'info');
+            
+            try {
+                // 等待AppConfig加载完成
+                await waitForAppConfig();
+                
+                const apiUrl = getApiUrl();
+                const loginUrl = AppConfig.getApiUrl('auth/login');
+                
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'User-Agent': navigator.userAgent
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(`✅ 登录成功！<br>Token: ${data.access_token.substring(0, 30)}...`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult(`❌ 登录失败<br>状态码: ${response.status}<br>错误: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ 登录请求失败<br>错误: ${error.message}`, 'error');
+            }
+        });
+
+        // 页面加载时获取设备信息
+        window.addEventListener('load', async () => {
+            try {
+                // 等待AppConfig加载完成
+                await waitForAppConfig();
+                
+                getDeviceInfo();
+                
+                // 如果是移动设备，显示提示
+                const deviceInfo = getDeviceInfo();
+                if (deviceInfo.isMobile) {
+                    showResult('📱 检测到移动设备！请确保手机和电脑在同一WiFi网络下。', 'info');
+                }
+            } catch (error) {
+                console.error('AppConfig加载失败:', error);
+                getDeviceInfo(); // 即使AppConfig加载失败，也显示设备信息
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+/* 关键的Bootstrap Icons样式，确保图标能正常显示 */
+.bi::before {
+    display: inline-block;
+    content: var(--bs-icon);
+    font-family: bootstrap-icons !important;
+    font-style: normal;
+    font-weight: normal !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    vertical-align: -.125em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Bi图标类定义 - 合并重复的图标定义 */
+.bi-house::before { content: "\f3df"; }
+.bi-microchip::before { content: "\f67d"; }
+.bi-flask::before { content: "\f52c"; }
+.bi-cart::before { content: "\f23d"; }
+.bi-qr-code-scan::before { content: "\f721"; }
+.bi-calendar-check::before { content: "\f271"; }
+.bi-tools::before { content: "\f52a"; }
+.bi-person::before { content: "\f471"; }
+
+/* 确保页面底部有足够的空间容纳导航栏 */
+body {
+    padding-bottom: 65px;
+    margin: 0;
+    min-height: 100vh;
+}
+
+/* 移除功能扩展区的样式，因为所有按钮现在都整合到底部导航栏 */
+.function-extension {
+    display: none !important;
+}
+
+/* 增强的底部导航栏样式，确保所有8个按钮均匀分布 - 增强特异性 */
+body nav.bottom-nav {
+    /* 基础定位与背景 */
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+    
+    /* 布局与间距 - 关键：使用space-around实现均匀分布 */
+    display: flex !important;
+    justify-content: space-around !important; /* 关键：让8个按钮均匀分布 */
+    align-items: center !important;
+    padding: 8px 5px !important; /* 优化内边距 */
+    
+    /* 显示与层级 */
+    z-index: 9999 !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1) !important;
+    
+    /* 尺寸控制 - 增加高度以容纳更多内容 */
+    height: 70px !important;
+    flex-wrap: nowrap !important;
+    
+    /* 移除横向滚动，使用弹性布局 */
+    overflow: hidden !important;
+    
+    /* 确保内容不会被截断 */
+    contain: size !important;
+    
+    /* 防止内联样式覆盖 */
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* 增强滚动条显示，明确提示用户可以横向滚动 */
+body nav.bottom-nav::-webkit-scrollbar {
+    height: 6px !important;
+    visibility: visible !important;
+}
+
+body nav.bottom-nav::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 10px !important;
+}
+
+body nav.bottom-nav::-webkit-scrollbar-thumb {
+    background: #667eea !important;
+    border-radius: 10px !important;
+    opacity: 0.8 !important;
+}
+
+body nav.bottom-nav::-webkit-scrollbar-thumb:hover {
+    background: #764ba2 !important;
+    opacity: 1 !important;
+}
+
+/* 确保在iOS设备上也能显示滚动条 */
+body nav.bottom-nav {
+    -ms-overflow-style: scrollbar !important;
+    scrollbar-width: thin !important;
+}
+
+/* 导航项样式 - 优化8个按钮布局 - 增强特异性 */
+body nav.bottom-nav a.nav-item {
+    /* 基础样式 */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    color: #666 !important;
+    
+    /* 优化尺寸 - 使用弹性宽度以适应不同屏幕尺寸 */
+    min-width: 45px !important;
+    max-width: 60px !important;
+    width: auto !important;
+    flex: 1 !important; /* 关键：让所有按钮均匀分布 */
+    height: 100% !important;
+    
+    /* 间距控制 */
+    margin: 0 2px !important;
+    padding: 5px 0 !important;
+    flex-shrink: 1 !important; /* 允许适当收缩 */
+    
+    /* 添加触摸反馈 */
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    position: relative !important;
+}
+
+/* 添加触摸反馈 */
+body nav.bottom-nav a.nav-item:active {
+    transform: scale(0.98) !important;
+    background: rgba(102, 126, 234, 0.1) !important;
+    border-radius: 10px !important;
+}
+
+/* 图标样式优化 */
+body nav.bottom-nav a.nav-item i {
+    font-size: 1.3rem !important;
+    margin-bottom: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+}
+
+/* 文字样式优化 - 确保在小空间内清晰显示 */
+body nav.bottom-nav a.nav-item span {
+    font-size: 0.55rem !important; /* 优化字体大小 */
+    display: block !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.05em !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+}
+
+/* 活动项样式 */
+body nav.bottom-nav a.nav-item.active {
+    color: #667eea !important;
+    font-weight: 500 !important;
+}
+
+/* 响应式优化 - 针对超小屏幕尺寸进行调整 */
+@media (max-width: 320px) {
+    body nav.bottom-nav a.nav-item {
+        min-width: 48px !important;
+        max-width: 48px !important;
+        width: 48px !important;
+        margin: 0 3px !important;
+    }
+    
+    body nav.bottom-nav a.nav-item span {
+        font-size: 0.48rem !important;
+    }
+    
+    body nav.bottom-nav a.nav-item i {
+        font-size: 1.15rem !important;
+        width: 24px !important;
+        height: 24px !important;
+    }
+}
+
+/* 响应式优化 - 确保在小屏幕设备上也能均匀分布 */
+@media (max-width: 768px) {
+    body nav.bottom-nav {
+        /* 保持均匀分布布局 */
+        justify-content: space-around !important;
+        padding: 8px 3px !important;
+        
+        /* 确保在移动设备上正常显示 */
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        
+        /* 防止任何可能的样式覆盖 */
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+    }
+    
+    /* 进一步优化超小屏幕的按钮尺寸 */
+    @media (max-width: 320px) {
+        body nav.bottom-nav a.nav-item {
+            min-width: 40px !important;
+            max-width: 50px !important;
+            margin: 0 1px !important;
+        }
+        
+        body nav.bottom-nav a.nav-item span {
+            font-size: 0.45rem !important;
+        }
+        
+        body nav.bottom-nav a.nav-item i {
+            font-size: 1.1rem !important;
+            width: 22px !important;
+            height: 22px !important;
+        }
+    }
+}

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>登录测试</title>
+    <!-- 引入配置文件 -->
+    <script src="frontend/public/config.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .form-group { margin: 10px 0; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; margin-bottom: 10px; }
+        button { padding: 10px 20px; margin: 5px; }
+        .result { margin: 20px 0; padding: 10px; background: #f5f5f5; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>登录测试</h1>
+        
+        <div class="form-group">
+            <label>用户名:</label>
+            <input type="text" id="username" value="admin" />
+        </div>
+        
+        <div class="form-group">
+            <label>密码:</label>
+            <input type="password" id="password" value="admin123" />
+        </div>
+        
+        <button onclick="login()">登录</button>
+        <button onclick="testDeviceAPI()">测试设备API</button>
+        <button onclick="checkToken()">检查Token</button>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        // 配置加载状态管理
+        function waitForAppConfig(callback, timeout = 5000) {
+            let attempts = 0;
+            const maxAttempts = timeout / 100;
+            
+            const checkConfig = () => {
+                attempts++;
+                
+                if (window.AppConfig) {
+                    console.log('AppConfig已加载:', window.AppConfig);
+                    if (callback) callback();
+                    return;
+                }
+                
+                if (attempts >= maxAttempts) {
+                    console.log('AppConfig加载超时，使用默认配置');
+                    // 初始化默认配置
+                    window.AppConfig = window.AppConfig || {
+                        apiUrl: `http://${window.location.hostname}:8001`,
+                        apiPort: '8001'
+                    };
+                    if (callback) callback();
+                    return;
+                }
+                
+                // 继续检查
+                setTimeout(checkConfig, 100);
+            };
+            
+            // 开始检查
+            setTimeout(checkConfig, 100);
+        }
+        
+        // 获取API基础URL
+        function getApiBaseUrl() {
+            try {
+                if (window.AppConfig && window.AppConfig.apiUrl) {
+                    return window.AppConfig.apiUrl;
+                }
+                // 使用当前主机名和配置的端口
+                return `http://${window.location.hostname}:${window.AppConfig?.apiPort || '8001'}`;
+            } catch (error) {
+                console.error('获取API URL失败:', error);
+                return `http://${window.location.hostname}:8001`;
+            }
+        }
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const apiBaseUrl = getApiBaseUrl();
+                const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify({ username: username }));
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `登录成功！<br>Token: ${data.access_token.substring(0, 50)}...<br>Token类型: ${data.token_type}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `登录失败: ${JSON.stringify(data)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `登录错误: ${error.message}`;
+            }
+        }
+        
+        async function testDeviceAPI() {
+            const token = localStorage.getItem('token');
+            const resultDiv = document.getElementById('result');
+            
+            if (!token) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '请先登录获取token';
+                return;
+            }
+            
+            try {
+                const apiBaseUrl = getApiBaseUrl();
+                const response = await fetch(`${apiBaseUrl}/api/devices`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                resultDiv.innerHTML = `设备API响应 (${response.status}):<br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `设备API错误: ${error.message}`;
+            }
+        }
+        
+        function checkToken() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = `
+                <strong>当前状态:</strong><br>
+                Token: ${token ? `${token.substring(0, 50)}...` : '无'}<br>
+                用户: ${user || '无'}<br>
+                Token长度: ${token ? token.length : 0}
+            `;
+        }
+    </script>
+</body>
+</html>

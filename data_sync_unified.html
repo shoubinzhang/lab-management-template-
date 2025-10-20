@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端-网页端数据同步统一修复</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+        .card {
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        .code {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+        .status-good { color: #28a745; font-weight: bold; }
+        .status-warning { color: #ffc107; font-weight: bold; }
+        .status-error { color: #dc3545; font-weight: bold; }
+        .progress { height: 8px; margin-top: 5px; }
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">移动端-网页端数据同步统一修复</h1>
+        
+        <!-- 问题诊断 -->
+        <div class="card">
+            <div class="card-header">
+                <h3><span class="step-number">1</span>问题诊断</h3>
+            </div>
+            <div class="card-body">
+                <button id="diagnoseIssues" class="btn btn-primary">诊断数据不一致问题</button>
+                <div id="diagnosisResult" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- 存储键名统一 -->
+        <div class="card">
+            <div class="card-header">
+                <h3><span class="step-number">2</span>存储键名统一</h3>
+            </div>
+            <div class="card-body">
+                <button id="unifyStorage" class="btn btn-warning">统一存储键名</button>
+                <div id="storageResult" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- API配置统一 -->
+        <div class="card">
+            <div class="card-header">
+                <h3><span class="step-number">3</span>API配置统一</h3>
+            </div>
+            <div class="card-body">
+                <button id="unifyApiConfig" class="btn btn-success">统一API配置</button>
+                <div id="apiConfigResult" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- 数据同步验证 -->
+        <div class="card">
+            <div class="card-header">
+                <h3><span class="step-number">4</span>数据同步验证</h3>
+            </div>
+            <div class="card-body">
+                <button id="verifySync" class="btn btn-primary">验证数据同步</button>
+                <div id="syncResult" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- 操作指南 -->
+        <div class="card">
+            <div class="card-header">
+                <h3>操作指南</h3>
+            </div>
+            <div class="card-body">
+                <h5>问题根源分析</h5>
+                <ul>
+                    <li><strong>存储键名不一致</strong>：移动端和网页端使用不同的localStorage键名</li>
+                    <li><strong>API地址配置差异</strong>：移动端硬编码IP地址，网页端使用localhost</li>
+                    <li><strong>缓存策略不同</strong>：数据更新和缓存机制不一致</li>
+                </ul>
+                
+                <h5>修复步骤</h5>
+                <ol>
+                    <li><strong>诊断问题</strong>：分析当前数据不一致的具体原因</li>
+                    <li><strong>统一存储键名</strong>：将移动端和网页端的存储键名统一为标准格式</li>
+                    <li><strong>统一API配置</strong>：确保两端使用相同的API地址和配置</li>
+                    <li><strong>验证同步</strong>：测试数据是否已正确同步</li>
+                </ol>
+                
+                <h5>统一后的标准配置</h5>
+                <div class="code">
+// 标准存储键名
+- authToken: JWT认证令牌
+- userInfo: 用户信息对象
+- apiBaseUrl: API基础地址
+
+// 标准API配置
+- 开发环境: http://localhost:8000
+- 生产环境: 根据实际部署地址
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 标准存储键名定义
+        const STANDARD_KEYS = {
+            TOKEN: 'authToken',
+            USER: 'userInfo',
+            API_URL: 'apiBaseUrl'
+        };
+
+        // 移动端和网页端的键名映射
+        const KEY_MAPPINGS = {
+            // Token相关键名
+            token: STANDARD_KEYS.TOKEN,
+            auth_token: STANDARD_KEYS.TOKEN,
+            authToken: STANDARD_KEYS.TOKEN,
+            
+            // 用户信息相关键名
+            user: STANDARD_KEYS.USER,
+            username: STANDARD_KEYS.USER,
+            userInfo: STANDARD_KEYS.USER
+        };
+
+        // 诊断数据不一致问题
+        document.getElementById('diagnoseIssues').addEventListener('click', function() {
+            const result = diagnoseIssues();
+            document.getElementById('diagnosisResult').innerHTML = result;
+        });
+
+        // 统一存储键名
+        document.getElementById('unifyStorage').addEventListener('click', function() {
+            const result = unifyStorageKeys();
+            document.getElementById('storageResult').innerHTML = result;
+        });
+
+        // 统一API配置
+        document.getElementById('unifyApiConfig').addEventListener('click', function() {
+            const result = unifyApiConfiguration();
+            document.getElementById('apiConfigResult').innerHTML = result;
+        });
+
+        // 验证数据同步
+        document.getElementById('verifySync').addEventListener('click', function() {
+            const result = verifyDataSync();
+            document.getElementById('syncResult').innerHTML = result;
+        });
+
+        // 诊断问题函数
+        function diagnoseIssues() {
+            let result = '<h5>数据不一致问题诊断：</h5>';
+            
+            // 检查存储键名差异
+            const allKeys = Object.keys(localStorage);
+            const tokenKeys = allKeys.filter(key => 
+                key.includes('token') || key.includes('auth')
+            );
+            const userKeys = allKeys.filter(key => 
+                key.includes('user') || key.includes('info')
+            );
+            
+            result += `<p><strong>Token相关键名：</strong> ${tokenKeys.length > 0 ? tokenKeys.join(', ') : '无'}</p>`;
+            result += `<p><strong>用户信息键名：</strong> ${userKeys.length > 0 ? userKeys.join(', ') : '无'}</p>`;
+            
+            // 检查键名一致性
+            if (tokenKeys.length > 1) {
+                result += `<p class="status-warning">⚠️ 发现多个Token键名，可能导致数据不一致</p>`;
+            }
+            
+            if (userKeys.length > 1) {
+                result += `<p class="status-warning">⚠️ 发现多个用户信息键名，可能导致数据不一致</p>`;
+            }
+            
+            // 检查API配置
+            const apiUrl = localStorage.getItem('apiBaseUrl');
+            if (apiUrl) {
+                result += `<p><strong>当前API配置：</strong> ${apiUrl}</p>`;
+            } else {
+                result += `<p class="status-warning">⚠️ 未找到标准API配置</p>`;
+            }
+            
+            // 检查数据值一致性
+            result += '<h5 class="mt-3">数据值一致性检查：</h5>';
+            
+            // Token值一致性
+            if (tokenKeys.length > 1) {
+                const tokens = tokenKeys.map(key => localStorage.getItem(key));
+                const uniqueTokens = [...new Set(tokens)];
+                result += `<p class="${uniqueTokens.length === 1 ? 'status-good' : 'status-error'}">
+                    Token值一致性：${uniqueTokens.length === 1 ? '✓ 一致' : '✗ 不一致'}
+                </p>`;
+            }
+            
+            // 用户信息值一致性
+            if (userKeys.length > 1) {
+                const users = userKeys.map(key => localStorage.getItem(key));
+                const uniqueUsers = [...new Set(users)];
+                result += `<p class="${uniqueUsers.length === 1 ? 'status-good' : 'status-error'}">
+                    用户信息一致性：${uniqueUsers.length === 1 ? '✓ 一致' : '✗ 不一致'}
+                </p>`;
+            }
+            
+            return result;
+        }
+
+        // 统一存储键名函数
+        function unifyStorageKeys() {
+            let result = '<h5>存储键名统一过程：</h5>';
+            let progress = 0;
+            const totalSteps = Object.keys(KEY_MAPPINGS).length;
+            
+            // 创建进度条
+            result += '<div class="progress"><div class="progress-bar" style="width: 0%"></div></div>';
+            
+            // 遍历所有键名映射
+            Object.entries(KEY_MAPPINGS).forEach(([oldKey, newKey], index) => {
+                if (localStorage.getItem(oldKey)) {
+                    const oldValue = localStorage.getItem(oldKey);
+                    
+                    // 检查新键名是否已存在
+                    if (localStorage.getItem(newKey)) {
+                        const newValue = localStorage.getItem(newKey);
+                        if (oldValue === newValue) {
+                            // 值相同，删除旧键名
+                            localStorage.removeItem(oldKey);
+                            result += `<p>✓ 删除冗余键名: <code>${oldKey}</code> (值相同)</p>`;
+                        } else {
+                            // 值不同，保留新键名的值
+                            result += `<p class="status-warning">⚠️ 键名冲突: <code>${oldKey}</code> 和 <code>${newKey}</code> 值不同，保留新键名</p>`;
+                            localStorage.removeItem(oldKey);
+                        }
+                    } else {
+                        // 新键名不存在，迁移数据
+                        localStorage.setItem(newKey, oldValue);
+                        localStorage.removeItem(oldKey);
+                        result += `<p>✓ 迁移键名: <code>${oldKey}</code> → <code>${newKey}</code></p>`;
+                    }
+                }
+                
+                // 更新进度
+                progress = Math.round((index + 1) / totalSteps * 100);
+                result = result.replace('width: 0%', `width: ${progress}%`);
+            });
+            
+            result += `<p class="status-good">✅ 存储键名统一完成！</p>`;
+            return result;
+        }
+
+        // 统一API配置函数
+        function unifyApiConfiguration() {
+            let result = '<h5>API配置统一过程：</h5>';
+            
+            // 检测当前访问地址
+            const currentUrl = window.location.href;
+            const isLocalhost = currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1');
+            
+            // 设置标准API地址
+            let apiBaseUrl;
+            if (isLocalhost) {
+                apiBaseUrl = 'http://localhost:8000';
+            } else {
+                // 从当前URL推断API地址
+                const url = new URL(currentUrl);
+                apiBaseUrl = `${url.protocol}//${url.hostname}:8000`;
+            }
+            
+            // 保存标准API配置
+            localStorage.setItem('apiBaseUrl', apiBaseUrl);
+            
+            result += `<p>✓ 检测到访问地址: <code>${currentUrl}</code></p>`;
+            result += `<p>✓ 设置标准API地址: <code>${apiBaseUrl}</code></p>`;
+            result += `<p class="status-good">✅ API配置统一完成！</p>`;
+            
+            return result;
+        }
+
+        // 验证数据同步函数
+        function verifyDataSync() {
+            let result = '<h5>数据同步验证：</h5>';
+            
+            // 检查标准键名是否存在
+            const hasAuthToken = localStorage.getItem(STANDARD_KEYS.TOKEN);
+            const hasUserInfo = localStorage.getItem(STANDARD_KEYS.USER);
+            const hasApiUrl = localStorage.getItem(STANDARD_KEYS.API_URL);
+            
+            result += `<p class="${hasAuthToken ? 'status-good' : 'status-warning'}">
+                ${hasAuthToken ? '✓' : '✗'} 认证令牌: ${hasAuthToken ? '存在' : '缺失'}
+            </p>`;
+            
+            result += `<p class="${hasUserInfo ? 'status-good' : 'status-warning'}">
+                ${hasUserInfo ? '✓' : '✗'} 用户信息: ${hasUserInfo ? '存在' : '缺失'}
+            </p>`;
+            
+            result += `<p class="${hasApiUrl ? 'status-good' : 'status-warning'}">
+                ${hasApiUrl ? '✓' : '✗'} API配置: ${hasApiUrl ? '存在' : '缺失'}
+            </p>`;
+            
+            // 检查是否有遗留的非标准键名
+            const allKeys = Object.keys(localStorage);
+            const legacyKeys = allKeys.filter(key => 
+                !Object.values(STANDARD_KEYS).includes(key) && 
+                (key.includes('token') || key.includes('auth') || key.includes('user'))
+            );
+            
+            if (legacyKeys.length > 0) {
+                result += `<p class="status-warning">⚠️ 发现遗留键名: ${legacyKeys.join(', ')}</p>`;
+            } else {
+                result += `<p class="status-good">✓ 无遗留键名</p>`;
+            }
+            
+            // 总体评估
+            const isComplete = hasAuthToken && hasUserInfo && hasApiUrl && legacyKeys.length === 0;
+            result += `<h5 class="mt-3 ${isComplete ? 'status-good' : 'status-warning'}">
+                总体评估: ${isComplete ? '✅ 数据同步完成' : '⚠️ 需要进一步修复'}
+            </h5>`;
+            
+            return result;
+        }
+    </script>
+</body>
+</html>

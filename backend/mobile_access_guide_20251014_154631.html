@@ -1,0 +1,85 @@
+
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>实验室管理系统 - 移动端访问</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                text-align: center;
+            }
+            .container {
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 20px;
+                margin-top: 20px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .qr-code {
+                margin: 20px 0;
+                padding: 10px;
+                background-color: white;
+                display: inline-block;
+            }
+            .url-display {
+                word-break: break-all;
+                padding: 10px;
+                background-color: #f5f5f5;
+                border-radius: 4px;
+                margin: 10px 0;
+            }
+            .instructions {
+                text-align: left;
+                margin-top: 20px;
+            }
+            .instructions li {
+                margin: 8px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>实验室管理系统 - 移动端访问</h1>
+        <div class="container">
+            <h2>扫描二维码访问</h2>
+            <div class="qr-code">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2ykAAAC20lEQVR4nO1aXYrjMAyWlEAfG5gDzFGSG+yRhrlZfJQeYCF5LKRokWS3nSybOC9dp9EHM7Wj70Eg9GNJyLAFgTbRAZy/DFqRz+H8ZdCKfA7nL4NW5HM4fxm0Ip/D+UfgY0QNAGMNEOQUEBFgTLLuhfrkgzZwD8xvWTBIBfU5yfWK+MUTYAeVirhs/bNBB+WP0UPxa7jhjIPm2C/VJxeUzTQcnc/fTcXYSZCG8cS7038NtMo4BP88SaS+4l71/yfoYPw6/p7FVUfJxJdk1LYH1m9csP7k/Bx+0BK5ASuoYmgea7nerHz+yc8GOb8A/+WnL+crcmgq4NAA8k9ZefqT8zPsiwDVlFy0YmyHBrkdPuRbNQGMH1Oh+pPzs96/g7yKtKpq9MSs4Zp7jc+f+hJ+4meDnP9f+fBoXmh/w5ocT9JB+htDaoH0pelPzs+xb8sTcC/+K/FZ/3F/p4jAulhu373al6NV1Yn7s5mT9aTWd//dMZ+/G43A9zQrNVcHN7TEHBr16dfpkw/awD0iH6Kf3lNvawlX43PF6er5d6d8iGE4jYk069q1v9dcdnL77pAPKc1KfZVMay8lkNQrJ2bPv3vnjyfWga/2r2zID3BD9V/sHpOkUvXPBR20fh4eaTY+kmL+vT+c3H933H8OOguUIVLAilOn8oYsV2gvdWpDl6Y/OT+Dj19aMKeorPs5JtD5UaeZ+ImfD3J+Ee+jBCuoYn9jsqjs/Y232p88xf2c8FinbF6sTz5oA/fg/UmWroYVVDZV4NS4bLX74f77BvuToPNflCFhEK/VJWjZmfX54C759ezOoZFX0nkAbC/1xDLa11LL6+e3sC9qLA5dPemSjj2SxLzY9iXqT87ftj8Jj10c0MUdCdK/ftfuv3vf3wAd7Vv/ylrPHDvR4tP+PnqL/UmO+xvxGz/9vUQfcv4iaFn8F5y/DFqRz+H8ZdCKfA7nL4NW5HM4fxml8f8AB9vDGJ+OJqkAAAAASUVORK5CYII=" alt="移动端访问QR码">
+            </div>
+            
+            <h3>或直接输入以下网址</h3>
+            <div class="url-display">
+                <strong>局域网地址：</strong><br>http://172.30.81.97:8000/mobile_login_final.html
+            </div>
+            <div class="url-display">
+                <strong>本机地址：</strong><br>http://localhost:8000/mobile_login_final.html
+            </div>
+            
+            <div class="instructions">
+                <h3>使用说明：</h3>
+                <ol>
+                    <li>确保您的手机和电脑连接在同一个局域网内</li>
+                    <li>打开手机上的浏览器或扫码应用</li>
+                    <li>扫描上方的二维码，或手动输入网址</li>
+                    <li>系统将自动跳转到移动端登录页面</li>
+                    <li>登录后即可使用移动端功能</li>
+                </ol>
+            </div>
+            
+            <div class="instructions">
+                <h3>常用移动端页面：</h3>
+                <ul>
+                    <li>登录页面：<code>http://172.30.81.97:8000/mobile_login_final.html</code></li>
+                    <li>仪表盘：<code>http://172.30.81.97:8000/mobile_dashboard.html</code></li>
+                    <li>设备管理：<code>http://172.30.81.97:8000/mobile_devices.html</code></li>
+                    <li>试剂管理：<code>http://172.30.81.97:8000/mobile_reagents.html</code></li>
+                    <li>扫码页面：<code>http://172.30.81.97:8000/mobile_scan.html</code></li>
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    

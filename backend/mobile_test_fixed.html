@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导航测试（已修复）- 移动端</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 70px;
+            min-height: 100vh;
+        }
+        
+        .mobile-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0 0 20px 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .mobile-header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: #333;
+        }
+        
+        .test-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-section {
+            margin-bottom: 20px;
+        }
+        
+        .test-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .test-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .test-btn {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .test-btn i {
+            margin-right: 10px;
+        }
+        
+        .status-message {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: block;
+        }
+        
+        .error-message {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .note {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-header">
+        <h1>导航测试（已修复）</h1>
+    </div>
+
+    <div class="test-container">
+        <div class="note">
+            <i class="bi bi-info-circle"></i> 此页面修复了导航问题，所有链接都使用了正确的/static/前缀。
+            <br>请使用 <strong>http://localhost:8000/static/mobile_test_fixed.html</strong> 访问此页面。
+        </div>
+        
+        <!-- 页面导航测试 -->
+        <div class="test-section">
+            <h2><i class="bi bi-link"></i> 页面导航测试</h2>
+            <div class="test-buttons">
+                <a href="/static/mobile_index.html" class="test-btn">
+                    <i class="bi bi-house"></i> 首页
+                </a>
+                <a href="/static/mobile_devices.html" class="test-btn">
+                    <i class="bi bi-gear"></i> 设备管理
+                </a>
+                <a href="/static/mobile_reagents.html" class="test-btn">
+                    <i class="bi bi-flask-conical"></i> 试剂管理
+                </a>
+                <a href="/static/mobile_consumables.html" class="test-btn">
+                    <i class="bi bi-box"></i> 耗材管理
+                </a>
+                <a href="/static/mobile_scan.html" class="test-btn">
+                    <i class="bi bi-qr-code-scan"></i> 扫码功能
+                </a>
+                <a href="/static/mobile_user.html" class="test-btn">
+                    <i class="bi bi-person"></i> 个人中心
+                </a>
+                <a href="/static/mobile_login_final.html" class="test-btn">
+                    <i class="bi bi-box-arrow-in-right"></i> 登录页面
+                </a>
+            </div>
+        </div>
+
+        <!-- 功能测试 -->
+        <div class="test-section">
+            <h2><i class="bi bi-wrench"></i> 功能测试</h2>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="testTokenStorage()">
+                    <i class="bi bi-key"></i> 测试Token存储
+                </button>
+                <button class="test-btn" onclick="setTestToken()">
+                    <i class="bi bi-key-fill"></i> 设置测试Token
+                </button>
+                <button class="test-btn" onclick="clearTestToken()">
+                    <i class="bi bi-key-off"></i> 清除测试Token
+                </button>
+                <button class="test-btn" onclick="testAllLinks()">
+                    <i class="bi bi-check-all"></i> 测试所有链接
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="statusMessage" class="status-message">
+        <i class="bi bi-check-circle"></i> 页面加载成功！请点击上方按钮开始测试。
+    </div>
+
+    <div id="errorMessage" class="error-message">
+        <i class="bi bi-exclamation-circle"></i> <span id="errorText">测试失败，请检查网络连接或稍后再试。</span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 显示状态消息
+        function showStatus(message) {
+            const statusElement = document.getElementById('statusMessage');
+            const errorElement = document.getElementById('errorMessage');
+            
+            if (message) {
+                statusElement.innerHTML = `<i class="bi bi-check-circle"></i> ${message}`;
+            }
+            statusElement.style.display = 'block';
+            errorElement.style.display = 'none';
+        }
+        
+        // 显示错误消息
+        function showError(message) {
+            const statusElement = document.getElementById('statusMessage');
+            const errorElement = document.getElementById('errorMessage');
+            const errorTextElement = document.getElementById('errorText');
+            
+            errorTextElement.textContent = message;
+            errorElement.style.display = 'block';
+            statusElement.style.display = 'none';
+        }
+        
+        // 测试Token存储功能
+        function testTokenStorage() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                showStatus(`检测到已存储的Token: ${token.substring(0, 20)}...`);
+            } else {
+                showError('未检测到存储的Token，请点击"设置测试Token"按钮进行测试');
+            }
+        }
+        
+        // 设置测试Token
+        function setTestToken() {
+            // 生成一个随机的测试Token
+            const testToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' + 
+                              'eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFkbWluIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyMzkwMjIsInJvbGUiOiJhZG1pbiJ9.' + 
+                              'test-signature';
+            
+            localStorage.setItem('token', testToken);
+            localStorage.setItem('username', '管理员');
+            showStatus('测试Token已设置成功！');
+        }
+        
+        // 清除测试Token
+        function clearTestToken() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            showStatus('测试Token已清除！');
+        }
+        
+        // 测试所有链接
+        async function testAllLinks() {
+            showStatus('正在测试所有链接，请稍候...');
+            
+            const links = [
+                '/static/mobile_index.html',
+                '/static/mobile_devices.html',
+                '/static/mobile_reagents.html',
+                '/static/mobile_consumables.html',
+                '/static/mobile_scan.html',
+                '/static/mobile_user.html',
+                '/static/mobile_login_final.html',
+                '/static/mobile_test_fixed.html'
+            ];
+            
+            let successCount = 0;
+            let errorCount = 0;
+            const errorLinks = [];
+            
+            for (const link of links) {
+                try {
+                    const response = await fetch(link, { method: 'HEAD' });
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        errorLinks.push(`${link} (状态码: ${response.status})`);
+                    }
+                } catch (error) {
+                    errorCount++;
+                    errorLinks.push(`${link} (错误: ${error.message})`);
+                }
+            }
+            
+            if (errorCount > 0) {
+                showError(`测试完成: ${successCount}个链接成功, ${errorCount}个链接失败\n失败链接: ${errorLinks.join(', ')}`);
+            } else {
+                showStatus(`测试完成: 所有${successCount}个链接都可以正常访问！`);
+            }
+        }
+        
+        // 页面加载完成后检查基本功能
+        window.addEventListener('DOMContentLoaded', () => {
+            // 检查当前URL是否包含/static/
+            if (!window.location.pathname.startsWith('/static/')) {
+                showError('警告: 请使用/static/前缀访问此页面，否则可能无法正常导航。\n正确的URL: http://localhost:8000/static/mobile_test_fixed.html');
+            } else {
+                showStatus('页面加载成功！请点击上方按钮开始测试。');
+            }
+        });
+    </script>
+</body>
+</html>

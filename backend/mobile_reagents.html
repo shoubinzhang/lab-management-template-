@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>试剂管理 - 移动端</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="static/mobile_nav_styles.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 80px;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        .mobile-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 0 0 20px 20px;
+            padding: 20px 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .mobile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #4361ee, #4cc9f0, #7209b7, #f72585);
+        }
+        
+        .reagent-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .reagent-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #4361ee, #3a0ca3);
+        }
+        
+        .reagent-card:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stock-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .stock-status::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .stock-status:hover::before {
+            left: 100%;
+        }
+        
+        .stock-normal {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .stock-low {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .stock-empty {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .category-badge {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-bar {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 25px;
+            padding: 12px 20px;
+            border: none;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .search-bar:focus {
+            outline: none;
+            box-shadow: 0 6px 25px rgba(67, 97, 238, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #4361ee;
+            background: transparent;
+            color: #4361ee;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .filter-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .filter-btn.active,
+        .filter-btn:hover {
+            color: white;
+        }
+        
+        .filter-btn.active::after,
+        .filter-btn:hover::after {
+            opacity: 1;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .action-buttons::after {
+            content: '';
+            flex: auto;
+        }
+        
+        .btn-action {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1;
+            min-width: 60px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        
+        .btn-action::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: -1;
+        }
+        
+        .btn-action:active::after {
+            transform: translateX(0);
+        }
+        
+        .btn-borrow {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+        }
+        
+        .btn-return {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+        
+        .btn-edit {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+        
+        .btn-request {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+        }
+        
+        .btn-primary-mobile {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 24px;
+            font-weight: 500;
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .btn-primary-mobile::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: -1;
+        }
+        
+        .btn-primary-mobile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(67, 97, 238, 0.4);
+        }
+        
+        .btn-primary-mobile:active::after {
+            transform: translateX(0);
+        }
+        
+        .btn-primary-mobile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 20px 20px 0 0;
+            padding: 12px 10px;
+            box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            justify-content: space-around;
+            z-index: 1000;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .nav-item {
+            text-align: center;
+            padding: 8px;
+            border-radius: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            flex: 1;
+            margin: 0 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            color: white;
+        }
+        
+        .nav-item i {
+            font-size: 1.3rem;
+            display: block;
+            margin-bottom: 4px;
+            transition: transform 0.3s ease;
+        }
+        
+        .nav-item:hover i,
+        .nav-item.active i {
+            transform: translateY(-2px);
+        }
+        
+        .nav-item span {
+            font-size: 0.75rem;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        
+        .nav-item:hover span,
+        .nav-item.active span {
+            transform: translateY(-2px);
+        }
+        
+        .nav-item i {
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+        
+        .nav-item span {
+            font-size: 0.8rem;
+            display: block;
+        }
+        
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideUp 0.4s ease-out;
+        }
+        
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #4361ee;
+            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+            transform: translateY(-1px);
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .alert-mobile {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 2000;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+            animation: alertSlideDown 0.3s ease-out;
+        }
+        
+        @keyframes alertSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .empty-state i {
+            font-size: 5rem;
+            color: rgba(255, 255, 255, 0.3);
+            margin-bottom: 20px;
+            transition: transform 0.5s ease;
+        }
+        
+        .empty-state:hover i {
+            transform: rotate(10deg) scale(1.1);
+        }
+        
+        .reagent-detail {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+        
+        .expiry-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            border-left: 4px solid #ffc107;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .expiry-warning::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 10px;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 5px,
+                rgba(255, 255, 255, 0.3) 5px,
+                rgba(255, 255, 255, 0.3) 10px
+            );
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(8px);
+            animation: statsSlideUp 0.5s ease-out;
+        }
+        
+        @keyframes statsSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .stat-item {
+            text-align: center;
+            position: relative;
+            transition: transform 0.3s ease;
+            padding: 8px;
+            border-radius: 10px;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-2px);
+            background: rgba(67, 97, 238, 0.05);
+        }
+        
+        .stat-number {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #4361ee;
+            transition: color 0.3s ease;
+        }
+        
+        .stat-item:hover .stat-number {
+            color: #3a0ca3;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 试剂管理页面 -->
+    <div id="reagent-page" class="container-fluid">
+        <!-- 头部 -->
+        <div class="mobile-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0 text-primary">试剂管理</h4>
+                    <small class="text-muted">移动端</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary-mobile btn-sm" onclick="showAddReagentModal()">
+                        <i class="bi bi-plus"></i> 添加
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="goBack()">
+                        <i class="bi bi-arrow-left"></i> 返回
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">总试剂</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="lowStockCount">0</div>
+                <div class="stat-label">低库存</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="expiredCount">0</div>
+                <div class="stat-label">已过期</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="borrowedCount">0</div>
+                <div class="stat-label">已借出</div>
+            </div>
+        </div>
+
+        <!-- 搜索栏 -->
+        <div class="px-3">
+            <input type="text" class="form-control search-bar" placeholder="搜索试剂名称、CAS号或供应商..." 
+                   id="searchInput" onkeyup="searchReagents()">
+        </div>
+
+        <!-- 分类筛选 -->
+        <div class="px-3">
+            <div class="filter-section" id="categoryFilter">
+                <button class="filter-btn active" data-category="" onclick="filterByCategory('')">全部</button>
+                <button class="filter-btn" data-category="研发试剂" onclick="filterByCategory('研发试剂')">研发试剂</button>
+                <button class="filter-btn" data-category="IVD试剂" onclick="filterByCategory('IVD试剂')">IVD试剂</button>
+                <button class="filter-btn" data-category="提取试剂" onclick="filterByCategory('提取试剂')">提取试剂</button>
+            </div>
+        </div>
+
+        <!-- 试剂列表 -->
+        <div class="px-3" id="reagentList">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="mt-2 text-muted">正在加载试剂数据...</p>
+            </div>
+        </div>
+
+        <!-- 空状态 -->
+        <div id="emptyState" class="empty-state hidden">
+            <i class="bi bi-flask"></i>
+            <h5>暂无试剂数据</h5>
+            <p>点击上方"添加"按钮创建第一个试剂</p>
+        </div>
+    </div>
+
+    <!-- 添加/编辑试剂模态框 -->
+    <div class="modal fade" id="reagentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reagentModalTitle">添加试剂</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="reagentForm">
+                        <div class="row gap-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-sm font-medium text-gray-700">试剂名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="reagentName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-sm font-medium text-gray-700">分类 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="reagentCategory" required>
+                                    <option value="">请选择分类</option>
+                                    <option value="研发试剂">研发试剂</option>
+                                    <option value="IVD试剂">IVD试剂</option>
+                                    <option value="提取试剂">提取试剂</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">CAS号</label>
+                                <input type="text" class="form-control" id="reagentCAS" placeholder="如：123-45-6">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">货号</label>
+                                <input type="text" class="form-control" id="reagentCatalog" placeholder="供应商货号">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">供应商</label>
+                                <input type="text" class="form-control" id="reagentSupplier" placeholder="供应商名称">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">规格</label>
+                                <input type="text" class="form-control" id="reagentSpecification" placeholder="如：100mg、500ml">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">库存数量 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="reagentQuantity" min="0" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">单位</label>
+                                <select class="form-select" id="reagentUnit">
+                                    <option value="mg">mg</option>
+                                    <option value="g">g</option>
+                                    <option value="kg">kg</option>
+                                    <option value="ml">ml</option>
+                                    <option value="L">L</option>
+                                    <option value="支">支</option>
+                                    <option value="瓶">瓶</option>
+                                    <option value="盒">盒</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">低库存预警值</label>
+                                <input type="number" class="form-control" id="reagentThreshold" min="0" placeholder="低于此值时预警">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">有效期</label>
+                                <input type="date" class="form-control" id="reagentExpiry">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">存储条件</label>
+                                <select class="form-select" id="reagentStorage">
+                                    <option value="室温">室温</option>
+                                    <option value="2-8°C">2-8°C</option>
+                                    <option value="-20°C">-20°C</option>
+                                    <option value="-80°C">-80°C</option>
+                                    <option value="避光">避光</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">位置</label>
+                                <input type="text" class="form-control" id="reagentLocation" placeholder="如：试剂柜A-01">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">备注</label>
+                            <textarea class="form-control" id="reagentNotes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary-mobile" onclick="saveReagent()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 借用试剂模态框 -->
+    <div class="modal fade" id="borrowModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">借用试剂</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="borrowForm">
+                        <div class="mb-3">
+                            <label class="form-label">试剂名称</label>
+                            <input type="text" class="form-control" id="borrowReagentName" readonly>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">借用数量 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="borrowQuantity" min="1" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">可用库存</label>
+                                <input type="text" class="form-control" id="availableStock" readonly>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">借用人 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="borrowerName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">借用用途</label>
+                            <textarea class="form-control" id="borrowPurpose" rows="2" placeholder="请说明借用用途"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">预计归还日期</label>
+                            <input type="date" class="form-control" id="expectedReturnDate">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary-mobile" onclick="borrowReagent()">确认借用</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toast通知系统 - 保持与其他页面一致性，参数顺序为(message, type)
+        function showToast(message, type = 'info', duration = 3000) {
+            // 兼容性处理：如果调用方式是旧的(type, message)，则交换参数
+            if (typeof message === 'string' && ['success', 'error', 'warning', 'info', 'danger'].includes(message)) {
+                const temp = message;
+                message = type;
+                type = temp;
+            }
+            
+            // 检查是否已存在toast容器，不存在则创建
+            let toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toastContainer';
+                toastContainer.style.position = 'fixed';
+                toastContainer.style.top = '20px';
+                toastContainer.style.right = '20px';
+                toastContainer.style.zIndex = '9999';
+                toastContainer.style.display = 'flex';
+                toastContainer.style.flexDirection = 'column';
+                toastContainer.style.gap = '10px';
+                document.body.appendChild(toastContainer);
+            }
+            
+            // 创建toast元素
+            const toast = document.createElement('div');
+            
+            // 根据类型设置背景色
+            const bgColors = {
+                success: 'rgba(40, 167, 69, 0.95)',
+                error: 'rgba(220, 53, 69, 0.95)',
+                warning: 'rgba(255, 193, 7, 0.95)',
+                info: 'rgba(23, 162, 184, 0.95)',
+                danger: 'rgba(220, 53, 69, 0.95)'
+            };
+            
+            // 根据类型设置图标
+            const icons = {
+                success: 'bi-check-circle',
+                error: 'bi-exclamation-circle',
+                warning: 'bi-exclamation-triangle',
+                info: 'bi-info-circle',
+                danger: 'bi-exclamation-circle'
+            };
+            
+            toast.style.backgroundColor = bgColors[type] || bgColors.info;
+            toast.style.color = 'white';
+            toast.style.padding = '12px 20px';
+            toast.style.borderRadius = '8px';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '10px';
+            toast.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            toast.style.maxWidth = '350px';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            toast.style.cursor = 'pointer';
+            
+            toast.innerHTML = `
+                <i class="bi ${icons[type] || icons.info}" style="font-size: 1.2rem;"></i>
+                <span>${message}</span>
+            `;
+            
+            // 添加到容器
+            toastContainer.appendChild(toast);
+            
+            // 触发动画
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // 点击关闭
+            toast.addEventListener('click', () => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            });
+            
+            // 自动关闭
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, duration);
+        }
+        
+        // 为了兼容性保留showAlert函数，但内部调用showToast
+        function showAlert(type, message) {
+            // 将bootstrap的alert类型映射到toast类型
+            const typeMap = {
+                success: 'success',
+                danger: 'error',
+                warning: 'warning',
+                info: 'info'
+            };
+            showToast(message, typeMap[type] || 'info');
+        }
+        
+        let apiBaseUrl = '';
+        let authToken = '';
+        let currentUser = null;
+        let reagents = [];
+        let editingReagent = null;
+        let borrowingReagent = null;
+        let currentCategory = '';
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeReagentPage();
+        });
+
+        // 初始化试剂页面
+        async function initializeReagentPage() {
+            try {
+                // 从localStorage获取认证token
+                authToken = localStorage.getItem('auth_token') || '';
+                
+                // 如果没有token，可能是未登录状态
+                if (!authToken) {
+                    console.warn('未找到认证token，可能需要登录');
+                    // 仍然尝试加载数据，但可能会失败
+                }
+                
+                // 直接设置API基础URL
+                apiBaseUrl = window.location.origin;
+                
+                // 优先加载真实数据，如果失败再使用模拟数据
+                try {
+                    // 添加超时控制
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    
+                    await loadReagents();
+                    clearTimeout(timeoutId);
+                } catch (apiError) {
+                    console.warn('API调用失败，使用模拟数据:', apiError);
+                    showToast('warning', '暂时无法连接到服务器，显示模拟数据');
+                    loadMockReagents();
+                }
+            } catch (error) {
+                console.error('初始化失败:', error);
+                // 使用模拟数据
+                loadMockReagents();
+            }
+        }
+        
+        // 加载模拟试剂数据
+        function loadMockReagents() {
+            reagents = [
+                {
+                    id: 1,
+                    name: '氯化钠',
+                    category: '无机盐',
+                    cas_number: '7647-14-5',
+                    catalog_number: 'S1001',
+                    supplier: '国药集团',
+                    specification: '分析纯',
+                    quantity: 250,
+                    unit: 'g',
+                    threshold: 50,
+                    expiry_date: '2025-12-31',
+                    storage_condition: '室温',
+                    location: '试剂柜A-01',
+                    notes: '常用于缓冲液配制',
+                    is_borrowed: false
+                },
+                {
+                    id: 2,
+                    name: '无水乙醇',
+                    category: '有机溶剂',
+                    cas_number: '64-17-5',
+                    catalog_number: 'A1002',
+                    supplier: '阿拉丁',
+                    specification: '色谱纯',
+                    quantity: 15,
+                    unit: 'ml',
+                    threshold: 100,
+                    expiry_date: '2024-06-30',
+                    storage_condition: '室温',
+                    location: '试剂柜B-02',
+                    notes: '用于色谱分析',
+                    is_borrowed: true
+                },
+                {
+                    id: 3,
+                    name: '牛血清白蛋白',
+                    category: '生化试剂',
+                    cas_number: '9048-46-8',
+                    catalog_number: 'B2003',
+                    supplier: 'Sigma',
+                    specification: '98%',
+                    quantity: 5,
+                    unit: 'g',
+                    threshold: 10,
+                    expiry_date: '2024-03-15',
+                    storage_condition: '-20°C',
+                    location: '冰箱C-03',
+                    notes: '用于蛋白标准品',
+                    is_borrowed: false
+                },
+                {
+                    id: 4,
+                    name: '二甲亚砜',
+                    category: '有机溶剂',
+                    cas_number: '67-68-5',
+                    catalog_number: 'D1004',
+                    supplier: '百灵威',
+                    specification: '细胞培养级',
+                    quantity: 0,
+                    unit: 'ml',
+                    threshold: 50,
+                    expiry_date: '2025-09-30',
+                    storage_condition: '室温',
+                    location: '试剂柜A-05',
+                    notes: '细胞冻存液成分',
+                    is_borrowed: false
+                }
+            ];
+            
+            renderReagents();
+            updateStats();
+        }
+
+
+
+        // 加载试剂数据
+        async function loadReagents() {
+            try {
+                // 添加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                const response = await fetch(`${apiBaseUrl}/api/reagents`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error('获取试剂数据失败');
+                }
+                
+                const data = await response.json();
+                reagents = data.items || data || [];
+                
+                renderReagents();
+                updateStats();
+                showToast('success', '数据已更新');
+                
+            } catch (error) {
+                console.error('加载试剂失败:', error);
+                // 显示错误信息，但使用模拟数据确保用户体验
+                showToast('warning', '暂时无法连接到服务器，显示本地数据');
+                // 确保已有模拟数据，否则重新加载
+                if (reagents.length === 0) {
+                    loadMockReagents();
+                }
+            }
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const total = reagents.length;
+            const lowStock = reagents.filter(r => {
+                const threshold = r.threshold || 5;
+                return r.quantity <= threshold && r.quantity > 0;
+            }).length;
+            const expired = reagents.filter(r => {
+                if (!r.expiry_date) return false;
+                const today = new Date();
+                const expiry = new Date(r.expiry_date);
+                return expiry < today;
+            }).length;
+            const borrowed = reagents.filter(r => r.is_borrowed).length;
+            
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('lowStockCount').textContent = lowStock;
+            document.getElementById('expiredCount').textContent = expired;
+            document.getElementById('borrowedCount').textContent = borrowed;
+        }
+
+        // 渲染试剂列表
+        function renderReagents(searchTerm = '', category = '') {
+            const reagentList = document.getElementById('reagentList');
+            const emptyState = document.getElementById('emptyState');
+            
+            let filteredReagents = reagents;
+            
+            // 搜索过滤
+            if (searchTerm) {
+                filteredReagents = filteredReagents.filter(reagent => 
+                    reagent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (reagent.cas_number && reagent.cas_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (reagent.supplier && reagent.supplier.toLowerCase().includes(searchTerm.toLowerCase()))
+                );
+            }
+            
+            // 分类过滤
+            if (category) {
+                filteredReagents = filteredReagents.filter(reagent => 
+                    reagent.category === category
+                );
+            }
+            
+            if (filteredReagents.length === 0) {
+                reagentList.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            reagentList.innerHTML = filteredReagents.map(reagent => {
+                const stockClass = getStockStatusClass(reagent);
+                const expiryWarning = getExpiryWarning(reagent);
+                
+                return `
+                    <div class="reagent-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-1">${reagent.name}</h6>
+                            <div class="text-end">
+                                <span class="category-badge">${reagent.category}</span>
+                                <div class="mt-1">
+                                    <span class="stock-status ${stockClass}">
+                                        ${reagent.quantity} ${reagent.unit}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="reagent-detail">
+                            <div><i class="bi bi-hash"></i> CAS: ${reagent.cas_number || '无'}</div>
+                            <div><i class="bi bi-building"></i> 供应商: ${reagent.supplier || '未指定'}</div>
+                            <div><i class="bi bi-geo-alt"></i> 位置: ${reagent.location || '未指定'}</div>
+                            <div><i class="bi bi-thermometer"></i> 存储: ${reagent.storage_condition || '室温'}</div>
+                        </div>
+                        ${expiryWarning}
+                        <div class="action-buttons">
+                            ${reagent.quantity > 0 ? `
+                                <button class="btn-action btn-borrow" onclick="showBorrowModal(${reagent.id})">
+                                    <i class="bi bi-box-arrow-out"></i> 借用
+                                </button>
+                            ` : ''}
+                            ${reagent.is_borrowed ? `
+                                <button class="btn-action btn-return" onclick="returnReagent(${reagent.id})">
+                                    <i class="bi bi-box-arrow-in"></i> 归还
+                                </button>
+                            ` : ''}
+                            <button class="btn-action btn-request" onclick="requestReagent(${reagent.id})">
+                                <i class="bi bi-cart-plus"></i> 申请
+                            </button>
+                            <button class="btn-action btn-edit" onclick="editReagent(${reagent.id})">
+                                <i class="bi bi-pencil"></i> 编辑
+                            </button>
+                            <button class="btn-action btn-delete" onclick="deleteReagent(${reagent.id})">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 获取库存状态样式类
+        function getStockStatusClass(reagent) {
+            const threshold = reagent.threshold || 5;
+            if (reagent.quantity === 0) return 'stock-empty';
+            if (reagent.quantity <= threshold) return 'stock-low';
+            return 'stock-normal';
+        }
+
+        // 获取过期警告
+        function getExpiryWarning(reagent) {
+            if (!reagent.expiry_date) return '';
+            
+            const today = new Date();
+            const expiry = new Date(reagent.expiry_date);
+            const daysDiff = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff <= 30 && daysDiff > 0) {
+                return `<div class="expiry-warning">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    还有 ${daysDiff} 天过期
+                </div>`;
+            } else if (daysDiff <= 0) {
+                return `<div class="expiry-warning" style="background: #f8d7da; color: #721c24; border-color: #f5c6cb;">
+                    <i class="bi bi-x-circle"></i> 
+                    已过期 ${Math.abs(daysDiff)} 天
+                </div>`;
+            }
+            
+            return '';
+        }
+
+        // 搜索试剂
+        function searchReagents() {
+            const searchTerm = document.getElementById('searchInput').value;
+            renderReagents(searchTerm, currentCategory);
+        }
+
+        // 按分类筛选
+        function filterByCategory(category) {
+            currentCategory = category;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderReagents('', category);
+        }
+
+        // 显示添加试剂模态框
+        function showAddReagentModal() {
+            editingReagent = null;
+            document.getElementById('reagentModalTitle').textContent = '添加试剂';
+            document.getElementById('reagentForm').reset();
+            new bootstrap.Modal(document.getElementById('reagentModal')).show();
+        }
+
+        // 编辑试剂
+        function editReagent(reagentId) {
+            const reagent = reagents.find(r => r.id === reagentId);
+            if (!reagent) return;
+            
+            editingReagent = reagent;
+            document.getElementById('reagentModalTitle').textContent = '编辑试剂';
+            
+            // 填充表单数据
+            document.getElementById('reagentName').value = reagent.name || '';
+            document.getElementById('reagentCategory').value = reagent.category || '';
+            document.getElementById('reagentCAS').value = reagent.cas_number || '';
+            document.getElementById('reagentCatalog').value = reagent.catalog_number || '';
+            document.getElementById('reagentSupplier').value = reagent.supplier || '';
+            document.getElementById('reagentSpecification').value = reagent.specification || '';
+            document.getElementById('reagentQuantity').value = reagent.quantity || 0;
+            document.getElementById('reagentUnit').value = reagent.unit || 'mg';
+            document.getElementById('reagentThreshold').value = reagent.threshold || 5;
+            document.getElementById('reagentExpiry').value = reagent.expiry_date || '';
+            document.getElementById('reagentStorage').value = reagent.storage_condition || '室温';
+            document.getElementById('reagentLocation').value = reagent.location || '';
+            document.getElementById('reagentNotes').value = reagent.notes || '';
+            
+            new bootstrap.Modal(document.getElementById('reagentModal')).show();
+        }
+
+        // 保存试剂
+        async function saveReagent() {
+            try {
+                const formData = {
+                    name: document.getElementById('reagentName').value,
+                    category: document.getElementById('reagentCategory').value,
+                    cas_number: document.getElementById('reagentCAS').value,
+                    catalog_number: document.getElementById('reagentCatalog').value,
+                    supplier: document.getElementById('reagentSupplier').value,
+                    specification: document.getElementById('reagentSpecification').value,
+                    quantity: parseInt(document.getElementById('reagentQuantity').value) || 0,
+                    unit: document.getElementById('reagentUnit').value,
+                    threshold: parseInt(document.getElementById('reagentThreshold').value) || 5,
+                    expiry_date: document.getElementById('reagentExpiry').value || null,
+                    storage_condition: document.getElementById('reagentStorage').value,
+                    location: document.getElementById('reagentLocation').value,
+                    notes: document.getElementById('reagentNotes').value
+                };
+                
+                const url = editingReagent ? 
+                    `${apiBaseUrl}/api/reagents/${editingReagent.id}` : 
+                    `${apiBaseUrl}/api/reagents`;
+                
+                const method = editingReagent ? 'PUT' : 'POST';
+                
+                // 添加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(formData),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error('保存试剂失败');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('reagentModal')).hide();
+                showToast('success', editingReagent ? '试剂更新成功' : '试剂添加成功');
+                await loadReagents();
+                
+            } catch (error) {
+                console.error('保存试剂失败:', error);
+                showToast('error', editingReagent ? '试剂更新失败，请重试' : '试剂添加失败，请重试');
+            }
+        }
+
+        // 申请试剂
+        function requestReagent(reagentId) {
+            const reagent = reagents.find(r => r.id === reagentId);
+            if (!reagent) return;
+            
+            showToast('info', `试剂 "${reagent.name}" 申请功能开发中...`);
+        }
+
+        // 借用试剂
+        async function borrowReagent() {
+            try {
+                const quantity = parseInt(document.getElementById('borrowQuantity').value);
+                const borrower = document.getElementById('borrowerName').value;
+                const purpose = document.getElementById('borrowPurpose').value;
+                const expectedReturn = document.getElementById('expectedReturnDate').value;
+                
+                if (!quantity || quantity <= 0) {
+                    showToast('warning', '请输入有效的借用数量');
+                    return;
+                }
+                
+                if (!borrower) {
+                    showToast('warning', '请输入借用人姓名');
+                    return;
+                }
+                
+                if (quantity > borrowingReagent.quantity) {
+                    showToast('warning', '借用数量超过可用库存');
+                    return;
+                }
+                
+                const borrowData = {
+                    reagent_id: borrowingReagent.id,
+                    quantity: quantity,
+                    borrower: borrower,
+                    purpose: purpose,
+                    expected_return_date: expectedReturn || null
+                };
+                
+                // 添加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${apiBaseUrl}/api/reagents/borrow`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(borrowData),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error('借用试剂失败');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('borrowModal')).hide();
+                showToast('success', '试剂借用成功');
+                await loadReagents();
+                
+            } catch (error) {
+                console.error('借用试剂失败:', error);
+                showToast('error', '试剂借用失败，请重试');
+            }
+        }
+
+        // 归还试剂
+        async function returnReagent(reagentId) {
+            try {
+                // 添加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${apiBaseUrl}/api/reagents/return/${reagentId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error('归还试剂失败');
+                }
+                
+                showToast('success', '试剂归还成功');
+                await loadReagents();
+                
+            } catch (error) {
+                console.error('归还试剂失败:', error);
+                showToast('error', '试剂归还失败，请重试');
+            }
+        }
+
+        // 删除试剂
+        async function deleteReagent(reagentId) {
+            if (!confirm('确定要删除这个试剂吗？此操作不可恢复。')) {
+                return;
+            }
+            
+            try {
+                // 添加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${apiBaseUrl}/api/reagents/${reagentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error('删除试剂失败');
+                }
+                
+                showToast('success', '试剂删除成功');
+                await loadReagents();
+                
+            } catch (error) {
+                console.error('删除试剂失败:', error);
+                showToast('error', '试剂删除失败，请重试');
+            }
+        }
+
+        // 页面导航 - 添加页面过渡动画
+        function navigateTo(page) {
+            const pages = {
+                'dashboard': '/static/mobile_dashboard.html',
+                'devices': '/static/mobile_devices.html',
+                'reagents': '/static/mobile_reagents.html',
+                'consumables': '/static/mobile_consumables.html',
+                'scan': '/static/mobile_scan.html'
+            };
+            
+            if (pages[page]) {
+                // 添加页面过渡动画
+                document.body.style.opacity = '0';
+                document.body.style.transition = 'opacity 0.3s ease-out';
+                
+                setTimeout(() => {
+                    window.location.href = pages[page];
+                }, 300);
+            }
+        }
+
+        // 返回主页 - 添加页面过渡动画
+        function goBack() {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.3s ease-out';
+            
+            setTimeout(() => {
+                window.location.href = "/static/mobile_dashboard.html";
+            }, 300);
+        }
+
+
+    </script>
+
+</body>
+</html>

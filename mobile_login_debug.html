@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手机登录调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+    <script src="/config.js"></script>
+</head>
+<body>
+    <h1>手机登录调试工具</h1>
+    
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="username">用户名:</label>
+            <input type="text" id="username" name="username" value="admin" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">密码:</label>
+            <input type="password" id="password" name="password" value="admin123" required>
+        </div>
+        
+        <button type="submit">测试登录</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        let AppConfig = {};
+        let debugLog = '';
+
+        // 等待AppConfig加载完成
+        function waitForAppConfig() {
+            return new Promise((resolve) => {
+                if (typeof window.AppConfig !== 'undefined') {
+                    AppConfig = window.AppConfig;
+                    resolve();
+                } else {
+                    const checkInterval = setInterval(() => {
+                        if (typeof window.AppConfig !== 'undefined') {
+                            clearInterval(checkInterval);
+                            AppConfig = window.AppConfig;
+                            resolve();
+                        }
+                    }, 50);
+                }
+            });
+        }
+
+        // 获取当前设备信息
+        function getDeviceInfo() {
+            return {
+                userAgent: navigator.userAgent,
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                devicePixelRatio: window.devicePixelRatio,
+                hasTouch: 'ontouchstart' in window,
+                maxTouchPoints: navigator.maxTouchPoints,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine
+            };
+        }
+        
+        // 显示结果
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+        }
+        
+        // 测试网络连接
+        async function testConnection() {
+            try {
+                await waitForAppConfig();
+                const loginUrl = AppConfig.getApiUrl('auth/login');
+                const response = await fetch(loginUrl, {
+                    method: 'OPTIONS'
+                });
+                return { success: true, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // 登录测试
+        async function testLogin(username, password) {
+            const deviceInfo = getDeviceInfo();
+            
+            showResult(`设备信息:\n${JSON.stringify(deviceInfo, null, 2)}\n\n正在测试登录...`, 'info');
+            
+            try {
+                // 等待AppConfig加载完成
+                await waitForAppConfig();
+                
+                // 首先测试连接
+                const connectionTest = await testConnection();
+                console.log('连接测试结果:', connectionTest);
+                
+                // 尝试登录
+                const loginUrl = AppConfig.getApiUrl('auth/login');
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                const responseText = await response.text();
+                let responseData;
+                
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    responseData = responseText;
+                }
+                
+                const result = {
+                    deviceInfo: deviceInfo,
+                    connectionTest: connectionTest,
+                    response: {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: Object.fromEntries(response.headers.entries()),
+                        data: responseData
+                    }
+                };
+                
+                if (response.ok) {
+                    showResult(`登录成功!\n\n${JSON.stringify(result, null, 2)}`, 'success');
+                } else {
+                    showResult(`登录失败!\n\n${JSON.stringify(result, null, 2)}`, 'error');
+                }
+                
+            } catch (error) {
+                const result = {
+                    deviceInfo: deviceInfo,
+                    error: {
+                        message: error.message,
+                        stack: error.stack,
+                        name: error.name
+                    }
+                };
+                
+                showResult(`网络错误!\n\n${JSON.stringify(result, null, 2)}`, 'error');
+            }
+        }
+        
+        // 表单提交处理
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            await testLogin(username, password);
+        });
+
+        // 页面加载时显示AppConfig信息
+        window.addEventListener('load', async function() {
+            await waitForAppConfig();
+            const deviceInfo = getDeviceInfo();
+            showResult(`设备信息:\n${JSON.stringify(deviceInfo, null, 2)}\n\nAppConfig配置:\n${JSON.stringify(AppConfig, null, 2)}`, 'info');
+        });
+        
+        // 页面加载时显示设备信息
+        window.addEventListener('load', function() {
+            const deviceInfo = getDeviceInfo();
+            showResult(`设备信息:\n${JSON.stringify(deviceInfo, null, 2)}`, 'info');
+        });
+    </script>
+</body>
+</html>

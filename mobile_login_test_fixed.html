@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手机登录测试工具</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin: 0;
+            font-size: 24px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .test-section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn.success {
+            background: #28a745;
+        }
+        .btn.success:hover {
+            background: #1e7e34;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .network-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .qr-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .qr-code {
+            max-width: 200px;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 手机登录测试工具</h1>
+            <p>诊断和修复手机扫码登录问题</p>
+        </div>
+
+        <div id="status" class="status info">
+            <strong>📱 准备测试手机登录功能...</strong>
+        </div>
+
+        <div class="test-section">
+            <h3>🌐 网络配置检测</h3>
+            <button class="btn" onclick="checkNetworkConfig()">检测网络配置</button>
+            <div id="networkInfo" class="network-info" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 连接测试</h3>
+            <button class="btn" onclick="testBackendConnection()">测试后端连接</button>
+            <button class="btn" onclick="testFrontendAccess()">测试前端访问</button>
+            <div id="connectionResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 登录测试</h3>
+            <div class="form-group">
+                <label for="username">用户名:</label>
+                <input type="text" id="username" class="form-control" value="admin">
+            </div>
+            <div class="form-group">
+                <label for="password">密码:</label>
+                <input type="password" id="password" class="form-control" value="admin123">
+            </div>
+            <button class="btn success" onclick="testLogin()">测试登录</button>
+            <div id="loginResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 二维码生成</h3>
+            <button class="btn" onclick="generateQRCode()">生成访问二维码</button>
+            <div id="qrSection" class="qr-section" style="display: none;">
+                <img id="qrCode" class="qr-code" alt="访问二维码">
+                <div id="qrUrl" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🛠️ 快速修复</h3>
+            <button class="btn" onclick="runFullDiagnostic()">运行完整诊断</button>
+            <button class="btn" onclick="clearCache()">清除缓存</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://172.30.81.103:8000';
+        const FRONTEND_BASE = 'http://172.30.81.103:3000';
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status ${type}`;
+            statusEl.innerHTML = `<strong>${message}</strong>`;
+        }
+
+        async function checkNetworkConfig() {
+            updateStatus('🔍 检测网络配置中...', 'info');
+            
+            const networkInfo = document.getElementById('networkInfo');
+            networkInfo.style.display = 'block';
+            networkInfo.innerHTML = `
+                <strong>当前配置:</strong><br>
+                后端API: ${API_BASE}<br>
+                前端应用: ${FRONTEND_BASE}<br>
+                用户代理: ${navigator.userAgent}<br>
+                屏幕尺寸: ${window.screen.width}x${window.screen.height}<br>
+                当前时间: ${new Date().toLocaleString()}
+            `;
+            
+            updateStatus('✅ 网络配置检测完成', 'success');
+        }
+
+        async function testBackendConnection() {
+            updateStatus('🔍 测试后端连接中...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const resultsEl = document.getElementById('connectionResults');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultsEl.innerHTML = `
+                        <div class="status success">
+                            ✅ 后端连接成功!<br>
+                            状态码: ${response.status}<br>
+                            响应: ${JSON.stringify(data)}
+                        </div>
+                    `;
+                    updateStatus('✅ 后端连接测试通过', 'success');
+                } else {
+                    resultsEl.innerHTML = `
+                        <div class="status error">
+                            ❌ 后端连接失败<br>
+                            状态码: ${response.status}
+                        </div>
+                    `;
+                    updateStatus('❌ 后端连接测试失败', 'error');
+                }
+            } catch (error) {
+                document.getElementById('connectionResults').innerHTML = `
+                    <div class="status error">
+                        ❌ 后端连接错误: ${error.message}
+                    </div>
+                `;
+                updateStatus('❌ 后端连接测试失败', 'error');
+            }
+        }
+
+        async function testFrontendAccess() {
+            updateStatus('🔍 测试前端访问中...', 'info');
+            
+            try {
+                const response = await fetch(FRONTEND_BASE, {
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                
+                document.getElementById('connectionResults').innerHTML += `
+                    <div class="status success">
+                        ✅ 前端访问测试完成<br>
+                        URL: ${FRONTEND_BASE}
+                    </div>
+                `;
+                updateStatus('✅ 前端访问测试通过', 'success');
+            } catch (error) {
+                document.getElementById('connectionResults').innerHTML += `
+                    <div class="status error">
+                        ❌ 前端访问错误: ${error.message}
+                    </div>
+                `;
+                updateStatus('❌ 前端访问测试失败', 'error');
+            }
+        }
+
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            updateStatus('🔐 测试登录中...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const resultsEl = document.getElementById('loginResults');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultsEl.innerHTML = `
+                        <div class="status success">
+                            ✅ 登录成功!<br>
+                            用户: ${data.user?.username || 'N/A'}<br>
+                            角色: ${data.user?.role || 'N/A'}<br>
+                            Token: ${data.access_token ? '已获取' : '未获取'}
+                        </div>
+                    `;
+                    updateStatus('✅ 登录测试通过', 'success');
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    resultsEl.innerHTML = `
+                        <div class="status error">
+                            ❌ 登录失败<br>
+                            状态码: ${response.status}<br>
+                            错误: ${errorData.detail || '未知错误'}
+                        </div>
+                    `;
+                    updateStatus('❌ 登录测试失败', 'error');
+                }
+            } catch (error) {
+                document.getElementById('loginResults').innerHTML = `
+                    <div class="status error">
+                        ❌ 登录错误: ${error.message}
+                    </div>
+                `;
+                updateStatus('❌ 登录测试失败', 'error');
+            }
+        }
+
+        function generateQRCode() {
+            updateStatus('📱 生成二维码中...', 'info');
+            
+            const qrSection = document.getElementById('qrSection');
+            const qrCode = document.getElementById('qrCode');
+            const qrUrl = document.getElementById('qrUrl');
+            
+            const url = FRONTEND_BASE;
+            const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+            
+            qrCode.src = qrCodeUrl;
+            qrUrl.innerHTML = `<strong>扫码访问:</strong><br>${url}`;
+            qrSection.style.display = 'block';
+            
+            updateStatus('✅ 二维码生成完成', 'success');
+        }
+
+        async function runFullDiagnostic() {
+            updateStatus('🔍 运行完整诊断中...', 'info');
+            
+            await checkNetworkConfig();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testBackendConnection();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testFrontendAccess();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testLogin();
+            
+            updateStatus('✅ 完整诊断完成', 'success');
+        }
+
+        function clearCache() {
+            updateStatus('🧹 清除缓存中...', 'info');
+            
+            // 清除localStorage
+            localStorage.clear();
+            
+            // 清除sessionStorage
+            sessionStorage.clear();
+            
+            // 尝试清除缓存
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                });
+            }
+            
+            setTimeout(() => {
+                updateStatus('✅ 缓存清除完成', 'success');
+            }, 1000);
+        }
+
+        // 页面加载时自动检测网络配置
+        window.onload = function() {
+            checkNetworkConfig();
+        };
+    </script>
+</body>
+</html>

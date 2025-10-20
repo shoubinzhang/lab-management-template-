@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端登录快速修复</title>
+    <script src="config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .step {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #007bff;
+        }
+        
+        .step-number {
+            background: #007bff;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .step h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .step p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .test-btn.secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .result {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .result.success {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .result.error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .result.info {
+            border-color: #17a2b8;
+            background: #d1ecf1;
+        }
+        
+        .app-config-status {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #2196f3;
+            font-size: 14px;
+        }
+        
+        .app-config-status.loading {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        
+        .app-config-status.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .app-config-status.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        
+        .quick-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .link-btn {
+            background: white;
+            border: 2px solid #007bff;
+            color: #007bff;
+            padding: 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .link-btn:hover {
+            background: #007bff;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .emergency {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .emergency h3 {
+            color: #d63031;
+            margin-bottom: 10px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .quick-links {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 移动端登录快速修复</h1>
+            <p>5分钟内解决您的移动端登录问题</p>
+        </div>
+        
+        <div class="content">
+            <div id="app-config-status" class="app-config-status loading">
+                <h3>🔧 AppConfig 配置加载中...</h3>
+                <p>系统正在加载配置信息，请稍候...</p>
+            </div>
+            
+            <div id="emergency-info" class="emergency hidden">
+                <h3>🚨 关键信息</h3>
+                <p><strong>手机访问地址:</strong> <code id="frontend-url">-- 加载中 --</code></p>
+                <p><strong>测试账号:</strong> admin / admin123</p>
+                <p><strong>诊断工具:</strong> <code id="diagnostic-url">-- 加载中 --</code></p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>🔍 立即诊断</h3>
+                <p>首先确认问题类型，点击下面的按钮进行快速检测：</p>
+                <button class="test-btn" onclick="quickDiagnosis()">🧪 快速诊断</button>
+                <button class="test-btn secondary" onclick="testNetwork()">🌐 网络测试</button>
+                <div id="diagnosis-result" class="result hidden"></div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>📱 手机端测试</h3>
+                <p>在您的手机浏览器中访问以下链接进行测试：</p>
+                <div id="quick-links" class="quick-links hidden">
+                    <!-- 链接将在AppConfig加载后动态生成 -->
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>🔧 常见问题修复</h3>
+                <p>根据诊断结果，选择相应的修复方案：</p>
+                <button class="test-btn" onclick="fixNetwork()">🌐 网络修复</button>
+                <button class="test-btn" onclick="fixBrowser()">🧹 清理缓存</button>
+                <button class="test-btn" onclick="fixFirewall()">🔒 防火墙设置</button>
+                <div id="fix-result" class="result hidden"></div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>✅ 验证修复</h3>
+                <p>完成修复后，验证登录功能是否正常：</p>
+                <button class="test-btn" onclick="verifyLogin()">🔐 验证登录</button>
+                <button class="test-btn secondary" onclick="verifyComplete()">🎉 完整验证</button>
+                <div id="verify-result" class="result hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 快速诊断
+        async function quickDiagnosis() {
+            const result = document.getElementById('diagnosis-result');
+            result.classList.remove('hidden');
+            result.innerHTML = '<div class="loading"></div> 正在诊断...';
+            
+            try {
+                // 测试后端
+                const healthResponse = await fetch('http://172.30.81.103:8000/health');
+                const healthData = await healthResponse.json();
+                
+                // 测试登录
+                const loginResponse = await fetch('http://172.30.81.103:8000/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                let status = 'success';
+                let message = '✅ 系统状态良好！服务端正常运行。\n';
+                message += `健康检查: ${healthData.status}\n`;
+                message += `登录接口: ${loginResponse.status === 200 ? '正常' : '异常'}`;
+                
+                result.className = 'result success';
+                result.innerHTML = message.replace(/\n/g, '<br>');
+                
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `❌ 诊断失败: ${error.message}\n\n建议检查网络连接和IP地址设置。`;
+            }
+        }
+        
+        // 网络测试
+        async function testNetwork() {
+            const result = document.getElementById('diagnosis-result');
+            result.classList.remove('hidden');
+            result.innerHTML = '<div class="loading"></div> 正在测试网络...';
+            
+            const tests = [
+                'http://172.30.81.103:8000/health',
+                'http://172.30.81.103:3000',
+                'http://localhost:8000/health',
+                'http://127.0.0.1:8000/health'
+            ];
+            
+            let results = [];
+            for (const url of tests) {
+                try {
+                    const response = await fetch(url, { 
+                        method: 'GET', 
+                        mode: 'no-cors',
+                        timeout: 3000 
+                    });
+                    results.push(`✅ ${url}: 可访问`);
+                } catch (error) {
+                    results.push(`❌ ${url}: ${error.message}`);
+                }
+            }
+            
+            result.className = 'result';
+            result.innerHTML = results.join('<br>');
+        }
+        
+        // 网络修复
+        function fixNetwork() {
+            const result = document.getElementById('fix-result');
+            result.classList.remove('hidden');
+            result.className = 'result success';
+            result.innerHTML = `
+                <strong>🌐 网络修复建议:</strong><br><br>
+                1. <strong>确保同一WiFi:</strong> 手机和电脑连接同一个网络<br>
+                2. <strong>检查IP地址:</strong> 确认电脑IP是 172.30.81.103<br>
+                3. <strong>关闭VPN/代理:</strong> 手机和电脑都不要使用VPN<br>
+                4. <strong>重启网络:</strong> 重启路由器和设备<br><br>
+                🔍 完成后重新运行网络测试
+            `;
+        }
+        
+        // 浏览器修复
+        function fixBrowser() {
+            const result = document.getElementById('fix-result');
+            result.classList.remove('hidden');
+            result.className = 'result success';
+            result.innerHTML = `
+                <strong>🧹 浏览器清理步骤:</strong><br><br>
+                1. <strong>清除缓存:</strong> 设置 → 隐私 → 清除浏览数据<br>
+                2. <strong>关闭插件:</strong> 禁用广告拦截等扩展<br>
+                3. <strong>无痕模式:</strong> 使用隐私模式重新访问<br>
+                4. <strong>更换浏览器:</strong> 尝试Chrome/Safari/Edge<br><br>
+                📱 推荐使用手机自带浏览器
+            `;
+        }
+        
+        // 防火墙修复
+        function fixFirewall() {
+            const result = document.getElementById('fix-result');
+            result.classList.remove('hidden');
+            result.className = 'result info';
+            result.innerHTML = `
+                <strong>🔒 Windows防火墙设置:</strong><br><br>
+                1. 打开"Windows Defender 防火墙"<br>
+                2. 点击"高级设置"<br>
+                3. 添加入站规则，允许端口3000和8000<br>
+                4. 或者临时关闭防火墙进行测试<br><br>
+                ⚠️ 记得测试后重新开启防火墙
+            `;
+        }
+        
+        // 验证登录
+        async function verifyLogin() {
+            const result = document.getElementById('verify-result');
+            result.classList.remove('hidden');
+            result.innerHTML = '<div class="loading"></div> 正在验证登录...';
+            
+            try {
+                const response = await fetch('http://172.30.81.103:8000/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <strong>✅ 登录验证成功！</strong><br>
+                        令牌已获取: ${data.access_token ? data.access_token.substring(0, 20) + '...' : 'N/A'}<br>
+                        用户: ${data.user?.username || 'admin'}<br>
+                        🎉 服务端完全正常！
+                    `;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `❌ 登录验证失败: HTTP ${response.status}`;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `❌ 验证失败: ${error.message}`;
+            }
+        }
+        
+        // 完整验证
+        async function verifyComplete() {
+            const result = document.getElementById('verify-result');
+            result.classList.remove('hidden');
+            result.innerHTML = '<div class="loading"></div> 正在进行完整验证...';
+            
+            try {
+                // 1. 健康检查
+                const health = await fetch('http://172.30.81.103:8000/health');
+                const healthData = await health.json();
+                
+                // 2. 登录测试
+                const login = await fetch('http://172.30.81.103:8000/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: 'admin', password: 'admin123'})
+                });
+                const loginData = await login.json();
+                
+                // 3. 用户信息
+                const me = await fetch('http://172.30.81.103:8000/api/auth/me', {
+                    headers: {'Authorization': `Bearer ${loginData.access_token}`}
+                });
+                const meData = await me.json();
+                
+                result.className = 'result success';
+                result.innerHTML = `
+                    <strong>🎉 完整验证成功！</strong><br><br>
+                    ✅ 健康检查: ${healthData.status}<br>
+                    ✅ 登录功能: ${loginData.user?.username}<br>
+                    ✅ 用户信息: ${meData.username} (${meData.role})<br><br>
+                    <strong>💡 结论:</strong> 服务端完全正常！问题在移动端访问环节。
+                `;
+                
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `
+                    <strong>❌ 完整验证失败</strong><br>
+                    错误: ${error.message}<br><br>
+                    <strong>🔧 排查建议:</strong><br>
+                    1. 检查AppConfig配置是否正确<br>
+                    2. 确认API服务是否正在运行<br>
+                    3. 验证网络连接和防火墙设置
+                `;
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `
+                    <strong>❌ 完整验证失败</strong><br>
+                    错误: ${error.message}<br><br>
+                    <strong>⚠️ 注意:</strong><br>
+                    AppConfig配置加载失败，请检查config.js文件是否存在且正确配置。
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

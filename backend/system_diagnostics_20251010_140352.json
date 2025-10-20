@@ -1,0 +1,108 @@
+{
+  "timestamp": "2025-10-10T14:03:52.495120",
+  "base_url": "http://localhost:8000",
+  "results": {
+    "static_files": {
+      "success": false,
+      "details": [
+        {
+          "page": "mobile_index.html",
+          "url": "http://localhost:8000/static/mobile_index.html",
+          "status_code": 404,
+          "content_length": 22,
+          "success": false
+        },
+        {
+          "page": "mobile_devices.html",
+          "url": "http://localhost:8000/static/mobile_devices.html",
+          "status_code": 404,
+          "content_length": 22,
+          "success": false
+        },
+        {
+          "page": "mobile_user.html",
+          "url": "http://localhost:8000/static/mobile_user.html",
+          "status_code": 404,
+          "content_length": 22,
+          "success": false
+        },
+        {
+          "page": "mobile_test_fixed.html",
+          "url": "http://localhost:8000/static/mobile_test_fixed.html",
+          "status_code": 404,
+          "content_length": 22,
+          "success": false
+        }
+      ]
+    },
+    "network_configuration": {
+      "success": false,
+      "details": [
+        {
+          "test": "服务器可访问性",
+          "success": false,
+          "status_code": 404
+        },
+        {
+          "test": "CORS配置",
+          "success": true,
+          "access_control_allow_origin": "*"
+        }
+      ]
+    },
+    "database_connection": {
+      "success": true,
+      "details": [
+        {
+          "db_file": "lab.db",
+          "table_count": 2,
+          "success": true
+        },
+        {
+          "db_file": "lab_management.db",
+          "table_count": 20,
+          "success": true
+        },
+        {
+          "db_file": "test.db",
+          "table_count": 2,
+          "success": true
+        }
+      ]
+    },
+    "authentication": {
+      "success": true,
+      "details": {
+        "status_code": 200,
+        "token_received": true
+      },
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc2MDA3ODAyNn0.eOM5mXzBi4IQJnpw4Ek8r4e7yg1QUcbBvEwrOEHSWIY"
+    },
+    "api_endpoints": {
+      "success": false,
+      "details": [
+        {
+          "endpoint": "/api/devices",
+          "url": "http://localhost:8000/api/devices",
+          "method": "GET",
+          "status_code": 200,
+          "success": true
+        },
+        {
+          "endpoint": "/api/users/me",
+          "url": "http://localhost:8000/api/users/me",
+          "method": "GET",
+          "status_code": 500,
+          "success": false
+        },
+        {
+          "endpoint": "/api/health",
+          "url": "http://localhost:8000/api/health",
+          "method": "GET",
+          "status_code": 200,
+          "success": true
+        }
+      ]
+    }
+  }
+}

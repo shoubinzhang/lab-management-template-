@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清除缓存和存储</title>
+    <script src="config.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .danger {
+            background-color: #dc3545;
+        }
+        .danger:hover {
+            background-color: #c82333;
+        }
+        .success {
+            background-color: #28a745;
+        }
+        .success:hover {
+            background-color: #218838;
+        }
+        .warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .warning:hover {
+            background-color: #e0a800;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #e9ecef;
+        }
+        .link-button {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .link-button:hover {
+            background-color: #545b62;
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 清除缓存和存储工具</h1>
+        
+        <div class="section">
+            <h3>📊 当前状态检查</h3>
+            <button onclick="checkCurrentStatus()">检查当前状态</button>
+            <div id="statusInfo" class="status"></div>
+        </div>
+
+        <div class="section">
+            <h3>🧹 清除操作</h3>
+            <button onclick="clearLocalStorage()">清除 LocalStorage</button>
+            <button onclick="clearSessionStorage()">清除 SessionStorage</button>
+            <button onclick="clearCookies()">清除 Cookies</button>
+            <button class="warning" onclick="clearAllStorage()">清除所有存储</button>
+        </div>
+
+        <div class="section">
+            <h3>🔄 缓存操作</h3>
+            <button onclick="clearBrowserCache()">清除浏览器缓存</button>
+            <button onclick="hardRefresh()">强制刷新页面</button>
+            <button class="danger" onclick="clearAllAndReload()">清除所有并重新加载</button>
+        </div>
+
+        <div class="section">
+            <h3>🚀 快速操作</h3>
+            <button class="success" onclick="fixSyntaxError()">修复语法错误</button>
+            <button onclick="openReagentsPage()">打开试剂页面</button>
+            <button onclick="openHomePage()">打开首页</button>
+        </div>
+
+        <div class="section">
+            <h3>🔗 快速链接</h3>
+            <a href="javascript:void(0)" onclick="openHomePage()" class="link-button" target="_blank">首页</a>
+            <a href="javascript:void(0)" onclick="openReagentsPage()" class="link-button" target="_blank">试剂页面</a>
+            <a href="javascript:void(0)" onclick="openLoginPage()" class="link-button" target="_blank">登录页面</a>
+            <a href="fix_admin_permissions.html" class="link-button" target="_blank">权限修复工具</a>
+        </div>
+
+        <div id="result" class="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        // 配置加载状态管理
+        let configLoaded = false;
+        let configLoadTimeout = null;
+        
+        // 等待AppConfig加载完成
+        function waitForAppConfig(callback) {
+            if (window.AppConfig && window.AppConfig.apiUrl) {
+                configLoaded = true;
+                callback();
+            } else {
+                // 设置默认配置，以防config.js加载失败
+                if (!window.AppConfig) {
+                    window.AppConfig = {
+                        apiUrl: 'localhost',
+                        apiPort: '8000',
+                        frontendPort: '3000'
+                    };
+                }
+                
+                // 尝试等待配置加载
+                setTimeout(() => waitForAppConfig(callback), 100);
+                
+                // 设置超时处理
+                if (!configLoadTimeout) {
+                    configLoadTimeout = setTimeout(() => {
+                        console.warn('配置加载超时，使用默认配置');
+                        configLoaded = true;
+                        callback();
+                    }, 3000);
+                }
+            }
+        }
+        
+        // 获取前端基础URL
+        function getFrontendBaseUrl() {
+            if (!window.AppConfig) {
+                // 使用当前页面的协议和主机名作为默认回退
+                const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+                return `${protocol}//${window.location.hostname}:3000`;
+            }
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            
+            // 优先使用AppConfig中的完整URL
+            if (window.AppConfig.frontendUrl) {
+                return window.AppConfig.frontendUrl;
+            }
+            
+            // 动态构建URL
+            const host = window.AppConfig.apiUrl || window.location.hostname;
+            const port = window.AppConfig.frontendPort || '3000';
+            return `${protocol}//${host}:${port}`;
+        }
+        
+        // 构建前端完整URL
+        function buildFrontendUrl(path = '') {
+            const baseUrl = getFrontendBaseUrl();
+            return baseUrl + (path.startsWith('/') ? path : '/' + path);
+        }
+        
+        function showResult(message, type = 'info') {
+            const result = document.getElementById('result');
+            result.style.display = 'block';
+            result.innerHTML = message;
+            result.className = 'status ' + type;
+            
+            setTimeout(() => {
+                result.style.display = 'none';
+            }, 3000);
+        }
+
+        function checkCurrentStatus() {
+            const statusInfo = document.getElementById('statusInfo');
+            const localStorage = window.localStorage;
+            const sessionStorage = window.sessionStorage;
+            
+            let info = '<strong>存储状态：</strong><br>';
+            info += `LocalStorage 项目数: ${localStorage.length}<br>`;
+            info += `SessionStorage 项目数: ${sessionStorage.length}<br>`;
+            info += `Cookies: ${document.cookie ? '存在' : '无'}<br>`;
+            
+            // 检查用户信息
+            const userInfo = localStorage.getItem('userInfo');
+            if (userInfo) {
+                try {
+                    const user = JSON.parse(userInfo);
+                    info += `<strong>用户信息：</strong><br>`;
+                    info += `用户名: ${user.username || '未知'}<br>`;
+                    info += `角色: ${user.role || '未知'}<br>`;
+                    info += `ID: ${user.id || '未知'}<br>`;
+                } catch (e) {
+                    info += `<strong>用户信息：</strong> 解析错误<br>`;
+                }
+            } else {
+                info += `<strong>用户信息：</strong> 未登录<br>`;
+            }
+            
+            statusInfo.innerHTML = info;
+        }
+
+        function clearLocalStorage() {
+            localStorage.clear();
+            showResult('LocalStorage 已清除', 'success');
+        }
+
+        function clearSessionStorage() {
+            sessionStorage.clear();
+            showResult('SessionStorage 已清除', 'success');
+        }
+
+        function clearCookies() {
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            showResult('Cookies 已清除', 'success');
+        }
+
+        function clearAllStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            clearCookies();
+            showResult('所有存储已清除', 'success');
+        }
+
+        function clearBrowserCache() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    names.forEach(function(name) {
+                        caches.delete(name);
+                    });
+                });
+            }
+            showResult('浏览器缓存清除请求已发送', 'info');
+        }
+
+        function hardRefresh() {
+            window.location.reload(true);
+        }
+
+        function clearAllAndReload() {
+            clearAllStorage();
+            clearBrowserCache();
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 1000);
+        }
+
+        // 打开登录页面
+        function openLoginPage() {
+            try {
+                window.open(buildFrontendUrl('login'), '_blank');
+            } catch (error) {
+                console.error('打开登录页面失败:', error);
+                showResult('打开页面失败，请稍后再试', 'error');
+            }
+        }
+        
+        function fixSyntaxError() {
+            // 清除所有可能导致语法错误的缓存和存储
+            clearAllStorage();
+            clearBrowserCache();
+            
+            // 等待一下然后重新加载
+            showResult('正在修复语法错误...', 'info');
+            setTimeout(() => {
+                window.location.href = buildFrontendUrl('reagents') + '?_t=' + Date.now();
+            }, 2000);
+        }
+
+        function openReagentsPage() {
+            try {
+                window.open(buildFrontendUrl('reagents') + '?_t=' + Date.now(), '_blank');
+            } catch (error) {
+                console.error('打开试剂页面失败:', error);
+                showResult('打开页面失败，请稍后再试', 'error');
+            }
+        }
+
+        function openHomePage() {
+            try {
+                window.open(buildFrontendUrl() + '?_t=' + Date.now(), '_blank');
+            } catch (error) {
+                console.error('打开首页失败:', error);
+                showResult('打开页面失败，请稍后再试', 'error');
+            }
+        }
+
+        // 页面加载时自动检查状态
+        window.onload = function() {
+            // 确保config.js正确加载
+            if (!window.AppConfig) {
+                const configScript = document.createElement('script');
+                configScript.src = 'config.js';
+                configScript.onload = function() {
+                    console.log('config.js 加载完成');
+                    waitForAppConfig(() => {
+                        console.log('配置加载完成，当前前端地址:', getFrontendBaseUrl());
+                        checkCurrentStatus();
+                    });
+                };
+                configScript.onerror = function() {
+                    console.warn('config.js 加载失败，使用默认配置');
+                    // 创建默认配置
+                    window.AppConfig = {
+                        apiUrl: window.location.hostname,
+                        apiPort: '8000',
+                        frontendPort: '3000'
+                    };
+                    waitForAppConfig(() => {
+                        console.log('使用默认配置，当前前端地址:', getFrontendBaseUrl());
+                        checkCurrentStatus();
+                    });
+                };
+                document.head.appendChild(configScript);
+            } else {
+                waitForAppConfig(() => {
+                    console.log('配置加载完成，当前前端地址:', getFrontendBaseUrl());
+                    checkCurrentStatus();
+                });
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实验室管理系统 - 登录测试页面</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .debug-section {
+            margin-top: 30px;
+        }
+        .debug-section h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+        .loading.show {
+            display: flex;
+        }
+        .loading-content {
+            text-align: center;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p id="loading-message">加载中...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>实验室管理系统 - 登录测试</h1>
+            <p class="text-muted">用于诊断移动设备登录问题</p>
+        </div>
+
+        <form id="loginForm" class="mb-4">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" class="form-control" id="username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" class="form-control" id="password" placeholder="请输入密码">
+            </div>
+            <button type="submit" class="btn btn-primary">登录测试</button>
+        </form>
+
+        <div id="status" class="status"></div>
+        
+        <div class="debug-section">
+            <button id="test-connection" class="btn btn-secondary mb-3">测试API连接</button>
+            <h3>API连接状态</h3>
+            <p id="connection-status" class="text-muted">未测试</p>
+        </div>
+
+        <div class="debug-section">
+            <h3>网络环境信息</h3>
+            <div id="network-info" class="debug-info"></div>
+        </div>
+
+        <div class="debug-section">
+            <h3>调试日志</h3>
+            <div id="debug-log" class="debug-info"></div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let API_BASE_URL = '';
+        const DEBUG_MODE = true;
+        let isConnecting = false;
+        
+        // DOM元素
+        const loginForm = document.getElementById('loginForm');
+        const statusDiv = document.getElementById('status');
+        const debugLog = document.getElementById('debug-log');
+        const networkInfo = document.getElementById('network-info');
+        const connectionStatus = document.getElementById('connection-status');
+        const loadingDiv = document.getElementById('loading');
+        const loadingMessage = document.getElementById('loading-message');
+        const testConnectionBtn = document.getElementById('test-connection');
+        
+        // 日志函数
+        function log(message, level = 'info') {
+            const timestamp = new Date().toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            
+            const levelColors = {
+                'debug': '#6c757d',
+                'info': '#28a745',
+                'warn': '#ffc107',
+                'error': '#dc3545',
+                'success': '#28a745'
+            };
+            
+            const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
+            
+            // 在控制台显示日志
+            if (DEBUG_MODE) {
+                const consoleMethod = level === 'error' ? 'error' : 
+                                     level === 'warn' ? 'warn' : 
+                                     level === 'debug' ? 'debug' : 'log';
+                console[consoleMethod](logEntry);
+            }
+            
+            // 在页面上显示日志
+            const logElement = document.createElement('div');
+            logElement.textContent = logEntry;
+            logElement.style.color = levelColors[level] || '#333';
+            debugLog.appendChild(logElement);
+            
+            // 滚动到底部
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+        
+        // 显示/隐藏加载状态
+        function showLoading(message = '加载中...') {
+            loadingMessage.textContent = message;
+            loadingDiv.classList.add('show');
+        }
+        
+        function hideLoading() {
+            loadingDiv.classList.remove('show');
+        }
+        
+        // 显示状态信息
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        // 动态获取API地址
+        async function getApiUrl() {
+            try {
+                const currentHost = window.location.hostname;
+                const currentProtocol = window.location.protocol;
+                const currentPort = window.location.port;
+                const fullPath = window.location.href;
+                
+                // 详细记录当前网络环境
+                log(`=== 网络环境信息 ===`, 'debug');
+                log(`当前主机名: ${currentHost}`, 'debug');
+                log(`当前协议: ${currentProtocol}`, 'debug');
+                log(`当前端口: ${currentPort || '默认'}`, 'debug');
+                log(`完整URL: ${fullPath}`, 'debug');
+                log(`用户代理: ${navigator.userAgent}`, 'debug');
+                log(`浏览器语言: ${navigator.language}`, 'debug');
+                log(`=== 结束网络环境信息 ===`, 'debug');
+                
+                // 构建API地址
+                API_BASE_URL = `${currentProtocol}//${currentHost}:8000`;
+                
+                // 记录不同类型的访问场景
+                const isIpAddress = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(currentHost);
+                
+                if (isIpAddress) {
+                    log(`IP地址访问模式: ${currentHost}, 设置API地址: ${API_BASE_URL}`, 'info');
+                } else if (currentHost.includes('localhost') || currentHost.includes('127.0.0.1')) {
+                    log(`本地开发模式: ${currentHost}, 设置API地址: ${API_BASE_URL}`, 'info');
+                } else {
+                    log(`域名访问模式: ${currentHost}, 设置API地址: ${API_BASE_URL}`, 'info');
+                }
+                
+                // 显示API地址在网络信息区域
+                networkInfo.textContent = `API地址: ${API_BASE_URL}\n主机名: ${currentHost}\n协议: ${currentProtocol}\n端口: ${currentPort || '默认'}\n完整URL: ${fullPath}`;
+            } catch (error) {
+                log(`获取API地址异常: ${error.message}`, 'error');
+                log(`异常堆栈: ${error.stack}`, 'debug');
+                API_BASE_URL = 'http://localhost:8000'; // 默认值
+                networkInfo.textContent = `API地址: ${API_BASE_URL} (使用默认值)\n错误: ${error.message}`;
+            }
+        }
+        
+        // 测试API连接
+        async function testConnection() {
+            if (isConnecting) return;
+            
+            isConnecting = true;
+            connectionStatus.textContent = '连接中...';
+            connectionStatus.style.color = '#ffc107';
+            log(`=== 开始API连接测试 ===`, 'info');
+            
+            try {
+                const healthUrl = `${API_BASE_URL}/health`;
+                log(`测试连接URL: ${healthUrl}`, 'info');
+                
+                log(`准备发送健康检查请求...`, 'debug');
+                const startTime = performance.now();
+                
+                const response = await fetch(healthUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const endTime = performance.now();
+                const requestTime = endTime - startTime;
+                log(`连接测试完成，耗时: ${requestTime.toFixed(2)}ms`, 'debug');
+                log(`连接测试响应状态: ${response.status} ${response.statusText}`, 'info');
+                
+                // 记录响应头信息
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+                log(`连接测试响应头: ${JSON.stringify(headers)}`, 'debug');
+                
+                const responseText = await response.text();
+                log(`连接测试响应内容: ${responseText}`, 'debug');
+                
+                let data = null;
+                try {
+                    data = JSON.parse(responseText);
+                    log(`解析连接测试响应: ${JSON.stringify(data)}`, 'debug');
+                } catch (jsonError) {
+                    log(`连接测试响应JSON解析失败: ${jsonError.message}`, 'warn');
+                    log(`响应文本前200字符: ${responseText.substring(0, 200)}`, 'debug');
+                    
+                    // 检查是否返回HTML
+                    if (responseText.trim().startsWith('<')) {
+                        log('检测到服务器返回HTML内容而不是JSON', 'error');
+                    }
+                }
+                
+                if (response.ok) {
+                    log('API连接成功', 'success');
+                    connectionStatus.textContent = '连接成功';
+                    connectionStatus.style.color = '#28a745';
+                    showStatus('API连接正常', 'success');
+                } else {
+                    log('服务器返回非健康状态', 'warn');
+                    connectionStatus.textContent = '连接失败';
+                    connectionStatus.style.color = '#dc3545';
+                    showStatus(`API连接失败: 状态码 ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`连接异常: ${error.message}`, 'error');
+                log(`异常堆栈: ${error.stack}`, 'debug');
+                connectionStatus.textContent = '连接失败';
+                connectionStatus.style.color = '#dc3545';
+                
+                let friendlyError = '无法连接到服务器';
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    friendlyError = '无法连接到服务器，请检查网络连接';
+                }
+                
+                showStatus(`${friendlyError}: ${error.message}`, 'error');
+            } finally {
+                isConnecting = false;
+            }
+        }
+        
+        // 登录功能
+        async function login(username, password) {
+            log(`=== 开始登录流程 ===`, 'info');
+            log(`用户名: ${username}`, 'info');
+            showLoading('正在登录...');
+            showStatus('正在登录...', 'info');
+            
+            try {
+                const loginUrl = `${API_BASE_URL}/api/auth/login`;
+                log(`向登录API发送请求: ${loginUrl}`, 'info');
+                
+                // 记录完整请求信息
+                log(`请求参数: {username: ${username}, password: [已隐藏]}`, 'debug');
+                log(`完整请求URL: ${loginUrl}`, 'debug');
+                
+                log(`准备发送fetch请求...`, 'debug');
+                const startTime = performance.now();
+                
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                const endTime = performance.now();
+                const requestTime = endTime - startTime;
+                log(`请求完成，耗时: ${requestTime.toFixed(2)}ms`, 'debug');
+                log(`响应状态码: ${response.status} ${response.statusText}`, 'info');
+                
+                // 记录响应头信息
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+                log(`响应头信息: ${JSON.stringify(headers)}`, 'debug');
+                
+                const responseText = await response.text();
+                log(`登录响应内容: ${responseText}`, 'debug');
+                
+                let data = null;
+                try {
+                    data = JSON.parse(responseText);
+                    log(`解析响应数据: ${JSON.stringify(data)}`, 'debug');
+                    
+                    // 详细记录响应结构
+                    if (data) {
+                        log(`响应包含access_token: ${data.access_token ? '是' : '否'}`, 'debug');
+                        log(`响应包含detail字段: ${data.detail ? '是' : '否'}`, 'debug');
+                        log(`响应包含message字段: ${data.message ? '是' : '否'}`, 'debug');
+                    }
+                } catch (jsonError) {
+                    log(`响应JSON解析失败: ${jsonError.message}`, 'warn');
+                    log(`响应文本前200字符: ${responseText.substring(0, 200)}`, 'debug');
+                    
+                    // 检查是否返回HTML
+                    if (responseText.trim().startsWith('<')) {
+                        log('检测到服务器返回HTML内容而不是JSON', 'error');
+                    }
+                }
+                
+                if (response.ok && data && data.access_token) {
+                    // 登录成功
+                    log(`=== 登录成功 ===`, 'success');
+                    log(`用户: ${data.user.username}, 角色: ${data.user.role}`, 'success');
+                    log(`生成的token长度: ${data.access_token.length}字符`, 'debug');
+                    
+                    // 验证localStorage是否可用
+                    try {
+                        localStorage.setItem('test', 'test');
+                        localStorage.removeItem('test');
+                        log('localStorage可用', 'debug');
+                    } catch (storageError) {
+                        log(`localStorage不可用: ${storageError.message}`, 'warn');
+                    }
+                    
+                    showStatus('登录成功！', 'success');
+                    
+                    // 保存token到localStorage
+                    log('保存认证信息到localStorage');
+                    localStorage.setItem('authToken', data.access_token);
+                    localStorage.setItem('userInfo', JSON.stringify(data.user));
+                    localStorage.setItem('tokenType', data.token_type);
+                    
+                    // 验证保存是否成功
+                    const savedToken = localStorage.getItem('authToken');
+                    log(`Token保存${savedToken ? '成功' : '失败'}`, 'debug');
+                    
+                    // 显示保存的token信息
+                    showStatus(`登录成功！Token已保存，长度: ${savedToken.length}字符`, 'success');
+                    
+                } else {
+                    // 登录失败
+                    const errorMsg = data?.detail || data?.message || responseText || `登录失败 (状态码: ${response.status})`;
+                    log(`登录失败: ${errorMsg}`, 'error');
+                    log(`详细错误信息 - 状态码: ${response.status}, 响应类型: ${response.headers.get('content-type')}`, 'debug');
+                    
+                    // 显示更详细的错误信息
+                    let displayErrorMsg = errorMsg;
+                    if (response.status === 401) {
+                        displayErrorMsg = '用户名或密码错误，请重新输入';
+                    } else if (response.status === 422) {
+                        displayErrorMsg = '请求格式错误，请刷新页面后重试';
+                    } else if (response.status >= 500) {
+                        displayErrorMsg = '服务器内部错误，请稍后再试';
+                    }
+                    
+                    showStatus(displayErrorMsg, 'error');
+                }
+            } catch (error) {
+                log(`登录请求异常: ${error.message}`, 'error');
+                log(`异常类型: ${error.name}`, 'debug');
+                log(`异常堆栈: ${error.stack}`, 'debug');
+                
+                // 显示友好的错误信息
+                let friendlyError = '登录请求发生异常';
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    friendlyError = '无法连接到服务器，请检查网络连接';
+                }
+                
+                showStatus(`登录失败: ${friendlyError}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 表单提交事件
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showStatus('请输入用户名和密码', 'error');
+                return;
+            }
+            
+            await login(username, password);
+        });
+        
+        // 测试连接按钮事件
+        testConnectionBtn.addEventListener('click', async () => {
+            await testConnection();
+        });
+        
+        // 输入框回车事件
+        document.getElementById('username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('password').focus();
+            }
+        });
+        
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loginForm.dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', async () => {
+            log('页面加载完成，开始初始化...');
+            // 先获取API地址
+            await getApiUrl();
+            // 然后测试连接
+            await testConnection();
+        });
+    </script>
+</body>
+</html>

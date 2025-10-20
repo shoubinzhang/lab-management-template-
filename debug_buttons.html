@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>试剂管理页面按钮调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .debug-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .code {
+            background: #e8e8e8;
+            padding: 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #fff;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <h1>试剂管理页面按钮调试指南</h1>
+    
+    <div class="debug-section">
+        <h2>🔍 调试步骤</h2>
+        
+        <div class="step">
+            <h3>步骤1: 检查用户权限</h3>
+            <p>在浏览器控制台中执行以下代码：</p>
+            <div class="code">
+                // 检查用户信息<br>
+                const user = JSON.parse(localStorage.getItem('user') || '{}');<br>
+                console.log('用户信息:', user);<br>
+                console.log('用户角色:', user.role);<br>
+                console.log('是否为管理员:', user.role === 'admin');
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>步骤2: 检查屏幕尺寸判断</h3>
+            <p>在浏览器控制台中执行以下代码：</p>
+            <div class="code">
+                // 检查屏幕尺寸<br>
+                console.log('窗口宽度:', window.innerWidth);<br>
+                console.log('窗口高度:', window.innerHeight);<br>
+                console.log('是否为移动端 (宽度 < 960px):', window.innerWidth < 960);
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>步骤3: 检查DOM元素</h3>
+            <p>在浏览器控制台中执行以下代码：</p>
+            <div class="code">
+                // 查找按钮元素<br>
+                const editButtons = document.querySelectorAll('button:contains("编辑"), [aria-label*="编辑"]');<br>
+                const deleteButtons = document.querySelectorAll('button:contains("删除"), [aria-label*="删除"]');<br>
+                const requestButtons = document.querySelectorAll('button:contains("申请"), [aria-label*="申请"]');<br>
+                <br>
+                console.log('编辑按钮数量:', editButtons.length);<br>
+                console.log('删除按钮数量:', deleteButtons.length);<br>
+                console.log('申请按钮数量:', requestButtons.length);<br>
+                <br>
+                // 检查按钮样式<br>
+                editButtons.forEach((btn, index) => {<br>
+                &nbsp;&nbsp;const style = window.getComputedStyle(btn);<br>
+                &nbsp;&nbsp;console.log(`编辑按钮${index + 1}:`, {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;display: style.display,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;visibility: style.visibility,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;opacity: style.opacity<br>
+                &nbsp;&nbsp;});<br>
+                });
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>步骤4: 检查React组件状态</h3>
+            <p>查看控制台中的调试信息，应该能看到类似这样的输出：</p>
+            <div class="code">
+                ReagentListItem Debug: {<br>
+                &nbsp;&nbsp;reagentName: "试剂名称",<br>
+                &nbsp;&nbsp;isAdmin: true/false,<br>
+                &nbsp;&nbsp;isMobile: true/false,<br>
+                &nbsp;&nbsp;userRole: "admin"/"user",<br>
+                &nbsp;&nbsp;hasEditCallback: true/false,<br>
+                &nbsp;&nbsp;hasDeleteCallback: true/false<br>
+                }
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>步骤5: 检查CSS样式</h3>
+            <p>在浏览器控制台中执行以下代码：</p>
+            <div class="code">
+                // 检查试剂列表容器<br>
+                const container = document.querySelector('.reagents-list-container');<br>
+                if (container) {<br>
+                &nbsp;&nbsp;const style = window.getComputedStyle(container);<br>
+                &nbsp;&nbsp;console.log('试剂列表容器样式:', {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;display: style.display,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;visibility: style.visibility<br>
+                &nbsp;&nbsp;});<br>
+                } else {<br>
+                &nbsp;&nbsp;console.log('未找到试剂列表容器');<br>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>🎯 预期结果</h2>
+        <ul>
+            <li><strong>管理员用户</strong>：应该看到"申请"、"编辑"、"删除"三个按钮</li>
+            <li><strong>普通用户</strong>：应该只看到"申请"按钮</li>
+            <li><strong>桌面端</strong>：按钮应该在每行试剂的右侧显示</li>
+            <li><strong>移动端</strong>：按钮应该在卡片底部显示</li>
+        </ul>
+    </div>
+    
+    <div class="debug-section">
+        <h2>🔧 常见问题解决方案</h2>
+        
+        <h3>问题1: 用户未登录或权限不足</h3>
+        <p>解决方案：确保用户已登录且角色为"admin"</p>
+        
+        <h3>问题2: CSS样式隐藏了按钮</h3>
+        <p>解决方案：检查CSS规则，确保没有display:none或visibility:hidden</p>
+        
+        <h3>问题3: 响应式布局判断错误</h3>
+        <p>解决方案：检查Material-UI主题配置和屏幕尺寸判断</p>
+        
+        <h3>问题4: 组件props传递错误</h3>
+        <p>解决方案：检查ReagentsPage → ReagentsListContainer → ReagentListItem的props传递链</p>
+    </div>
+    
+    <script>
+        // 自动执行一些基本检查
+        window.addEventListener('load', function() {
+            console.log('=== 试剂管理页面按钮调试 ===');
+            
+            // 检查用户信息
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                console.log('用户信息:', user);
+                console.log('用户角色:', user.role);
+                console.log('是否为管理员:', user.role === 'admin');
+            } catch (e) {
+                console.log('无法获取用户信息:', e);
+            }
+            
+            // 检查屏幕尺寸
+            console.log('窗口尺寸:', {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                isMobile: window.innerWidth < 960
+            });
+            
+            console.log('请按照页面上的步骤进行详细调试！');
+        });
+    </script>
+</body>
+</html>

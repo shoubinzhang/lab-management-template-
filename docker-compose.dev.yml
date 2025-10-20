@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # PostgreSQL数据库（开发环境）
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: lab-management-db-dev
+    environment:
+      POSTGRES_DB: lab_management_dev
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"
+    networks:
+      - lab-dev-network
+    restart: unless-stopped
+
+  # Redis缓存（开发环境）
+  redis-dev:
+    image: redis:7-alpine
+    container_name: lab-management-redis-dev
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - lab-dev-network
+    restart: unless-stopped
+
+  # 后端开发服务（热重载）
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: lab-management-backend-dev
+    environment:
+      - DATABASE_URL=postgresql://dev_user:dev_password@postgres-dev:5432/lab_management_dev
+      - REDIS_URL=redis://redis-dev:6379/0
+      - JWT_SECRET_KEY=dev-jwt-secret-key
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    ports:
+      - "8001:8000"
+    networks:
+      - lab-dev-network
+    depends_on:
+      - postgres-dev
+      - redis-dev
+    restart: unless-stopped
+    command: >
+      sh -c "python -m flask db upgrade &&
+             python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload"
+
+  # 前端开发服务（热重载）
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: lab-management-frontend-dev
+    environment:
+      - REACT_APP_API_URL=http://localhost:8001
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - lab-dev-network
+    depends_on:
+      - backend-dev
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  lab-dev-network:
+    driver: bridge

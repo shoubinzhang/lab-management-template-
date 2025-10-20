@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手机登录测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .debug-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>手机登录测试</h2>
+        
+        <div class="form-group">
+            <label for="username">用户名:</label>
+            <input type="text" id="username" value="admin" placeholder="请输入用户名">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">密码:</label>
+            <input type="password" id="password" value="admin123" placeholder="请输入密码">
+        </div>
+        
+        <button onclick="testLogin()">登录测试</button>
+        <button onclick="testConnection()">连接测试</button>
+        <button onclick="getDeviceInfo()">设备信息</button>
+        <button onclick="clearDebug()">清除日志</button>
+        
+        <div id="result"></div>
+        <div id="debug" class="debug-info"></div>
+    </div>
+
+    <script src="/config.js"></script>
+    <script>
+        let debugLog = '';
+        
+        // 等待AppConfig加载完成
+        function waitForAppConfig() {
+            return new Promise((resolve) => {
+                if (typeof AppConfig !== 'undefined') {
+                    resolve();
+                } else {
+                    const checkInterval = setInterval(() => {
+                        if (typeof AppConfig !== 'undefined') {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 50);
+                }
+            });
+        }
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog += `[${timestamp}] ${message}\n`;
+            document.getElementById('debug').textContent = debugLog;
+            console.log(message);
+        }
+        
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = type;
+            resultDiv.textContent = message;
+        }
+        
+        function clearDebug() {
+            debugLog = '';
+            document.getElementById('debug').textContent = '';
+            document.getElementById('result').textContent = '';
+        }
+        
+        function getApiUrl() {
+            // 确保AppConfig已经加载
+            if (typeof AppConfig === 'undefined') {
+                log('AppConfig尚未加载，使用默认配置');
+                const protocol = window.location.protocol;
+                const hostname = window.location.hostname;
+                const defaultUrl = `${protocol}//${hostname}:8000`;
+                log(`使用默认API URL: ${defaultUrl}`);
+                return defaultUrl;
+            }
+            
+            const apiBaseUrl = AppConfig.api.baseUrl;
+            log(`使用AppConfig配置的API基础地址: ${apiBaseUrl}`);
+            return apiBaseUrl;
+        }
+        
+        function getDeviceInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                hostname: window.location.hostname,
+                protocol: window.location.protocol,
+                port: window.location.port,
+                href: window.location.href
+            };
+            
+            log('设备信息:');
+            Object.entries(info).forEach(([key, value]) => {
+                log(`  ${key}: ${value}`);
+            });
+            
+            // 检测移动设备
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isSmallScreen = window.innerWidth <= 768;
+            const hasTouch = 'ontouchstart' in window;
+            
+            log(`移动设备检测:`);
+            log(`  isMobile: ${isMobile}`);
+            log(`  isSmallScreen: ${isSmallScreen}`);
+            log(`  hasTouch: ${hasTouch}`);
+            log(`  综合判断: ${isMobile || isSmallScreen || hasTouch}`);
+        }
+        
+        async function testConnection() {
+            try {
+                // 等待AppConfig加载完成
+                await waitForAppConfig();
+                
+                const apiUrl = getApiUrl();
+                
+                // 使用AppConfig.getApiUrl方法构建API端点
+                const healthUrl = AppConfig.getApiUrl('health');
+                const loginTestUrl = AppConfig.getApiUrl('auth/login');
+                
+                // docs页面通常不需要API前缀
+                const testUrl = apiUrl.replace('/api', '/docs');
+                
+                log(`开始连接测试...`);
+                log(`API基础地址: ${apiUrl}`);
+                log(`测试端点: ${testUrl}`);
+                log(`健康检查端点: ${healthUrl}`);
+                log(`登录测试端点: ${loginTestUrl}`);
+                
+                showResult('正在测试连接...', 'info');
+                
+                // 测试健康检查端点
+                log('测试健康检查端点...');
+                const healthResponse = await fetch(healthUrl, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                log(`健康检查响应状态: ${healthResponse.status}`);
+                
+                // 测试API文档端点
+                log('测试API文档端点...');
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                // 测试登录端点（HEAD请求检查端点是否存在）
+                log('测试登录端点是否存在...');
+                try {
+                    const loginResponse = await fetch(loginTestUrl, {
+                        method: 'HEAD',
+                        mode: 'cors'
+                    });
+                    log(`登录端点HEAD响应: ${loginResponse.status} ${loginResponse.statusText}`);
+                    
+                    if (loginResponse.status === 404) {
+                        log('❌ 登录端点不存在！这可能是404错误的根本原因');
+                        showResult('❌ 登录端点不存在！请检查后端API配置', 'error');
+                        return;
+                    }
+                } catch (loginError) {
+                    log(`登录端点测试错误: ${loginError.message}`);
+                }
+                
+                log(`连接响应状态: ${response.status}`);
+                log(`连接响应头: ${JSON.stringify([...response.headers.entries()])}`);
+                
+                if (response.ok && healthResponse.ok) {
+                    showResult('连接测试成功！', 'success');
+                    log('✅ 连接测试成功');
+                } else {
+                    showResult(`连接测试失败: docs=${response.status}, health=${healthResponse.status}`, 'error');
+                    log(`❌ 连接测试失败: docs=${response.status} ${response.statusText}, health=${healthResponse.status} ${healthResponse.statusText}`);
+                }
+            } catch (error) {
+                showResult(`连接测试错误: ${error.message}`, 'error');
+                log(`连接测试错误: ${error.message}`);
+                log(`错误详情: ${error.stack}`);
+            }
+        }
+        
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showResult('请输入用户名和密码', 'error');
+                return;
+            }
+            
+            try {
+                // 等待AppConfig加载完成
+                await waitForAppConfig();
+                
+                const apiUrl = getApiUrl();
+                
+                // 使用AppConfig.getApiUrl方法构建登录URL
+                const loginUrl = AppConfig.getApiUrl('auth/login');
+                
+                log(`登录请求URL: ${loginUrl}`);
+                log(`登录数据: username=${username}, password=***`);
+                log(`完整请求信息: POST ${loginUrl}`);
+                log(`请求头: Content-Type: application/json, Accept: application/json`);
+                
+                // 构建请求数据
+                const requestData = {
+                    username: username,
+                    password: password
+                };
+                
+                log(`请求体对象: ${JSON.stringify(requestData)}`);
+                
+                showResult('正在发送登录请求...', 'info');
+                
+                log('正在创建fetch请求...');
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    credentials: 'include',
+                    body: JSON.stringify(requestData)
+                });
+                
+                log(`✅ 请求发送成功`);
+                log(`登录响应状态: ${response.status}`);
+                log(`登录响应状态文本: ${response.statusText}`);
+                log(`登录响应URL: ${response.url}`);
+                log(`登录响应头: ${JSON.stringify([...response.headers.entries()])}`);
+                
+                const responseText = await response.text();
+                log(`登录响应内容: ${responseText}`);
+                
+                if (response.ok) {
+                    const data = JSON.parse(responseText);
+                    showResult('登录成功！', 'success');
+                    log('✅ 登录成功');
+                    log(`返回数据: ${JSON.stringify(data)}`);
+                    
+                    // 保存token到localStorage
+                    if (data.access_token) {
+                        localStorage.setItem('token', data.access_token);
+                        log('Token已保存到localStorage');
+                    }
+                } else {
+                    const errorText = responseText;
+                    log(`❌ 登录失败: ${response.status} ${response.statusText}`);
+                    log(`错误响应: ${errorText}`);
+                    log(`请求URL: ${loginUrl}`);
+                    log(`请求方法: POST`);
+                    log(`请求头: Content-Type: application/json`);
+                    
+                    let errorMessage = `登录失败: ${response.status}`;
+                    
+                    // 特殊处理404错误
+                    if (response.status === 404) {
+                        errorMessage = `❌ 404错误: 登录端点不存在 (${loginUrl})`;
+                        log(`🔍 可能的原因:`);
+                        log(`1. 后端服务未运行或端口不正确`);
+                        log(`2. API端点路径错误`);
+                        log(`3. 后端服务配置问题`);
+                        log(`4. 网络连接问题`);
+                    }
+                    
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        if (errorData.detail) {
+                            errorMessage = `登录失败: ${errorData.detail}`;
+                        }
+                        log(`完整错误数据: ${JSON.stringify(errorData)}`);
+                    } catch (e) {
+                        errorMessage += ` - ${errorText}`;
+                        log(`解析错误响应失败: ${e.message}`);
+                        log(`原始错误内容: ${errorText}`);
+                    }
+                    
+                    showResult(errorMessage, 'error');
+                    log(errorMessage);
+                }
+            } catch (error) {
+                showResult(`登录错误: ${error.message}`, 'error');
+                log(`登录错误: ${error.message}`);
+                log(`错误详情: ${error.stack}`);
+            }
+        }
+        
+        // 页面加载时自动获取设备信息
+        window.onload = function() {
+            log('页面加载完成');
+            getDeviceInfo();
+        };
+    </script>
+</body>
+</html>

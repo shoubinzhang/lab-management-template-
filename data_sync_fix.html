@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据同步修复工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+        .card {
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        .code {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-good {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .status-error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">移动端-网页端数据同步修复工具</h1>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3>当前存储状态分析</h3>
+            </div>
+            <div class="card-body">
+                <button id="analyzeStorage" class="btn btn-primary">分析存储状态</button>
+                <div id="storageAnalysis" class="mt-3"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>数据同步修复</h3>
+            </div>
+            <div class="card-body">
+                <button id="syncData" class="btn btn-primary">同步数据</button>
+                <button id="clearAll" class="btn btn-danger ms-2">清除所有存储</button>
+                <div id="syncResult" class="mt-3"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>验证数据一致性</h3>
+            </div>
+            <div class="card-body">
+                <button id="verifyConsistency" class="btn btn-primary">验证一致性</button>
+                <div id="consistencyResult" class="mt-3"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>操作指南</h3>
+            </div>
+            <div class="card-body">
+                <h4>步骤1：分析存储状态</h4>
+                <p>点击"分析存储状态"按钮，查看当前移动端和网页端的存储键名差异。</p>
+                
+                <h4>步骤2：同步数据</h4>
+                <p>点击"同步数据"按钮，系统会自动统一所有存储键名，确保数据一致性。</p>
+                
+                <h4>步骤3：验证一致性</h4>
+                <p>点击"验证一致性"按钮，确认所有数据已经同步完成。</p>
+                
+                <h4>步骤4：重新登录</h4>
+                <p>如果问题仍然存在，可以点击"清除所有存储"按钮，然后重新登录网页端和移动端。</p>
+                
+                <h4>问题根源</h4>
+                <p>移动端和网页端使用了不同的localStorage键名：</p>
+                <ul>
+                    <li><strong>移动端</strong>: token, auth_token, username</li>
+                    <li><strong>网页端</strong>: token, authToken, user, userInfo</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 存储键名映射
+        const TOKEN_KEYS = ['token', 'authToken', 'auth_token'];
+        const USER_KEYS = ['user', 'userInfo', 'username'];
+
+        // 分析存储状态
+        document.getElementById('analyzeStorage').addEventListener('click', function() {
+            const analysis = analyzeStorage();
+            document.getElementById('storageAnalysis').innerHTML = analysis;
+        });
+
+        // 同步数据
+        document.getElementById('syncData').addEventListener('click', function() {
+            const result = syncStorageData();
+            document.getElementById('syncResult').innerHTML = result;
+        });
+
+        // 清除所有存储
+        document.getElementById('clearAll').addEventListener('click', function() {
+            if (confirm('确定要清除所有本地存储数据吗？这将需要重新登录。')) {
+                clearAllStorage();
+                document.getElementById('syncResult').innerHTML = '<p class="status-good">✓ 所有存储数据已清除，请重新登录。</p>';
+            }
+        });
+
+        // 验证一致性
+        document.getElementById('verifyConsistency').addEventListener('click', function() {
+            const result = verifyConsistency();
+            document.getElementById('consistencyResult').innerHTML = result;
+        });
+
+        // 分析存储状态函数
+        function analyzeStorage() {
+            let result = '<h5>存储键名分析：</h5>';
+            
+            // 检查token相关键名
+            const tokenKeys = TOKEN_KEYS.filter(key => localStorage.getItem(key));
+            const userKeys = USER_KEYS.filter(key => localStorage.getItem(key));
+            
+            result += `<p><strong>Token键名：</strong> ${tokenKeys.length > 0 ? tokenKeys.join(', ') : '无'}</p>`;
+            result += `<p><strong>用户信息键名：</strong> ${userKeys.length > 0 ? userKeys.join(', ') : '无'}</p>`;
+            
+            // 检查数据一致性
+            if (tokenKeys.length > 1) {
+                const tokens = tokenKeys.map(key => localStorage.getItem(key));
+                const allTokensSame = tokens.every(token => token === tokens[0]);
+                result += `<p class="${allTokensSame ? 'status-good' : 'status-error'}">Token一致性：${allTokensSame ? '✓ 一致' : '✗ 不一致'}</p>`;
+            }
+            
+            if (userKeys.length > 1) {
+                const users = userKeys.map(key => localStorage.getItem(key));
+                const allUsersSame = users.every(user => user === users[0]);
+                result += `<p class="${allUsersSame ? 'status-good' : 'status-error'}">用户信息一致性：${allUsersSame ? '✓ 一致' : '✗ 不一致'}</p>`;
+            }
+            
+            // 显示具体数据
+            result += '<h5 class="mt-3">详细数据：</h5>';
+            result += '<div class="code">';
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                result += `${key}: ${value}\n`;
+            }
+            
+            result += '</div>';
+            
+            return result;
+        }
+
+        // 同步数据函数
+        function syncStorageData() {
+            let result = '<h5>数据同步结果：</h5>';
+            let changes = 0;
+            
+            // 同步token数据
+            const tokenKeys = TOKEN_KEYS.filter(key => localStorage.getItem(key));
+            if (tokenKeys.length > 0) {
+                const mainToken = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token');
+                
+                TOKEN_KEYS.forEach(key => {
+                    if (!localStorage.getItem(key)) {
+                        localStorage.setItem(key, mainToken);
+                        result += `<p>✓ 已同步token到键名: ${key}</p>`;
+                        changes++;
+                    }
+                });
+            }
+            
+            // 同步用户数据
+            const userKeys = USER_KEYS.filter(key => localStorage.getItem(key));
+            if (userKeys.length > 0) {
+                let mainUser = null;
+                
+                // 优先使用userInfo，然后是user，最后是username
+                if (localStorage.getItem('userInfo')) {
+                    mainUser = localStorage.getItem('userInfo');
+                } else if (localStorage.getItem('user')) {
+                    mainUser = localStorage.getItem('user');
+                } else if (localStorage.getItem('username')) {
+                    mainUser = JSON.stringify({ username: localStorage.getItem('username') });
+                }
+                
+                if (mainUser) {
+                    USER_KEYS.forEach(key => {
+                        if (!localStorage.getItem(key)) {
+                            if (key === 'username') {
+                                try {
+                                    const userObj = JSON.parse(mainUser);
+                                    localStorage.setItem(key, userObj.username || '');
+                                } catch {
+                                    localStorage.setItem(key, mainUser);
+                                }
+                            } else {
+                                localStorage.setItem(key, mainUser);
+                            }
+                            result += `<p>✓ 已同步用户信息到键名: ${key}</p>`;
+                            changes++;
+                        }
+                    });
+                }
+            }
+            
+            if (changes === 0) {
+                result += '<p class="status-good">✓ 数据已经同步，无需更改</p>';
+            } else {
+                result += `<p class="status-good">✓ 已完成 ${changes} 项数据同步</p>`;
+            }
+            
+            return result;
+        }
+
+        // 清除所有存储
+        function clearAllStorage() {
+            localStorage.clear();
+        }
+
+        // 验证一致性
+        function verifyConsistency() {
+            let result = '<h5>数据一致性验证：</h5>';
+            let allConsistent = true;
+            
+            // 验证token一致性
+            const tokenValues = TOKEN_KEYS.map(key => localStorage.getItem(key)).filter(val => val);
+            if (tokenValues.length > 1) {
+                const firstToken = tokenValues[0];
+                const tokensConsistent = tokenValues.every(token => token === firstToken);
+                
+                result += `<p class="${tokensConsistent ? 'status-good' : 'status-error'}">
+                    Token一致性: ${tokensConsistent ? '✓ 一致' : '✗ 不一致'}
+                </p>`;
+                
+                if (!tokensConsistent) allConsistent = false;
+            } else if (tokenValues.length === 1) {
+                result += '<p class="status-good">Token一致性: ✓ 单一值</p>';
+            } else {
+                result += '<p class="status-warning">Token一致性: ⚠ 无token数据</p>';
+            }
+            
+            // 验证用户信息一致性
+            const userValues = USER_KEYS.map(key => localStorage.getItem(key)).filter(val => val);
+            if (userValues.length > 1) {
+                const firstUser = userValues[0];
+                const usersConsistent = userValues.every(user => user === firstUser);
+                
+                result += `<p class="${usersConsistent ? 'status-good' : 'status-error'}">
+                    用户信息一致性: ${usersConsistent ? '✓ 一致' : '✗ 不一致'}
+                </p>`;
+                
+                if (!usersConsistent) allConsistent = false;
+            } else if (userValues.length === 1) {
+                result += '<p class="status-good">用户信息一致性: ✓ 单一值</p>';
+            } else {
+                result += '<p class="status-warning">用户信息一致性: ⚠ 无用户数据</p>';
+            }
+            
+            if (allConsistent) {
+                result += '<p class="status-good mt-3">✓ 所有数据一致性验证通过！</p>';
+            } else {
+                result += '<p class="status-error mt-3">✗ 存在数据不一致问题，请点击"同步数据"按钮修复。</p>';
+            }
+            
+            return result;
+        }
+
+        // 页面加载时自动分析
+        window.addEventListener('load', function() {
+            document.getElementById('analyzeStorage').click();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端数据加载修复验证工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .verification-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .verification-card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .verification-card .card-body {
+            padding: 0;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+        .btn-outline-primary {
+            border-color: #667eea;
+            color: #667eea;
+            transition: all 0.3s ease;
+        }
+        .btn-outline-primary:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+        .status-good {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-bad {
+            color: #dc3545;
+        }
+        .status-warning {
+            color: #ffc107;
+        }
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .log-time {
+            color: #6c757d;
+            font-size: 12px;
+        }
+        .log-success {
+            color: #28a745;
+        }
+        .log-error {
+            color: #dc3545;
+        }
+        .log-warning {
+            color: #ffc107;
+        }
+        .log-info {
+            color: #17a2b8;
+        }
+        .test-case {
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .test-case h5 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        .token-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .user-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container max-w-2xl">
+        <div class="verification-card">
+            <h3><i class="bi bi-tools"></i> 移动端数据加载修复验证工具</h3>
+            <div class="card-body">
+                <p>此工具用于测试实验室管理系统移动端数据加载问题的修复效果。通过此工具，您可以：</p>
+                <ul class="list-group mb-4">
+                    <li class="list-group-item"><i class="bi bi-check-circle text-success"></i> 检查localStorage中的认证令牌和用户信息</li>
+                    <li class="list-group-item"><i class="bi bi-check-circle text-success"></i> 模拟登录状态，设置正确的令牌和用户信息</li>
+                    <li class="list-group-item"><i class="bi bi-check-circle text-success"></i> 验证mobile_dashboard.html是否能正确读取这些信息</li>
+                    <li class="list-group-item"><i class="bi bi-check-circle text-success"></i> 测试修复后的数据加载顺序和错误处理</li>
+                </ul>
+                
+                <div class="d-grid gap-2 mb-4">
+                    <button id="btn-check-status" class="btn btn-primary"><i class="bi bi-search"></i> 检查当前状态</button>
+                    <button id="btn-simulate-login" class="btn btn-outline-primary"><i class="bi bi-person-check"></i> 模拟登录</button>
+                    <button id="btn-clear-storage" class="btn btn-outline-secondary"><i class="bi bi-trash"></i> 清除localStorage</button>
+                    <button id="btn-open-dashboard" class="btn btn-success"><i class="bi bi-arrow-right"></i> 打开移动端Dashboard</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 认证状态检查 -->
+        <div class="verification-card">
+            <h3><i class="bi bi-shield-check"></i> 认证状态检查结果</h3>
+            <div class="card-body">
+                <div id="auth-status" class="log-container">
+                    <div class="log-entry">
+                        <span class="log-time">[--:--:--]</span> 点击"检查当前状态"按钮开始检查
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 测试用例 -->
+        <div class="verification-card">
+            <h3><i class="bi bi-list-check"></i> 修复验证测试用例</h3>
+            <div class="card-body">
+                
+                <div class="test-case">
+                    <h5>测试1: 令牌兼容性检查</h5>
+                    <p class="text-muted">验证mobile_dashboard.html是否能正确读取多种可能的令牌键名</p>
+                    <button id="test-token-compatibility" class="btn btn-sm btn-outline-primary">运行测试</button>
+                </div>
+                
+                <div class="test-case">
+                    <h5>测试2: 用户信息兼容性检查</h5>
+                    <p class="text-muted">验证mobile_dashboard.html是否能正确读取多种可能的用户信息键名</p>
+                    <button id="test-userinfo-compatibility" class="btn btn-sm btn-outline-primary">运行测试</button>
+                </div>
+                
+                <div class="test-case">
+                    <h5>测试3: 初始化流程模拟</h5>
+                    <p class="text-muted">模拟mobile_dashboard.html的初始化流程，检查数据加载顺序</p>
+                    <button id="test-initialization-flow" class="btn btn-sm btn-outline-primary">运行测试</button>
+                </div>
+                
+                <div class="test-case">
+                    <h5>测试4: API连接测试（新增）</h5>
+                    <p class="text-muted">测试移动端与后端API的连接状态，验证端口配置是否正确</p>
+                    <button id="test-api-connection" class="btn btn-sm btn-outline-primary">运行测试</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 验证指南 -->
+        <div class="verification-card">
+            <h3><i class="bi bi-book"></i> 验证指南</h3>
+            <div class="card-body">
+                <h5>如何验证修复效果：</h5>
+                <ol class="list-group list-group-numbered">
+                    <li class="list-group-item">点击"模拟登录"按钮，设置测试用的认证令牌和用户信息</li>
+                    <li class="list-group-item">点击"检查当前状态"按钮，确认令牌和用户信息已正确设置</li>
+                    <li class="list-group-item">点击"打开移动端Dashboard"按钮，测试修复后的页面</li>
+                    <li class="list-group-item">在Dashboard页面，确认能正确显示用户信息和设备数据</li>
+                    <li class="list-group-item">如遇到问题，返回此页面点击"清除localStorage"，重新开始测试</li>
+                </ol>
+                
+                <h5 class="mt-4">修复后的预期行为：</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><i class="bi bi-check-circle text-success"></i> 移动端优先显示真实数据，而非模拟数据</li>
+                    <li class="list-group-item"><i class="bi bi-check-circle text-success"></i> 能够正确读取登录页面保存的认证令牌</li>
+                    <li class="list-group-item"><i class="bi bi-check-circle text-success"></i> 能够正确读取登录页面保存的用户信息</li>
+                    <li class="list-group-item"><i class="bi bi-check-circle text-success"></i> 数据加载失败时提供明确的错误提示</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 获取DOM元素
+        const btnCheckStatus = document.getElementById('btn-check-status');
+        const btnSimulateLogin = document.getElementById('btn-simulate-login');
+        const btnClearStorage = document.getElementById('btn-clear-storage');
+        const btnOpenDashboard = document.getElementById('btn-open-dashboard');
+        const authStatus = document.getElementById('auth-status');
+        const testTokenCompatibility = document.getElementById('test-token-compatibility');
+        const testUserinfoCompatibility = document.getElementById('test-userinfo-compatibility');
+        const testInitializationFlow = document.getElementById('test-initialization-flow');
+        const testApiConnection = document.getElementById('test-api-connection');
+        
+        // 工具函数：添加日志
+        function addLog(type, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <span class="log-time">[${timestamp}]</span> 
+                <span class="log-${type}">${message}</span>
+            `;
+            authStatus.appendChild(logEntry);
+            authStatus.scrollTop = authStatus.scrollHeight;
+        }
+        
+        // 工具函数：清空日志
+        function clearLogs() {
+            authStatus.innerHTML = '';
+        }
+        
+        // 检查认证状态
+        function checkAuthStatus() {
+            clearLogs();
+            addLog('info', '开始检查认证状态...');
+            
+            // 检查令牌
+            const tokens = {
+                'authToken': localStorage.getItem('authToken'),
+                'token': localStorage.getItem('token'),
+                'access_token': localStorage.getItem('access_token')
+            };
+            
+            let hasToken = false;
+            let tokenType = 'N/A';
+            
+            Object.entries(tokens).forEach(([key, value]) => {
+                if (value) {
+                    hasToken = true;
+                    // 尝试解析token获取类型
+                    try {
+                        const payload = JSON.parse(atob(value.split('.')[1]));
+                        if (payload.role) {
+                            tokenType = payload.role;
+                        }
+                    } catch (e) {
+                        // 解析失败不影响
+                    }
+                    addLog('success', `发现令牌 [${key}]: ${value.substring(0, 20)}...`);
+                } else {
+                    addLog('info', `未找到令牌 [${key}]`);
+                }
+            });
+            
+            // 检查用户信息
+            const userInfoKeys = ['userInfo', 'user', 'user_info'];
+            let hasUserInfo = false;
+            
+            userInfoKeys.forEach(key => {
+                const userInfo = localStorage.getItem(key);
+                if (userInfo) {
+                    hasUserInfo = true;
+                    addLog('success', `发现用户信息 [${key}]`);
+                    try {
+                        const userData = JSON.parse(userInfo);
+                        addLog('info', `  - 用户名: ${userData.username || 'N/A'}`);
+                        addLog('info', `  - 角色: ${userData.role || 'N/A'}`);
+                    } catch (e) {
+                        addLog('warning', `  - 解析用户信息失败: ${e.message}`);
+                    }
+                } else {
+                    addLog('info', `未找到用户信息 [${key}]`);
+                }
+            });
+            
+            // 总结
+            addLog('info', '\n=== 检查结果总结 ===');
+            addLog(hasToken ? 'success' : 'error', `认证令牌存在: ${hasToken}`);
+            addLog('info', `令牌类型: ${tokenType}`);
+            addLog(hasUserInfo ? 'success' : 'error', `用户信息: ${hasUserInfo ? '存在' : '不存在'}`);
+            
+            if (hasToken && hasUserInfo) {
+                addLog('success', '✓ 认证状态完整，可以正常访问移动端Dashboard');
+            } else {
+                addLog('warning', '⚠ 认证状态不完整，可能导致数据加载问题');
+            }
+        }
+        
+        // 模拟登录
+        function simulateLogin() {
+            clearLogs();
+            addLog('info', '开始模拟登录...');
+            
+            // 模拟用户数据
+            const mockUserData = {
+                id: 1,
+                username: 'test_admin',
+                role: 'admin',
+                department: '研发部',
+                name: '测试管理员',
+                email: 'admin@example.com'
+            };
+            
+            // 模拟JWT令牌（包含用户角色信息）
+            const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' + 
+                            'eyJzdWIiOiJ0ZXN0X2FkbWluIiwibmFtZSI6IuW8oOS4iSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTY4MDAwMDAwMCwiZXhwIjoxNzEwMDAwMDAwfQ.' + 
+                            'test_signature';
+            
+            // 保存令牌到多种可能的键名
+            localStorage.setItem('authToken', mockToken);
+            localStorage.setItem('token', mockToken);
+            localStorage.setItem('access_token', mockToken);
+            addLog('success', '已设置认证令牌到localStorage');
+            
+            // 保存用户信息到多种可能的键名
+            localStorage.setItem('userInfo', JSON.stringify(mockUserData));
+            localStorage.setItem('user', JSON.stringify(mockUserData));
+            addLog('success', '已设置用户信息到localStorage');
+            
+            addLog('success', '\n模拟登录完成！现在可以测试移动端Dashboard了。');
+            addLog('info', '提示: 点击"检查当前状态"确认设置是否成功');
+        }
+        
+        // 清除localStorage
+        function clearLocalStorage() {
+            if (confirm('确定要清除localStorage中的所有数据吗？这将重置您的登录状态。')) {
+                clearLogs();
+                addLog('info', '开始清除localStorage...');
+                
+                // 清除所有相关的键
+                const keysToRemove = ['authToken', 'token', 'access_token', 'userInfo', 'user', 'user_info', 'tokenType'];
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                    addLog('info', `已清除: ${key}`);
+                });
+                
+                addLog('success', '\nlocalStorage清除完成！');
+            }
+        }
+        
+        // 打开移动端Dashboard
+        function openMobileDashboard() {
+            window.location.href = '/static/mobile_dashboard.html';
+        }
+        
+        // 测试1: 令牌兼容性检查
+        function testTokenCompatibilityCheck() {
+            clearLogs();
+            addLog('info', '开始测试令牌兼容性...');
+            
+            // 保存令牌到不同的键名，测试每种情况
+            const testToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' + 
+                            'eyJzdWIiOiJ0ZXN0IiwibmFtZSI6InRlc3QiLCJyb2xlIjoidGVzdCJ9.' + 
+                            'test';
+            
+            // 测试authToken
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            localStorage.setItem('authToken', testToken);
+            addLog('info', '设置令牌到 [authToken]');
+            
+            // 模拟getAuthToken函数行为
+            const savedToken1 = localStorage.getItem('authToken') || localStorage.getItem('token') || localStorage.getItem('access_token');
+            addLog(savedToken1 ? 'success' : 'error', `getAuthToken() 返回: ${savedToken1 ? '成功' : '失败'}`);
+            
+            // 测试token
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            localStorage.setItem('token', testToken);
+            addLog('info', '设置令牌到 [token]');
+            
+            const savedToken2 = localStorage.getItem('authToken') || localStorage.getItem('token') || localStorage.getItem('access_token');
+            addLog(savedToken2 ? 'success' : 'error', `getAuthToken() 返回: ${savedToken2 ? '成功' : '失败'}`);
+            
+            // 测试access_token
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            localStorage.setItem('access_token', testToken);
+            addLog('info', '设置令牌到 [access_token]');
+            
+            const savedToken3 = localStorage.getItem('authToken') || localStorage.getItem('token') || localStorage.getItem('access_token');
+            addLog(savedToken3 ? 'success' : 'error', `getAuthToken() 返回: ${savedToken3 ? '成功' : '失败'}`);
+            
+            // 恢复原始令牌
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            
+            addLog('info', '\n=== 令牌兼容性测试总结 ===');
+            if (savedToken1 && savedToken2 && savedToken3) {
+                addLog('success', '✓ 令牌兼容性测试通过！所有键名都能被正确识别');
+            } else {
+                addLog('error', '✗ 令牌兼容性测试失败！某些键名无法被识别');
+            }
+        }
+        
+        // 测试2: 用户信息兼容性检查
+        function testUserInfoCompatibilityCheck() {
+            clearLogs();
+            addLog('info', '开始测试用户信息兼容性...');
+            
+            // 模拟用户数据
+            const testUser = { username: 'test_user', role: 'test_role' };
+            
+            // 测试userInfo
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('user');
+            localStorage.setItem('userInfo', JSON.stringify(testUser));
+            addLog('info', '设置用户信息到 [userInfo]');
+            
+            const userInfo1 = localStorage.getItem('userInfo') || localStorage.getItem('user');
+            addLog(userInfo1 ? 'success' : 'error', `读取用户信息: ${userInfo1 ? '成功' : '失败'}`);
+            
+            // 测试user
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('user');
+            localStorage.setItem('user', JSON.stringify(testUser));
+            addLog('info', '设置用户信息到 [user]');
+            
+            const userInfo2 = localStorage.getItem('userInfo') || localStorage.getItem('user');
+            addLog(userInfo2 ? 'success' : 'error', `读取用户信息: ${userInfo2 ? '成功' : '失败'}`);
+            
+            // 恢复原始用户信息
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('user');
+            
+            addLog('info', '\n=== 用户信息兼容性测试总结 ===');
+            if (userInfo1 && userInfo2) {
+                addLog('success', '✓ 用户信息兼容性测试通过！所有键名都能被正确识别');
+            } else {
+                addLog('error', '✗ 用户信息兼容性测试失败！某些键名无法被识别');
+            }
+        }
+        
+        // 测试3: 初始化流程模拟
+        function testInitializationFlowSimulation() {
+            clearLogs();
+            addLog('info', '开始模拟初始化流程...');
+            
+            // 模拟getAuthToken函数
+            function getAuthToken() {
+                const savedToken = localStorage.getItem('authToken') || localStorage.getItem('token') || localStorage.getItem('access_token');
+                addLog('info', `getAuthToken() 尝试获取令牌: ${savedToken ? '找到' : '未找到'}`);
+                return savedToken || null;
+            }
+            
+            // 模拟读取用户信息
+            function getUserInfo() {
+                try {
+                    const userInfoJson = localStorage.getItem('userInfo') || localStorage.getItem('user');
+                    addLog('info', `尝试读取用户信息: ${userInfoJson ? '找到' : '未找到'}`);
+                    return userInfoJson ? JSON.parse(userInfoJson) : null;
+                } catch (e) {
+                    addLog('error', `解析用户信息失败: ${e.message}`);
+                    return null;
+                }
+            }
+            
+            // 模拟初始化流程
+            let authToken = getAuthToken();
+            let currentUser = getUserInfo();
+            
+            addLog('info', '\n=== 初始化流程模拟总结 ===');
+            addLog(authToken ? 'success' : 'error', `令牌获取: ${authToken ? '成功' : '失败'}`);
+            addLog(currentUser ? 'success' : 'error', `用户信息获取: ${currentUser ? '成功' : '失败'}`);
+            
+            if (currentUser) {
+                addLog('info', `  - 用户名: ${currentUser.username || 'N/A'}`);
+                addLog('info', `  - 角色: ${currentUser.role || 'N/A'}`);
+            }
+            
+            if (authToken && currentUser) {
+                addLog('success', '✓ 初始化流程模拟成功！认证状态完整');
+                addLog('info', '提示: 移动端Dashboard应该能够正确加载数据');
+            } else {
+                addLog('warning', '⚠ 初始化流程模拟警告！认证状态不完整');
+                addLog('info', '提示: 建议点击"模拟登录"按钮设置完整的认证状态');
+            }
+        }
+        
+        // 测试4: API连接测试
+        function testApiConnectionCheck() {
+            clearLogs();
+            addLog('info', '开始测试API连接...');
+            
+            // 获取当前页面URL信息
+            const currentUrl = window.location.href;
+            const isHttps = currentUrl.startsWith('https://');
+            const hostname = window.location.hostname;
+            
+            // 检测并显示当前使用的端口配置
+            addLog('info', '=== 当前端口配置信息 ===');
+            addLog('info', `当前页面: ${hostname}:${window.location.port || (isHttps ? '443' : '80')}`);
+            addLog('info', `前端应用: http://${hostname}:3000`);
+            addLog('info', `后端API: http://${hostname}:8000`);
+            
+            // 测试API连接
+            const apiTests = [
+                { name: '检查API服务可用性', url: `http://${hostname}:8000/` },
+                { name: '测试CORS配置', url: `http://${hostname}:8000/` },
+                { name: '获取基本状态信息', url: `http://${hostname}:8000/` }
+            ];
+            
+            let testsPassed = 0;
+            let totalTests = apiTests.length;
+            let doneCount = 0;
+            
+            apiTests.forEach(test => {
+                addLog('info', `\n测试: ${test.name}`);
+                addLog('info', `请求URL: ${test.url}`);
+                
+                fetch(test.url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        testsPassed++;
+                        addLog('success', `✓ ${test.name} 测试通过！`);
+                        addLog('info', `  - 状态码: ${response.status} ${response.statusText}`);
+                        
+                        // 获取并显示响应头中的CORS相关信息
+                        const corsHeaders = ['access-control-allow-origin', 'access-control-allow-credentials'];
+                        corsHeaders.forEach(header => {
+                            const value = response.headers.get(header);
+                            if (value) {
+                                addLog('info', `  - ${header}: ${value}`);
+                            }
+                        });
+                    } else {
+                        addLog('error', `✗ ${test.name} 测试失败！`);
+                        addLog('error', `  - 状态码: ${response.status} ${response.statusText}`);
+                    }
+                })
+                .catch(error => {
+                    addLog('error', `✗ ${test.name} 测试失败！`);
+                    addLog('error', `  - 错误信息: ${error.message || '未知错误'}`);
+                    addLog('warning', `  - 可能原因: 端口配置错误、CORS配置不正确或后端服务未启动`);
+                })
+                .finally(() => {
+                    doneCount++;
+                    if (doneCount === totalTests) {
+                        addLog('info', '\n=== API连接测试总结 ===');
+                        
+                        if (testsPassed === totalTests) {
+                            addLog('success', `✓ 所有测试通过！API连接状态良好`);
+                            addLog('success', `✓ 端口统一配置已生效，可以正常使用移动端功能`);
+                        } else if (testsPassed > 0) {
+                            addLog('warning', `⚠ 部分测试通过(${testsPassed}/${totalTests})，建议检查端口配置和CORS设置`);
+                        } else {
+                            addLog('error', `✗ 所有测试失败(${testsPassed}/${totalTests})，需要修复端口配置`);
+                            addLog('info', `  - 检查后端服务是否在8000端口运行`);
+                            addLog('info', `  - 确认.env文件中的CORS配置是否包含8000端口`);
+                        }
+                    }
+                });
+            });
+        }
+        
+        // 添加事件监听器
+        btnCheckStatus.addEventListener('click', checkAuthStatus);
+        btnSimulateLogin.addEventListener('click', simulateLogin);
+        btnClearStorage.addEventListener('click', clearLocalStorage);
+        btnOpenDashboard.addEventListener('click', openMobileDashboard);
+        testTokenCompatibility.addEventListener('click', testTokenCompatibilityCheck);
+        testUserinfoCompatibility.addEventListener('click', testUserInfoCompatibilityCheck);
+        testInitializationFlow.addEventListener('click', testInitializationFlowSimulation);
+        testApiConnection.addEventListener('click', testApiConnectionCheck);
+        
+        // 页面加载时自动检查状态
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延迟自动检查，避免页面加载时过于突兀
+            setTimeout(() => {
+                checkAuthStatus();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

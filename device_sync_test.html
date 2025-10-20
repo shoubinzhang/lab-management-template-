@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设备数据同步验证工具</title>
+    <script src="config.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+        .section-title {
+            color: #165DFF;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background-color: #165DFF;
+            border-color: #165DFF;
+        }
+        .btn-primary:hover {
+            background-color: #0E4AC4;
+            border-color: #0E4AC4;
+        }
+        .badge {
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+        .code-block {
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .status-icon {
+            font-size: 1.2rem;
+            vertical-align: middle;
+        }
+        .sync-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .sync-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+        .sync-card.success::before {
+            background-color: #52c41a;
+        }
+        .sync-card.warning::before {
+            background-color: #faad14;
+        }
+        .sync-card.error::before {
+            background-color: #ff4d4f;
+        }
+        .sync-card.info::before {
+            background-color: #165DFF;
+        }
+    </style>
+</head>
+<body class="container py-5">
+    <div class="mb-5 text-center">
+        <h1 class="text-primary"><i class="bi bi-sync-alt"></i> 设备数据同步验证工具</h1>
+        <p class="text-muted">用于测试实验室管理应用中设备数据的一致性和同步状态</p>
+    </div>
+
+    <div class="row gap-4 mb-5">
+        <!-- 认证状态检查 -->
+        <div class="col-md-6">
+            <div class="card p-4 sync-card info">
+                <h2 class="section-title mb-4"><i class="bi bi-shield-check"></i> 认证状态检查</h2>
+                <div class="mb-3">
+                    <button id="checkAuthBtn" class="btn btn-primary">检查认证状态</button>
+                    <span id="authStatus" class="ms-3 badge bg-secondary">未检查</span>
+                </div>
+                <div id="authInfo" class="code-block hidden">
+                    等待检查...
+                </div>
+            </div>
+        </div>
+
+        <!-- 设备数据加载 -->
+        <div class="col-md-6">
+            <div class="card p-4 sync-card info">
+                <h2 class="section-title mb-4"><i class="bi bi-cpu"></i> 设备数据加载</h2>
+                <div class="mb-3">
+                    <button id="loadDevicesBtn" class="btn btn-primary">加载设备列表</button>
+                    <span id="devicesStatus" class="ms-3 badge bg-secondary">未加载</span>
+                </div>
+                <div class="mb-2">
+                    <button id="clearCacheBtn" class="btn btn-outline-secondary btn-sm">清除本地缓存</button>
+                </div>
+                <div id="devicesInfo" class="code-block hidden">
+                    等待加载...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 同步测试 -->
+    <div class="card p-5 mb-5 sync-card info">
+        <h2 class="section-title mb-4"><i class="bi bi-refresh"></i> 数据同步测试</h2>
+        <div class="grid gap-3">
+            <div class="row gap-3">
+                <div class="col-md-4">
+                    <button id="testTokenSyncBtn" class="btn btn-outline-primary w-100">测试令牌同步</button>
+                </div>
+                <div class="col-md-4">
+                    <button id="testDataConsistencyBtn" class="btn btn-outline-primary w-100">测试数据一致性</button>
+                </div>
+                <div class="col-md-4">
+                    <button id="forceRefreshBtn" class="btn btn-outline-primary w-100">强制刷新所有数据</button>
+                </div>
+            </div>
+        </div>
+        <div id="testResults" class="mt-4 code-block hidden">
+            测试结果将显示在这里...
+        </div>
+    </div>
+
+    <!-- 验证指南 -->
+    <div class="card p-5 sync-card info">
+        <h2 class="section-title mb-4"><i class="bi bi-book"></i> 数据同步验证指南</h2>
+        <ol class="list-group list-group-numbered">
+            <li class="list-group-item">点击"检查认证状态"按钮，确认当前令牌是否有效且可用于API调用</li>
+            <li class="list-group-item">点击"加载设备列表"按钮，获取并显示最新的设备数据</li>
+            <li class="list-group-item">使用"清除本地缓存"按钮可以清除localStorage中的数据，测试重新加载流程</li>
+            <li class="list-group-item">通过"测试令牌同步"按钮可以检查移动端和网页端的令牌是否保持一致</li>
+            <li class="list-group-item">使用"测试数据一致性"按钮可以验证不同端加载的设备数据是否相同</li>
+            <li class="list-group-item">如果发现数据不一致，点击"强制刷新所有数据"按钮重新从服务器获取数据</li>
+        </ol>
+        <div class="mt-4 p-3 bg-info-subtle rounded">
+            <h5 class="text-info"><i class="bi bi-info-circle"></i> 修复说明</h5>
+            <p>我们已修复了应用初始化时不加载真实设备数据的问题。现在应用启动时会同时尝试从服务器加载设备列表数据，确保设备信息是最新的并且与服务器保持一致。</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 配置加载状态管理
+        let configLoaded = false;
+        let configLoadTimeout = null;
+        let apiBaseUrl = '';
+        let configSource = '默认配置';
+
+        // 等待AppConfig加载完成
+        function waitForAppConfig(callback) {
+            if (window.AppConfig && (window.AppConfig.apiUrl || window.AppConfig.frontendUrl)) {
+                configLoaded = true;
+                configSource = 'config.js';
+                apiBaseUrl = getApiBaseUrl();
+                callback();
+            } else {
+                // 设置默认配置，以防config.js加载失败
+                if (!window.AppConfig) {
+                    const currentHost = window.location.hostname === 'localhost' || window.location.hostname === '' ? 'localhost' : window.location.hostname;
+                    window.AppConfig = {
+                        apiUrl: currentHost,
+                        apiPort: '8000',
+                        frontendPort: '3000'
+                    };
+                }
+                
+                // 尝试等待配置加载
+                setTimeout(() => waitForAppConfig(callback), 100);
+                
+                // 设置超时处理
+                if (!configLoadTimeout) {
+                    configLoadTimeout = setTimeout(() => {
+                        console.warn('配置加载超时，使用默认配置');
+                        configLoaded = true;
+                        configSource = '默认配置';
+                        apiBaseUrl = getApiBaseUrl();
+                        callback();
+                    }, 3000);
+                }
+            }
+        }
+
+        // 获取API基础URL
+        function getApiBaseUrl() {
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            
+            // 优先使用完整的apiUrl配置
+            if (window.AppConfig && window.AppConfig.apiUrl && window.AppConfig.apiUrl.includes('://')) {
+                return window.AppConfig.apiUrl;
+            }
+            
+            // 其次使用单独配置的apiUrl和apiPort
+            if (window.AppConfig) {
+                const host = window.AppConfig.apiUrl || window.location.hostname === '' ? 'localhost' : window.location.hostname;
+                const port = window.AppConfig.apiPort || '8000';
+                return `${protocol}//${host}:${port}`;
+            }
+            
+            // 最后使用当前页面的协议和主机名作为默认值
+            const currentHost = window.location.hostname === '' ? 'localhost' : window.location.hostname;
+            
+            // 避免在当前origin后重复添加端口号
+            if (window.location.port && window.location.port !== '80' && window.location.port !== '443') {
+                // 如果当前URL已经包含端口，尝试使用当前端口作为API端口
+                return `${protocol}//${currentHost}:${window.location.port}`;
+            }
+            
+            return `${protocol}//${currentHost}:8000`;
+        }
+        
+        // 动态加载config.js
+        function loadConfigJs() {
+            return new Promise((resolve, reject) => {
+                // 检查config.js是否已经加载
+                if (document.querySelector('script[src="config.js"]')) {
+                    resolve();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = 'config.js';
+                script.onload = () => resolve();
+                script.onerror = () => {
+                    console.warn('config.js加载失败，将使用默认配置');
+                    reject(new Error('config.js加载失败'));
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        // 显示配置信息
+        function showConfigInfo() {
+            // 检查是否已存在配置信息区域
+            if (document.getElementById('configInfo')) {
+                return;
+            }
+            
+            // 创建一个配置信息区域
+            const configSection = document.createElement('div');
+            configSection.id = 'configInfo';
+            configSection.className = 'card p-4 sync-card info mb-5';
+            configSection.innerHTML = `
+                <h2 class="section-title mb-4"><i class="bi bi-gear"></i> 配置信息</h2>
+                <div class="code-block">
+                    === 配置详情 ===
+                    配置来源: ${configSource}
+                    API基础URL: ${apiBaseUrl}
+                    使用配置: ${configLoaded ? '已加载AppConfig' : '默认配置'}
+                    当前协议: ${window.location.protocol === 'https:' ? 'https:' : 'http:'}
+                    当前主机: ${window.location.hostname}
+                    当前端口: ${window.location.port || '默认'}
+                </div>
+            `;
+            
+            // 将配置信息区域添加到页面顶部
+            const mainContainer = document.querySelector('.container');
+            const firstCard = mainContainer.querySelector('.card');
+            mainContainer.insertBefore(configSection, firstCard);
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化按钮事件
+            document.getElementById('checkAuthBtn').addEventListener('click', checkAuthStatus);
+            document.getElementById('loadDevicesBtn').addEventListener('click', loadDeviceList);
+            document.getElementById('clearCacheBtn').addEventListener('click', clearLocalCache);
+            document.getElementById('testTokenSyncBtn').addEventListener('click', testTokenSync);
+            document.getElementById('testDataConsistencyBtn').addEventListener('click', testDataConsistency);
+            document.getElementById('forceRefreshBtn').addEventListener('click', forceRefreshAllData);
+
+            // 尝试动态加载config.js
+            loadConfigJs().catch(() => {
+                // config.js加载失败，创建默认配置
+                if (!window.AppConfig) {
+                    const currentHost = window.location.hostname === 'localhost' || window.location.hostname === '' ? 'localhost' : window.location.hostname;
+                    window.AppConfig = {
+                        apiUrl: currentHost,
+                        apiPort: '8000',
+                        frontendPort: '3000'
+                    };
+                }
+            }).finally(() => {
+                // 等待配置加载完成后再初始化
+                waitForAppConfig(() => {
+                    console.log('配置加载完成，当前API地址:', apiBaseUrl);
+                    console.log('配置来源:', configSource);
+                    
+                    // 显示配置信息
+                    showConfigInfo();
+                    
+                    // 自动检查一次认证状态
+                    setTimeout(checkAuthStatus, 1000);
+                });
+            });
+        });
+
+        // 检查认证状态
+        function checkAuthStatus() {
+            const authStatus = document.getElementById('authStatus');
+            const authInfo = document.getElementById('authInfo');
+            authInfo.classList.remove('hidden');
+
+            // 获取所有可能的令牌键名
+            const authToken = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
+            
+            let output = "=== 认证信息 ===\n";
+            output += `authToken: $${authToken ? authToken.substring(0, 30) + '...' : '未设置'}\n`;
+            output += `token: $${token ? token.substring(0, 30) + '...' : '未设置'}\n`;
+            output += `令牌一致性: $${authToken === token ? '一致' : '不一致'}\n`;
+            
+            // 尝试使用令牌调用API
+            if (authToken || token) {
+                const currentToken = authToken || token;
+                authStatus.className = 'ms-3 badge bg-warning';
+                authStatus.textContent = '验证中...';
+                
+                testApiAccess(currentToken).then(result => {
+                    output += `\n=== API访问测试 ===\n`;
+                    output += `API基础URL: ${apiBaseUrl}\n`;
+                    output += `使用配置: ${configLoaded ? 'AppConfig' : '默认配置'}\n`;
+                    output += `令牌有效性: ${result.valid ? '有效' : '无效'}\n`;
+                    if (!result.valid) {
+                        output += `错误信息: ${result.error}\n`;
+                        authStatus.className = 'ms-3 badge bg-danger';
+                        authStatus.textContent = '令牌无效';
+                    } else {
+                        authStatus.className = 'ms-3 badge bg-success';
+                        authStatus.textContent = '令牌有效';
+                        output += `用户信息: ${JSON.stringify(result.userInfo)}\n`;
+                    }
+                    authInfo.textContent = output;
+                });
+            } else {
+                output += "\n=== 状态总结 ===\n";
+                output += "未找到有效的认证令牌，API调用将失败\n";
+                authStatus.className = 'ms-3 badge bg-danger';
+                authStatus.textContent = '未登录';
+                authInfo.textContent = output;
+            }
+        }
+
+        // 测试API访问
+        async function testApiAccess(token) {
+            try {
+                // 确保apiBaseUrl已初始化
+                if (!apiBaseUrl) {
+                    apiBaseUrl = getApiBaseUrl();
+                }
+                
+                const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 3000
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+                
+                const userInfo = await response.json();
+                return { valid: true, userInfo };
+            } catch (error) {
+                return { valid: false, error: error.message };
+            }
+        }
+
+        // 加载设备列表
+        function loadDeviceList() {
+            const devicesStatus = document.getElementById('devicesStatus');
+            const devicesInfo = document.getElementById('devicesInfo');
+            devicesInfo.classList.remove('hidden');
+            
+            // 获取令牌
+            const authToken = localStorage.getItem('authToken') || localStorage.getItem('token');
+            
+            if (!authToken) {
+                devicesStatus.className = 'ms-3 badge bg-danger';
+                devicesStatus.textContent = '未登录';
+                devicesInfo.textContent = '错误: 未找到认证令牌，请先登录';
+                return;
+            }
+            
+            devicesStatus.className = 'ms-3 badge bg-warning';
+            devicesStatus.textContent = '加载中...';
+            devicesInfo.textContent = '正在从服务器获取设备列表...';
+            
+            fetch(`${apiBaseUrl}/api/devices`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                },
+                timeout: 5000
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`获取设备列表失败: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                devicesStatus.className = 'ms-3 badge bg-success';
+                devicesStatus.textContent = '加载成功';
+                
+                let output = `=== 设备数据 ===\n`;
+                output += `获取时间: ${new Date().toLocaleString('zh-CN')}\n`;
+                output += `设备总数: ${data.devices ? data.devices.length : 0}\n\n`;
+                
+                if (data.devices && data.devices.length > 0) {
+                    // 显示前5个设备作为示例
+                    const sampleDevices = data.devices.slice(0, 5);
+                    sampleDevices.forEach(device => {
+                        output += `设备ID: ${device.id}, 名称: ${device.name}, 状态: ${device.status}\n`;
+                    });
+                    if (data.devices.length > 5) {
+                        output += `... 以及 ${data.devices.length - 5} 个更多设备\n`;
+                    }
+                } else {
+                    output += '没有找到设备数据\n';
+                }
+                
+                output += `\n=== 数据来源 ===\n`;
+                output += `数据直接从服务器API获取，确保是最新状态`;
+                
+                devicesInfo.textContent = output;
+            })
+            .catch(error => {
+                devicesStatus.className = 'ms-3 badge bg-danger';
+                devicesStatus.textContent = '加载失败';
+                devicesInfo.textContent = `错误: ${error.message}\n\n尝试解决方案:\n1. 检查网络连接\n2. 确认令牌是否有效\n3. 点击"清除本地缓存"后重试`;
+            });
+        }
+
+        // 清除本地缓存
+        function clearLocalCache() {
+            if (confirm('确定要清除所有本地缓存数据吗？这将需要重新登录。')) {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('userInfo');
+                alert('本地缓存已清除，请刷新页面或重新登录');
+                checkAuthStatus(); // 重新检查认证状态
+            }
+        }
+
+        // 测试令牌同步
+        function testTokenSync() {
+            const testResults = document.getElementById('testResults');
+            testResults.classList.remove('hidden');
+            
+            let output = "=== 令牌同步测试 ===\n";
+            output += `测试时间: ${new Date().toLocaleString('zh-CN')}\n\n`;
+            
+            // 检查令牌存储状态
+            const authToken = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
+            
+            output += `authToken存在: ${!!authToken}\n`;
+            output += `token存在: ${!!token}\n`;
+            output += `令牌一致性: ${authToken === token ? '一致 ✓' : '不一致 ✗'}\n\n`;
+            
+            // 执行双向同步测试
+            if (authToken && token && authToken !== token) {
+                output += '发现不一致的令牌，尝试进行同步...\n';
+                // 优先保留非空令牌
+                const primaryToken = authToken || token;
+                localStorage.setItem('authToken', primaryToken);
+                localStorage.setItem('token', primaryToken);
+                output += '已将两个令牌同步为相同的值\n';
+            } else if (!authToken && token) {
+                output += '发现只有token存在，复制到authToken...\n';
+                localStorage.setItem('authToken', token);
+                output += '同步完成\n';
+            } else if (authToken && !token) {
+                output += '发现只有authToken存在，复制到token...\n';
+                localStorage.setItem('token', authToken);
+                output += '同步完成\n';
+            }
+            
+            output += `\n=== 测试结果 ===\n`;
+            if (localStorage.getItem('authToken') === localStorage.getItem('token')) {
+                output += '令牌同步状态: 正常 ✓\n';
+                output += '移动端和网页端现在可以共享相同的认证信息';
+            } else {
+                output += '令牌同步状态: 异常 ✗\n';
+                output += '建议清除本地缓存并重新登录';
+            }
+            
+            testResults.textContent = output;
+        }
+
+        // 测试数据一致性
+        function testDataConsistency() {
+            const testResults = document.getElementById('testResults');
+            testResults.classList.remove('hidden');
+            
+            testResults.textContent = '正在进行数据一致性测试...\n这可能需要几秒钟时间...';
+            
+            Promise.all([
+                // 模拟移动端请求
+                fetchDeviceData('authToken'),
+                // 模拟网页端请求
+                fetchDeviceData('token')
+            ]).then(results => {
+                const [mobileData, webData] = results;
+                
+                let output = "=== 数据一致性测试 ===\n";
+                output += `测试时间: ${new Date().toLocaleString('zh-CN')}\n\n`;
+                
+                output += `移动端数据 (authToken):\n`;
+                output += formatDataSummary(mobileData);
+                output += `\n网页端数据 (token):\n`;
+                output += formatDataSummary(webData);
+                
+                output += `\n=== 一致性比较 ===\n`;
+                if (mobileData.error || webData.error) {
+                    output += '数据获取失败，无法进行一致性比较\n';
+                    output += `移动端错误: ${mobileData.error || '无'}\n`;
+                    output += `网页端错误: ${webData.error || '无'}\n`;
+                } else if (mobileData.deviceCount === webData.deviceCount) {
+                    output += `设备数量一致: ${mobileData.deviceCount} 台设备 ✓\n`;
+                    output += '设备数据一致性: 正常 ✓';
+                } else {
+                    output += `设备数量不一致: 移动端 ${mobileData.deviceCount} 台，网页端 ${webData.deviceCount} 台 ✗\n`;
+                    output += '设备数据一致性: 异常 ✗\n';
+                    output += '建议: 清除本地缓存并刷新页面，然后重新测试';
+                }
+                
+                testResults.textContent = output;
+            });
+        }
+
+        // 模拟不同端获取设备数据
+        async function fetchDeviceData(tokenKey) {
+            try {
+                const token = localStorage.getItem(tokenKey);
+                if (!token) {
+                    throw new Error(`未找到${tokenKey}令牌`);
+                }
+                
+                const response = await fetch(`${apiBaseUrl}/api/devices`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    timeout: 5000
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return {
+                    success: true,
+                    deviceCount: data.devices ? data.devices.length : 0,
+                    timestamp: new Date().toISOString()
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    deviceCount: 0,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                };
+            }
+        }
+
+        // 格式化数据摘要
+        function formatDataSummary(data) {
+            if (data.success) {
+                return `  状态: 成功\n  设备数量: ${data.deviceCount}\n  时间戳: ${new Date(data.timestamp).toLocaleString('zh-CN')}\n`;
+            } else {
+                return `  状态: 失败\n  错误信息: ${data.error}\n  时间戳: ${new Date(data.timestamp).toLocaleString('zh-CN')}\n`;
+            }
+        }
+
+        // 强制刷新所有数据
+        function forceRefreshAllData() {
+            const testResults = document.getElementById('testResults');
+            testResults.classList.remove('hidden');
+            
+            testResults.textContent = '正在强制刷新所有数据...\n清除缓存并重新加载设备列表...';
+            
+            // 清除缓存
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('userInfo');
+            
+            // 延迟后重新获取令牌和设备数据
+            setTimeout(() => {
+                // 尝试重新从URL获取令牌
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                
+                if (token) {
+                    localStorage.setItem('authToken', token);
+                    localStorage.setItem('token', token);
+                    
+                    testResults.textContent = '已从URL获取新令牌，正在重新加载设备数据...';
+                    
+                    setTimeout(() => {
+                        loadDeviceList();
+                        checkAuthStatus();
+                        testResults.textContent = '强制刷新完成！请使用上方按钮验证数据同步状态。';
+                    }, 1000);
+                } else {
+                    testResults.textContent = '强制刷新完成！但未找到新的令牌，请重新登录后再测试。';
+                    checkAuthStatus();
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

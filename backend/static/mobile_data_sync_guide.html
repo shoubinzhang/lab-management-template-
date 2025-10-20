@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端数据同步指南 - 实验室管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #4facfe;
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .section h3 {
+            color: #555;
+            margin: 15px 0 10px 0;
+            font-size: 1.2em;
+        }
+        
+        .problem-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .problem-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #ff6b6b;
+        }
+        
+        .solution-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .solution-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #51cf66;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffa94d 0%, #ff922b 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #fa5252 100%);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .status-panel {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .status-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .status-good {
+            border-left: 4px solid #51cf66;
+        }
+        
+        .status-warning {
+            border-left: 4px solid #ffa94d;
+        }
+        
+        .status-error {
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 移动端数据同步指南</h1>
+            <p>解决移动端与网页端数据不一致问题</p>
+        </div>
+        
+        <div class="content">
+            <div class="section">
+                <h2>🔍 问题诊断</h2>
+                <p>移动端和网页端数据不一致的主要原因：</p>
+                
+                <ul class="problem-list">
+                    <li><strong>存储键名不统一</strong>：移动端和网页端使用不同的localStorage键名</li>
+                    <li><strong>API配置差异</strong>：移动端和网页端可能连接到不同的API地址</li>
+                    <li><strong>缓存机制不同</strong>：数据缓存策略和更新频率不一致</li>
+                    <li><strong>网络环境差异</strong>：移动端和网页端可能处于不同的网络环境</li>
+                </ul>
+                
+                <div class="status-panel">
+                    <h3>当前数据同步状态</h3>
+                    <div id="syncStatus">
+                        <div class="status-item status-warning">正在检测数据同步状态...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🛠️ 解决方案</h2>
+                
+                <h3>方案一：自动修复（推荐）</h3>
+                <ul class="solution-list">
+                    <li>使用数据同步修复工具自动统一存储键名</li>
+                    <li>自动检测并修复API配置差异</li>
+                    <li>保持数据一致性，无需手动操作</li>
+                </ul>
+                
+                <h3>方案二：手动修复</h3>
+                <ul class="solution-list">
+                    <li>清除浏览器缓存和localStorage</li>
+                    <li>重新登录系统</li>
+                    <li>确保使用相同的API地址</li>
+                </ul>
+                
+                <h3>方案三：预防措施</h3>
+                <ul class="solution-list">
+                    <li>使用统一的数据同步配置</li>
+                    <li>定期检查数据一致性</li>
+                    <li>避免频繁切换网络环境</li>
+                </ul>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="checkSyncStatus()">检测同步状态</button>
+                    <button class="btn btn-success" onclick="fixDataSync()">自动修复同步</button>
+                    <button class="btn btn-warning" onclick="clearStorage()">清除缓存</button>
+                    <a href="/mobile_login_final" class="btn btn-danger">重新登录</a>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📋 技术细节</h2>
+                
+                <h3>存储键名映射</h3>
+                <div class="code-block">
+// 移动端存储键名
+移动端: token, auth_token, username
+
+// 网页端存储键名  
+网页端: token, authToken, user, userInfo
+
+// 统一后的存储键名
+统一: token, authToken, auth_token, user, username, userInfo
+                </div>
+                
+                <h3>API配置统一</h3>
+                <div class="code-block">
+// 移动端API配置检测逻辑
+1. 检查localStorage中的apiBaseUrl
+2. 测试多个可能的API地址
+3. 自动选择可用的API地址
+4. 保存配置到localStorage
+
+// 网页端API配置
+1. 使用环境变量REACT_APP_API_URL
+2. 开发环境下使用代理配置
+3. 生产环境下使用固定地址
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📞 技术支持</h2>
+                <p>如果以上方法无法解决问题，请联系技术支持：</p>
+                
+                <ul class="solution-list">
+                    <li><strong>系统管理员</strong>：检查服务器配置和API服务状态</li>
+                    <li><strong>技术支持团队</strong>：提供详细的问题描述和错误日志</li>
+                    <li><strong>开发团队</strong>：报告系统bug和功能需求</li>
+                </ul>
+                
+                <div class="action-buttons">
+                    <a href="/mobile_helper" class="btn btn-primary">访问助手页面</a>
+                    <a href="/mobile_login_final" class="btn btn-success">返回登录页面</a>
+                    <a href="/" class="btn btn-warning">返回主页</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 检测数据同步状态
+        function checkSyncStatus() {
+            const syncStatus = document.getElementById('syncStatus');
+            syncStatus.innerHTML = '<div class="status-item status-warning">正在检测数据同步状态...</div>';
+            
+            // 检查存储键名一致性
+            const mobileKeys = ['token', 'auth_token', 'username'];
+            const webKeys = ['token', 'authToken', 'user', 'userInfo'];
+            
+            let statusHtml = '';
+            let allGood = true;
+            
+            // 检查移动端键名
+            mobileKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                const status = value ? 'status-good' : 'status-warning';
+                const text = value ? '✓ 已设置' : '⚠ 未设置';
+                if (!value) allGood = false;
+                statusHtml += `<div class="status-item ${status}">移动端 ${key}: ${text}</div>`;
+            });
+            
+            // 检查网页端键名
+            webKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                const status = value ? 'status-good' : 'status-warning';
+                const text = value ? '✓ 已设置' : '⚠ 未设置';
+                if (!value) allGood = false;
+                statusHtml += `<div class="status-item ${status}">网页端 ${key}: ${text}</div>`;
+            });
+            
+            // 检查API配置
+            const apiUrl = localStorage.getItem('apiBaseUrl');
+            const apiStatus = apiUrl ? 'status-good' : 'status-warning';
+            const apiText = apiUrl ? '✓ 已配置' : '⚠ 未配置';
+            if (!apiUrl) allGood = false;
+            statusHtml += `<div class="status-item ${apiStatus}">API配置: ${apiText} ${apiUrl || ''}</div>`;
+            
+            // 检查数据一致性
+            const tokenConsistent = localStorage.getItem('token') === localStorage.getItem('authToken');
+            const authConsistent = localStorage.getItem('auth_token') === localStorage.getItem('authToken');
+            
+            const consistencyStatus = tokenConsistent && authConsistent ? 'status-good' : 'status-error';
+            const consistencyText = tokenConsistent && authConsistent ? '✓ 数据一致' : '❌ 数据不一致';
+            if (!tokenConsistent || !authConsistent) allGood = false;
+            statusHtml += `<div class="status-item ${consistencyStatus}">数据一致性: ${consistencyText}</div>`;
+            
+            // 总体状态
+            const overallStatus = allGood ? 'status-good' : 'status-error';
+            const overallText = allGood ? '✓ 数据同步正常' : '❌ 需要数据同步修复';
+            statusHtml += `<div class="status-item ${overallStatus}"><strong>总体状态: ${overallText}</strong></div>`;
+            
+            syncStatus.innerHTML = statusHtml;
+        }
+        
+        // 修复数据同步
+        function fixDataSync() {
+            const syncStatus = document.getElementById('syncStatus');
+            syncStatus.innerHTML = '<div class="status-item status-warning">正在修复数据同步...</div>';
+            
+            // 获取当前有效的token和用户信息
+            const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token');
+            const username = localStorage.getItem('username') || (localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).username : null);
+            
+            if (!token || !username) {
+                syncStatus.innerHTML = '<div class="status-item status-error">❌ 未找到有效的登录信息，请重新登录</div>';
+                return;
+            }
+            
+            // 统一存储键名
+            localStorage.setItem('token', token);
+            localStorage.setItem('authToken', token);
+            localStorage.setItem('auth_token', token);
+            
+            localStorage.setItem('user', username);
+            localStorage.setItem('username', username);
+            localStorage.setItem('userInfo', JSON.stringify({
+                username: username,
+                access_token: token
+            }));
+            
+            // 保存API配置
+            const apiUrl = localStorage.getItem('apiBaseUrl') || window.location.origin.replace(/:[0-9]+$/, ':8000');
+            localStorage.setItem('apiBaseUrl', apiUrl);
+            
+            setTimeout(() => {
+                checkSyncStatus();
+                syncStatus.innerHTML += '<div class="status-item status-good">✓ 数据同步修复完成！</div>';
+            }, 1000);
+        }
+        
+        // 清除缓存
+        function clearStorage() {
+            if (confirm('确定要清除所有缓存数据吗？这将需要重新登录。')) {
+                localStorage.clear();
+                checkSyncStatus();
+                alert('缓存已清除，请重新登录系统。');
+            }
+        }
+        
+        // 页面加载时自动检测
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(checkSyncStatus, 500);
+        });
+    </script>
+</body>
+</html>

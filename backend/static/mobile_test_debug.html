@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端登录调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .debug-info {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: red;
+            background: #ffe6e6;
+        }
+        .success {
+            color: green;
+            background: #e6ffe6;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>移动端登录调试</h2>
+        
+        <button onclick="testConnection()">测试连接</button>
+        <button onclick="testLogin()">测试登录</button>
+        <button onclick="clearDebug()">清除调试信息</button>
+        
+        <div id="debug-info"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        
+        function log(message, type = 'info') {
+            const debugDiv = document.getElementById('debug-info');
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = `debug-info ${type}`;
+            div.textContent = `[${timestamp}] ${message}`;
+            debugDiv.appendChild(div);
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+        }
+        
+        async function testConnection() {
+            log('开始测试连接...', 'info');
+            
+            try {
+                log(`请求URL: ${API_BASE_URL}/health`, 'info');
+                
+                const response = await fetch(`${API_BASE_URL}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    mode: 'cors',
+                    credentials: 'same-origin'
+                });
+                
+                log(`响应状态: ${response.status}`, 'info');
+                log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`, 'info');
+                
+                const data = await response.json();
+                log(`响应数据: ${JSON.stringify(data, null, 2)}`, 'success');
+                
+            } catch (error) {
+                log(`连接错误: ${error.message}`, 'error');
+                log(`错误类型: ${error.name}`, 'error');
+                log(`错误堆栈: ${error.stack}`, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            log('开始测试登录...', 'info');
+            
+            try {
+                const loginData = {
+                    username: 'admin',
+                    password: 'admin123'
+                };
+                
+                log(`请求URL: ${API_BASE_URL}/api/auth/login`, 'info');
+                log(`请求数据: ${JSON.stringify(loginData, null, 2)}`, 'info');
+                
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData),
+                    mode: 'cors',
+                    credentials: 'same-origin'
+                });
+                
+                log(`响应状态: ${response.status}`, 'info');
+                log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`, 'info');
+                
+                const data = await response.json();
+                log(`响应数据: ${JSON.stringify(data, null, 2)}`, 'success');
+                
+            } catch (error) {
+                log(`登录错误: ${error.message}`, 'error');
+                log(`错误类型: ${error.name}`, 'error');
+                log(`错误堆栈: ${error.stack}`, 'error');
+            }
+        }
+        
+        function clearDebug() {
+            document.getElementById('debug-info').innerHTML = '';
+            log('调试信息已清除', 'info');
+        }
+        
+        // 页面加载时记录一些基本信息
+        log('页面加载完成', 'info');
+        log(`API基础地址: ${API_BASE_URL}`, 'info');
+        log(`用户代理: ${navigator.userAgent}`, 'info');
+        log(`页面来源: ${window.location.origin}`, 'info');
+    </script>
+</body>
+</html>
