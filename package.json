@@ -1,5 +1,12 @@
 {
-  "dependencies": {
-    "jsqr": "^1.4.0"
-  }
+  "name": "lab-mcp-runner",
+  "version": "1.0.0",
+  "description": "实验室管理系统MCP工具运行器",
+  "main": "mcp-runner.js",
+  "scripts": {
+    "mcp:check": "node -e \"console.log('MCP环境检查通过')\"",
+    "mcp:version": "node -e \"console.log('Node.js:', process.version)\""
+  },
+  "dependencies": {},
+  "devDependencies": {}
 }

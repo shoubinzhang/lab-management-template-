@@ -1,0 +1,32 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # 触发部署的分支
+  
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'  # 使用 Node.js 版本 16
+
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Build the project
+      run: npm run build
+      
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@4.1.3
+      with:
+        branch: gh-pages  # GitHub Pages 会使用 gh-pages 分支
+        folder: build  # 构建文件的目录
+        token: ${{ secrets.GITHUB_TOKEN }}  # 自动使用 GitHub Token 进行身份验证
