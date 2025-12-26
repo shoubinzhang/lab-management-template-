@@ -1,70 +1,154 @@
-# Getting Started with Create React App
+# 实验室管理系统 (Lab Management System)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+这是一个现代化的实验室管理系统，用于管理实验室设备、试剂、实验预约和用户权限等功能。系统采用前后端分离架构，提供直观的用户界面和完整的API支持。
 
-## Available Scripts
+## 功能特性
 
-In the project directory, you can run:
+### 后端功能
+- 用户认证与授权系统
+- 实验室设备管理（CRUD操作）
+- 试剂库存管理
+- 实验预约系统
+- 数据统计与报表
+- RESTful API接口
 
-### `npm start`
+### 前端功能
+- 响应式用户界面
+- 设备管理页面
+- 试剂管理页面
+- 实验预约功能
+- 多语言支持
+- PWA支持（离线使用）
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 技术栈
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 后端
+- Python 3.10+
+- Flask 2.0+
+- SQLAlchemy ORM
+- MySQL 8.0+
+- Redis（可选，用于缓存）
 
-### `npm test`
+### 前端
+- React 18+
+- Ant Design
+- React Router 6+
+- Redux Toolkit
+- Axios
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 安装指南
 
-### `npm run build`
+### 前置要求
+- Python 3.10 或更高版本
+- Node.js 16 或更高版本
+- MySQL 8.0 或更高版本
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 后端安装
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. 克隆仓库
+```bash
+git clone <repository-url>
+cd lab-management-app
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. 创建并激活虚拟环境
+```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# Linux/Mac
+source venv/bin/activate
+```
 
-### `npm run eject`
+3. 安装后端依赖
+```bash
+pip install -r requirements.txt
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+4. 配置环境变量
+创建 `.env` 文件并配置数据库连接等信息
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+5. 初始化数据库
+```bash
+python -m backend.db.init_db
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### 前端安装
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1. 进入前端目录
+```bash
+cd frontend
+```
 
-## Learn More
+2. 安装前端依赖
+```bash
+npm install
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 使用说明
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 运行后端服务
+```bash
+# 在项目根目录
+python -m backend.app
+```
 
-### Code Splitting
+### 运行前端开发服务器
+```bash
+# 在frontend目录
+npm start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 构建前端生产版本
+```bash
+# 在frontend目录
+npm run build
+```
 
-### Analyzing the Bundle Size
+## API文档
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+后端API遵循RESTful设计规范，主要接口包括：
+- `/api/auth/*` - 认证相关接口
+- `/api/devices/*` - 设备管理接口
+- `/api/reagents/*` - 试剂管理接口
+- `/api/reservations/*` - 预约管理接口
 
-### Making a Progressive Web App
+详细API文档可在运行后端服务后访问 `/api/docs` 获取。
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 项目结构
 
-### Advanced Configuration
+```
+lab-management-app/
+├── backend/             # 后端代码
+│   ├── app.py          # 应用入口
+│   ├── config.py       # 配置文件
+│   ├── routes/         # API路由
+│   ├── models/         # 数据库模型
+│   └── services/       # 业务逻辑
+├── frontend/            # 前端代码
+│   ├── public/         # 静态资源
+│   ├── src/            # 源代码
+│   │   ├── components/ # React组件
+│   │   ├── pages/      # 页面组件
+│   │   ├── hooks/      # 自定义钩子
+│   │   └── services/   # API服务
+│   └── package.json    # 前端依赖
+├── requirements.txt    # 后端依赖
+└── README.md           # 项目说明
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 贡献指南
 
-### Deployment
+1. Fork 项目仓库
+2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
+3. 提交更改 (`git commit -m 'Add some amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 开启 Pull Request
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 许可证
 
-### `npm run build` fails to minify
+[MIT](https://choosealicense.com/licenses/mit/)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 联系方式
+
+如有问题或建议，请联系项目维护者。

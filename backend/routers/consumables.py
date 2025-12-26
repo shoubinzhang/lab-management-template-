@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
-from database import get_db
-from models import Consumable, User
-from auth import get_current_user, require_admin
-from permissions import require_permission, Permissions
+from backend.database import get_db
+from backend.models import Consumable, User
+from backend.auth import get_current_user, require_admin
+from backend.permissions import require_permission, Permissions
 from pydantic import BaseModel
 
 # 创建路由器
@@ -179,7 +179,7 @@ def create_consumable(
     """创建新耗材"""
     db_consumable = Consumable(
         **consumable.dict(),
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     db.add(db_consumable)
     db.commit()
@@ -201,7 +201,7 @@ def update_consumable(
     for key, value in consumable.dict(exclude_unset=True).items():
         setattr(db_consumable, key, value)
     
-    db_consumable.updated_at = datetime.utcnow()
+    db_consumable.updated_at = datetime.now(timezone.utc)
     db.commit()
     return {"message": "耗材更新成功"}
 
@@ -233,8 +233,8 @@ def receive_consumable(
         raise HTTPException(status_code=404, detail="耗材不存在")
     
     # 更新库存
-    db_consumable.quantity = (db_consumable.quantity or 0) + receive_data.quantity
-    db_consumable.updated_at = datetime.utcnow()
+    db_consumable.quantity = (db_consumable.quantity or 0) + quantity
+    db_consumable.updated_at = datetime.now(timezone.utc)
     
     # 更新供应商信息（如果提供）
     if receive_data.supplier:
@@ -266,7 +266,7 @@ def use_consumable(
     
     # 更新库存
     db_consumable.quantity = (db_consumable.quantity or 0) - quantity
-    db_consumable.updated_at = datetime.utcnow()
+    db_consumable.updated_at = datetime.now(timezone.utc)
     
     db.commit()
     
@@ -305,7 +305,7 @@ def request_consumable(
     current_user: dict = Depends(get_current_user)
 ):
     """申请耗材"""
-    from routers.approvals import add_request, RequestType
+    from backend.routers.approvals import add_request, RequestType
     
     # 检查耗材是否存在
     consumable = db.query(Consumable).filter(Consumable.id == request.consumable_id).first()
@@ -417,7 +417,7 @@ def batch_update_consumables(
             for key, value in update_data.items():
                 if value is not None:
                     setattr(consumable, key, value)
-            consumable.updated_at = datetime.utcnow()
+            consumable.updated_at = datetime.now(timezone.utc)
         
         db.commit()
         

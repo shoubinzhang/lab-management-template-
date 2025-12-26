@@ -3,10 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 
-from database import get_db
-from models import ExperimentRecord, User
-from auth import get_current_user, require_admin
-from permissions import require_permission, Permissions
+from backend.database import get_db
+from backend.models import ExperimentRecord, User
+from backend.auth import get_current_user, require_admin
+from backend.permissions import require_permission, Permissions
 from pydantic import BaseModel
 
 # 创建路由器

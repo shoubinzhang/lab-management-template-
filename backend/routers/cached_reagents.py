@@ -7,14 +7,14 @@ from datetime import datetime
 import json
 import hashlib
 
-from database import get_db
-from models import Reagent, User
-from auth import get_current_user, require_admin
-from permissions import require_permission, Permissions
+from backend.database import get_db
+from backend.models import Reagent, User
+from backend.auth import get_current_user, require_admin
+from backend.permissions import require_permission, Permissions
 from pydantic import BaseModel
-from redis_cache import redis_cache, cache_result, invalidate_cache_pattern
-from redis_config import redis_config
-from cache_config import CacheType, CacheConfig, invalidate_related_cache, cache_key_for_list, cache_key_for_item
+from backend.redis_cache import redis_cache, cache_result, invalidate_cache_pattern
+from backend.redis_config import redis_config
+from backend.cache_config import CacheType, CacheConfig, invalidate_related_cache, cache_key_for_list, cache_key_for_item
 
 # 创建路由器
 router = APIRouter(prefix="/api/reagents", tags=["reagents"])
@@ -24,41 +24,68 @@ class ReagentCreate(BaseModel):
     name: str
     category: Optional[str] = None
     manufacturer: Optional[str] = None
-    lot_number: Optional[str] = None
+    product_number: Optional[str] = None  # 产品编号
+    batch_number: Optional[str] = None   # 批号（原lot_number）
     expiry_date: Optional[datetime] = None
     quantity: Optional[float] = 0.0
     unit: Optional[str] = "ml"
     min_threshold: Optional[float] = 10.0  # 最小库存阈值
     location: Optional[str] = None
-    safety_notes: Optional[str] = None
-    price: Optional[float] = None
+    storage_temperature: Optional[str] = None  # 储存温度
+    storage_location: Optional[str] = None     # 储存位置
+    cas_number: Optional[str] = None           # CAS号
+    molecular_formula: Optional[str] = None    # 分子式
+    molecular_weight: Optional[float] = None   # 分子量
+    purity: Optional[float] = None             # 纯度
+    supplier: Optional[str] = None             # 供应商
+    specification: Optional[str] = None       # 规格
+    safety_notes: Optional[str] = None        # 安全信息
+    price: Optional[float] = None              # 价格
 
 class ReagentUpdate(BaseModel):
     name: Optional[str] = None
     category: Optional[str] = None
     manufacturer: Optional[str] = None
-    lot_number: Optional[str] = None
+    product_number: Optional[str] = None  # 产品编号
+    batch_number: Optional[str] = None   # 批号（原lot_number）
     expiry_date: Optional[datetime] = None
     quantity: Optional[float] = None
     unit: Optional[str] = None
     min_threshold: Optional[float] = None  # 最小库存阈值
     location: Optional[str] = None
-    safety_notes: Optional[str] = None
-    price: Optional[float] = None
+    storage_temperature: Optional[str] = None  # 储存温度
+    storage_location: Optional[str] = None     # 储存位置
+    cas_number: Optional[str] = None           # CAS号
+    molecular_formula: Optional[str] = None    # 分子式
+    molecular_weight: Optional[float] = None   # 分子量
+    purity: Optional[float] = None             # 纯度
+    supplier: Optional[str] = None             # 供应商
+    specification: Optional[str] = None       # 规格
+    safety_notes: Optional[str] = None        # 安全信息
+    price: Optional[float] = None              # 价格
 
 class ReagentResponse(BaseModel):
     id: int
     name: str
     category: Optional[str]
     manufacturer: Optional[str]
-    lot_number: Optional[str]
+    product_number: Optional[str]  # 产品编号
+    batch_number: Optional[str]     # 批号
     expiry_date: Optional[datetime]
     quantity: Optional[float]
     unit: Optional[str]
     min_threshold: Optional[float]  # 最小库存阈值
     location: Optional[str]
-    safety_notes: Optional[str]
-    price: Optional[float]
+    storage_temperature: Optional[str]  # 储存温度
+    storage_location: Optional[str]     # 储存位置
+    cas_number: Optional[str]           # CAS号
+    molecular_formula: Optional[str]    # 分子式
+    molecular_weight: Optional[float]   # 分子量
+    purity: Optional[float]             # 纯度
+    supplier: Optional[str]             # 供应商
+    specification: Optional[str]        # 规格
+    safety_notes: Optional[str]        # 安全信息
+    price: Optional[float]              # 价格
     created_at: datetime
     updated_at: Optional[datetime]
 
@@ -98,13 +125,23 @@ def _serialize_reagents(reagents: List[Reagent]) -> List[dict]:
         "name": r.name,
         "category": r.category,
         "manufacturer": r.manufacturer,
-        "lot_number": r.lot_number,
+        "product_number": r.product_number,  # 产品编号
+        "batch_number": r.batch_number,       # 批号
         "expiry_date": r.expiry_date.isoformat() if r.expiry_date else None,
         "quantity": r.quantity,
         "unit": r.unit,
+        "min_threshold": r.min_threshold,     # 最小库存阈值
         "location": r.location,
-        "safety_notes": r.safety_notes,
-        "price": r.price,
+        "storage_temperature": r.storage_temperature,  # 储存温度
+        "storage_location": r.storage_location,        # 储存位置
+        "cas_number": r.cas_number,                    # CAS号
+        "molecular_formula": r.molecular_formula,      # 分子式
+        "molecular_weight": r.molecular_weight,         # 分子量
+        "purity": r.purity,                            # 纯度
+        "supplier": r.supplier,                        # 供应商
+        "specification": r.specification,              # 规格
+        "safety_notes": r.safety_notes,                # 安全信息
+        "price": r.price,                              # 价格
         "created_at": r.created_at.isoformat(),
         "updated_at": r.updated_at.isoformat() if r.updated_at else None
     } for r in reagents]
@@ -172,7 +209,8 @@ def get_reagents(
         query = query.filter(
             Reagent.name.contains(search) |
             Reagent.manufacturer.contains(search) |
-            Reagent.lot_number.contains(search)
+            Reagent.product_number.contains(search) |
+            Reagent.batch_number.contains(search)
         )
     
     # 排序
@@ -403,7 +441,7 @@ def request_reagent(
     current_user: dict = Depends(get_current_user)
 ):
     """申请领用试剂"""
-    from routers.approvals import add_request, RequestType
+    from backend.routers.approvals import add_request, RequestType
     
     # 检查试剂是否存在
     reagent = db.query(Reagent).filter(Reagent.id == request.reagent_id).first()

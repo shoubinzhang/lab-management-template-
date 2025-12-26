@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, Date, ForeignKey, Boolean, Table, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from database import Base
+from backend.database import Base
 
 # 用户角色关联表（多对多关系）
 user_roles = Table(
@@ -87,14 +87,22 @@ class Reagent(Base):
     name = Column(String, index=True)
     category = Column(String)  # 试剂类别
     manufacturer = Column(String)  # 制造商
-    lot_number = Column(String)  # 批次号
+    product_number = Column(String)  # 产品货号
+    batch_number = Column(String)  # 批次号
     expiry_date = Column(DateTime)
     quantity = Column(Float)
     unit = Column(String)  # 单位：mL, g, etc.
-    min_threshold = Column(Float, default=10.0)  # 最小库存阈值
-    location = Column(String)  # 存储位置
+    storage_temperature = Column(String)  # 存储温度
+    storage_location = Column(String)  # 存储位置
+    cas_number = Column(String)  # CAS号
+    molecular_formula = Column(String)  # 分子式
+    molecular_weight = Column(Float)  # 分子量
+    purity = Column(Float)  # 纯度（%）
+    supplier = Column(String)  # 供应商
+    specification = Column(String)  # 规格
     safety_notes = Column(String)  # 安全注意事项
     price = Column(Float)  # 价格
+    min_threshold = Column(Float, default=10.0)  # 最小库存阈值
     created_at = Column(DateTime, default=lambda: datetime.utcnow())
     updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
 

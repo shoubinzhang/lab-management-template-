@@ -4,10 +4,10 @@ from typing import List, Optional
 from datetime import datetime
 from enum import Enum
 
-from database import get_db
-from models import User, Request
-from auth import get_current_user
-from permissions import require_permission, Permissions
+from backend.database import get_db
+from backend.models import User, Request
+from backend.auth import get_current_user
+from backend.permissions import require_permission, Permissions
 from pydantic import BaseModel
 
 # 创建路由器
@@ -120,7 +120,7 @@ def approve_request(request_id: int, action: ApprovalAction, db: Session = Depen
         # 批准前进行库存检查和扣减
         try:
             # 导入模型
-            from models import Reagent, Consumable, UsageRecord
+            from backend.models import Reagent, Consumable, UsageRecord
             
             # 根据申请类型检查库存
             if request.request_type == RequestType.REAGENT:
@@ -274,7 +274,7 @@ def get_my_requests(
 # 内部函数：添加新申请到数据库（由其他模块调用）
 def add_request(request_type: RequestType, item_id: int, item_name: str, quantity: float, unit: str, purpose: str, requester_id: int, requester_name: str, notes: str = None):
     """添加新的申请到审批队列"""
-    from database import SessionLocal
+    from backend.database import SessionLocal
     
     db = SessionLocal()
     try:

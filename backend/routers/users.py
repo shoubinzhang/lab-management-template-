@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from database import get_db
-from models import User, Role, Permission
-from auth import get_current_user
-from permissions import check_permission, check_role, Permissions, Roles, get_permission_checker
+from backend.database import get_db
+from backend.models import User, Role, Permission
+from backend.auth import get_current_user
+from backend.permissions import check_permission, check_role, Permissions, Roles, get_permission_checker
 from pydantic import BaseModel
 from passlib.context import CryptContext
 

@@ -3,10 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 
-from database import get_db
-from models import Reagent, User
-from auth import get_current_user, require_admin
-from permissions import check_permission, Permissions
+from backend.database import get_db
+from backend.models import Reagent, User
+from backend.auth import get_current_user, require_admin
+from backend.permissions import check_permission, Permissions
 from pydantic import BaseModel
 
 # 创建路由器
@@ -17,25 +17,43 @@ class ReagentCreate(BaseModel):
     name: str
     category: Optional[str] = None
     manufacturer: Optional[str] = None
-    lot_number: Optional[str] = None
+    product_number: Optional[str] = None  # 产品编号
+    batch_number: Optional[str] = None   # 批号（原lot_number）
     expiry_date: Optional[datetime] = None
     quantity: Optional[float] = 0.0
     unit: Optional[str] = "ml"
     min_threshold: Optional[float] = 10.0  # 最小库存阈值
     location: Optional[str] = None
-    safety_notes: Optional[str] = None
-    price: Optional[float] = None
+    storage_temperature: Optional[str] = None  # 储存温度
+    storage_location: Optional[str] = None     # 储存位置
+    cas_number: Optional[str] = None           # CAS号
+    molecular_formula: Optional[str] = None    # 分子式
+    molecular_weight: Optional[float] = None   # 分子量
+    purity: Optional[float] = None             # 纯度
+    supplier: Optional[str] = None             # 供应商
+    specification: Optional[str] = None       # 规格
+    safety_notes: Optional[str] = None        # 安全信息
+    price: Optional[float] = None              # 价格
 
 class ReagentUpdate(BaseModel):
     name: Optional[str] = None
     category: Optional[str] = None
     manufacturer: Optional[str] = None
-    lot_number: Optional[str] = None
+    product_number: Optional[str] = None
+    batch_number: Optional[str] = None
     expiry_date: Optional[datetime] = None
     quantity: Optional[float] = None
     unit: Optional[str] = None
     min_threshold: Optional[float] = None  # 最小库存阈值
     location: Optional[str] = None
+    storage_temperature: Optional[str] = None
+    storage_location: Optional[str] = None
+    cas_number: Optional[str] = None
+    molecular_formula: Optional[str] = None
+    molecular_weight: Optional[float] = None
+    purity: Optional[float] = None
+    supplier: Optional[str] = None
+    specification: Optional[str] = None
     safety_notes: Optional[str] = None
     price: Optional[float] = None
 
@@ -44,12 +62,21 @@ class ReagentResponse(BaseModel):
     name: str
     category: Optional[str]
     manufacturer: Optional[str]
-    lot_number: Optional[str]
+    product_number: Optional[str]
+    batch_number: Optional[str]
     expiry_date: Optional[datetime]
     quantity: Optional[float]
     unit: Optional[str]
     min_threshold: Optional[float]  # 最小库存阈值
     location: Optional[str]
+    storage_temperature: Optional[str]
+    storage_location: Optional[str]
+    cas_number: Optional[str]
+    molecular_formula: Optional[str]
+    molecular_weight: Optional[float]
+    purity: Optional[float]
+    supplier: Optional[str]
+    specification: Optional[str]
     safety_notes: Optional[str]
     price: Optional[float]
     created_at: datetime
@@ -107,7 +134,12 @@ def get_reagents(
         query = query.filter(
             Reagent.name.contains(search) |
             Reagent.manufacturer.contains(search) |
-            Reagent.lot_number.contains(search)
+            Reagent.product_number.contains(search) |
+            Reagent.batch_number.contains(search) |
+            Reagent.cas_number.contains(search) |
+            Reagent.molecular_formula.contains(search) |
+            Reagent.supplier.contains(search) |
+            Reagent.specification.contains(search)
         )
     
     # 排序
@@ -253,7 +285,7 @@ def request_reagent(
     current_user: User = Depends(check_permission(Permissions.REAGENT_REQUEST))
 ):
     """申请领用试剂"""
-    from routers.approvals import add_request, RequestType
+    from backend.routers.approvals import add_request, RequestType
     
     # 检查试剂是否存在
     reagent = db.query(Reagent).filter(Reagent.id == request.reagent_id).first()

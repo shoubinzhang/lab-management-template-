@@ -10,9 +10,9 @@ import io
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import Response
 
-from database import get_db
-from models import UsageRecord, User, Reagent, Consumable
-from auth import get_current_user
+from backend.database import get_db
+from backend.models import UsageRecord, User, Reagent, Consumable
+from backend.auth import get_current_user
 
 router = APIRouter()
 

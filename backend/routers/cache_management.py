@@ -7,12 +7,12 @@ from datetime import datetime
 import asyncio
 import logging
 
-from database import get_db
-from auth import require_admin
-from models import User
-from redis_cache import redis_cache
-from redis_config import redis_config
-from cache_config import CacheType, CacheConfig, invalidate_related_cache
+from backend.database import get_db
+from backend.auth import require_admin
+from backend.models import User
+from backend.redis_cache import redis_cache
+from backend.redis_config import redis_config
+from backend.cache_config import CacheType, CacheConfig, invalidate_related_cache
 from pydantic import BaseModel
 
 # 配置日志
@@ -378,7 +378,7 @@ def test_cache_connection(
 # 辅助函数
 def _warmup_reagents(db: Session, current_user: dict, force: bool = False) -> int:
     """预热试剂缓存"""
-    from routers.cached_reagents import get_reagents, get_reagent_categories
+    from backend.routers.cached_reagents import get_reagents, get_reagent_categories
     
     warmed = 0
     
